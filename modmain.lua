@@ -7,6 +7,8 @@ local PROXIMITY_LIMIT = GetModConfigData("PROXIMITY_LIMIT") or 50
 local PLAYER_LIMIT = GetModConfigData("PLAYER_LIMIT") or 100
 local GLOBAL_LIMIT = GetModConfigData("GLOBAL_LIMIT") or 500
 local EXPIRY_TIME = GetModConfigData("EXPIRY_TIME") or 480
+local ENABLE_QL_HELPER = GetModConfigData("ENABLE_QL_HELPER")
+local QL_WINDOW_WIDTH = GetModConfigData("QL_WINDOW_WIDTH") or 300
 
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
@@ -233,4 +235,10 @@ end)
 AddClassPostConstruct("screens/playerhud", function(self)
     local MoonUI = require("widgets/moon_ui")
     self.moon_ui = self:AddChild(MoonUI())
+
+    if ENABLE_QL_HELPER then
+        local QLCleanupPanel = require("widgets/ql_cleanup_panel")
+        self.ql_cleanup_panel = self:AddChild(QLCleanupPanel(self.owner, QL_WINDOW_WIDTH))
+        self.ql_cleanup_panel:MoveToFront()
+    end
 end)
