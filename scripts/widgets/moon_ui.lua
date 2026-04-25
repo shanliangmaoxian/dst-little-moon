@@ -5,9 +5,10 @@ local Text = require "widgets/text"
 local Spinner = require "widgets/spinner" -- 引入选择器组件
 local TEMPLATES = require "widgets/redux/templates"
 
-local Moon_UI = Class(Widget, function(self)
+local Moon_UI = Class(Widget, function(self, max_summon)
     Widget._ctor(self, "Moon_UI")
     
+    self.max_summon = max_summon or 50
     self.root = self:AddChild(Widget("root"))
     self.frame = self.root:AddChild(Widget("frame"))
     self.frame:SetPosition(TheSim:GetScreenSize() / 2, TheSim:GetScreenSize() / 2.5)
@@ -31,13 +32,17 @@ local Moon_UI = Class(Widget, function(self)
 
     -- 数量选择器
     self.selected_count = 1
-    local spinner_data = {
-        { text = "1", data = 1 },
-        { text = "5", data = 5 },
-        { text = "10", data = 10 },
-        { text = "20", data = 20 },
-        { text = "50", data = 50 },
-    }
+    local spinner_data = {}
+    local possible_counts = {1, 5, 10, 20, 50}
+    for _, count in ipairs(possible_counts) do
+        if count <= self.max_summon then
+            table.insert(spinner_data, { text = tostring(count), data = count })
+        end
+    end
+    -- 如果 max_summon 不在预设列表中且比 1 大，也把它加上 (或者至少确保有一个选项)
+    if #spinner_data == 0 then
+        table.insert(spinner_data, { text = "1", data = 1 })
+    end
     
     self.spinner = self.frame:AddChild(self:MakeSpinner("召唤数量:", spinner_data, function(data)
         self.selected_count = data
