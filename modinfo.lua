@@ -60,4 +60,25 @@ configuration_options = {
         },
         default = 480,
     },
+    {
+        name = "ENABLE_QL_HELPER",
+        label = "开启快捷指令面板",
+        hover = "是否开启包含 #ql 和 #cleanup 的快捷指令面板",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "QL_WINDOW_WIDTH",
+        label = "指令面板宽度",
+        hover = "设置快捷指令面板的宽度",
+        options = {
+            { description = "小", data = 300 },
+            { description = "中", data = 360 },
+            { description = "大", data = 420 },
+        },
+        default = 300,
+    },
 }
