@@ -67,14 +67,14 @@ end)
 -- 简单的 Spinner 构造方法
 function Moon_UI:MakeSpinner(labeltext, spinnerdata, onchanged_fn)
     local wdg = Widget("labelspinner")
-    wdg.label = wdg:AddChild(Text(HEADERFONT, 24, labeltext))
-    wdg.label:SetPosition(-80, 0)
+    wdg.label = wdg:AddChild(Text(HEADERFONT, 32, labeltext))
+    wdg.label:SetPosition(-100, 0)
     wdg.label:SetColour(UICOLOURS.BROWN_DARK)
 
-    wdg.spinner = wdg:AddChild(Spinner(spinnerdata, 120, 30, {font = HEADERFONT, size = 24}, nil, "images/quagmire_recipebook.xml", nil, true))
+    wdg.spinner = wdg:AddChild(Spinner(spinnerdata, 150, 40, {font = HEADERFONT, size = 32}, nil, "images/quagmire_recipebook.xml", nil, true))
     wdg.spinner:SetTextColour(UICOLOURS.BROWN_DARK)
     wdg.spinner:SetOnChangedFn(onchanged_fn)
-    wdg.spinner:SetPosition(40, 0)
+    wdg.spinner:SetPosition(60, 0)
     
     return wdg
 end

@@ -89,7 +89,7 @@ local QLCleanupPanel = Class(Widget, function(self, owner, panel_width)
     self.drag_dots:SetPosition(-self.panel_width / 2 + 30, -1, 0)
     self.drag_dots:SetClickable(false)
 
-    self.title = self:AddChild(Text(CHATFONT, 32, "快捷指令")) -- 36 -> 32
+    self.title = self:AddChild(Text(CHATFONT, 32, "小月亮快捷指令")) -- 36 -> 32
     self.title:SetPosition(0, 32, 0) -- 24 -> 32 上移
     self.title:SetClickable(false)
 
