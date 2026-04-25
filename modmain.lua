@@ -240,7 +240,7 @@ end
 AddClassPostConstruct("screens/playerhud", function(self)
     if ENABLE_TREASURE then
         local MoonUI = require("widgets/moon_ui")
-        self.moon_ui = self:AddChild(MoonUI())
+        self.moon_ui = self:AddChild(MoonUI(PROXIMITY_LIMIT))
     end
 
     if ENABLE_QL_HELPER then
