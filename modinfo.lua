@@ -1,6 +1,6 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
-author = "Gemini CLI"
+author = "九月"
 version = "1.2.0"
 api_version = 10
 dst_compatible = true
