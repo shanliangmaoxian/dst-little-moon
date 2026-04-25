@@ -9,7 +9,28 @@ client_only_mod = false
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
 
+-- 定义标题函数 (参考 3253273657)
+local function AddTitle(title)
+    return { 
+        name = " ", 
+        label = title, 
+        options = { { description = "", data = 0 } }, 
+        default = 0 
+    }
+end
+
 configuration_options = {
+    AddTitle("附魔强化挖宝组件"),
+    {
+        name = "ENABLE_TREASURE",
+        label = "开启挖宝组件",
+        hover = "是否开启小月亮按钮及召唤功能",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
     {
         name = "PROXIMITY_LIMIT",
         label = "局部密度限制(20码)",
@@ -60,6 +81,8 @@ configuration_options = {
         },
         default = 480,
     },
+
+    AddTitle("欧皇模拟器清理组件"),
     {
         name = "ENABLE_QL_HELPER",
         label = "开启快捷指令面板",
