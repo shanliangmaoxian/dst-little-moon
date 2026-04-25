@@ -131,23 +131,102 @@ AddModRPCHandler("LittleMoon", "Summon", function(player, count)
     end
 end)
 
+local POSITION_FILE = "dst_little_moon_position"
+
+local function ScreenYToTopOffset(y)
+    local _, screen_h = _G.TheSim:GetScreenSize()
+    return y - screen_h
+end
+
 -- 2. 在左上角添加图标按钮
 AddClassPostConstruct("widgets/controls", function(self)
     self.moon_root = self:AddChild(Widget("moon_root"))
     self.moon_root:SetHAnchor(_G.ANCHOR_LEFT)
     self.moon_root:SetVAnchor(_G.ANCHOR_TOP)
-    self.moon_root:SetScaleMode(_G.SCALEMODE_PROPORTIONAL)
+    
     local tex = "lunar_seed.tex"
     local atlas = _G.GetInventoryItemAtlas(tex) or "images/inventoryimages.xml"
     self.moon_btn = self.moon_root:AddChild(ImageButton(atlas, tex))
-    self.moon_btn:SetScale(0.7)
-    self.moon_btn:SetPosition(80, -100)
+    self.moon_btn:SetScale(1.4)
+    
+    -- 默认位置
+    local default_x, default_y = 80, -100
+    self.moon_btn:SetPosition(default_x, default_y)
+    
+    -- 拖动相关变量
+    self.moon_btn.drag_move_handler = nil
+    self.moon_btn.drag_button_handler = nil
+
+    self.moon_btn.StartDragging = function(widget)
+        if widget.drag_move_handler ~= nil then return end
+
+        local mouse_pos = _G.TheInput:GetScreenPosition()
+        local pos_x, pos_y = widget:GetPositionXYZ()
+
+        widget.drag_offset_x = pos_x - mouse_pos.x
+        widget.drag_offset_y = pos_y - ScreenYToTopOffset(mouse_pos.y)
+
+        widget.drag_move_handler = _G.TheInput:AddMoveHandler(function(x, y)
+            widget:SetPosition(x + widget.drag_offset_x, ScreenYToTopOffset(y) + widget.drag_offset_y)
+        end)
+
+        widget.drag_button_handler = _G.TheInput:AddMouseButtonHandler(function(button_id, is_down)
+            if button_id == _G.MOUSEBUTTON_RIGHT and not is_down then
+                widget:StopDragging()
+            end
+        end)
+    end
+
+    self.moon_btn.StopDragging = function(widget)
+        if widget.drag_move_handler ~= nil then
+            widget.drag_move_handler:Remove()
+            widget.drag_move_handler = nil
+        end
+        if widget.drag_button_handler ~= nil then
+            widget.drag_button_handler:Remove()
+            widget.drag_button_handler = nil
+        end
+        
+        -- 保存位置
+        local x, y = widget:GetPositionXYZ()
+        _G.TheSim:SetPersistentString(POSITION_FILE, _G.json.encode({x = x, y = y}), false)
+    end
+
+    self.moon_btn.LoadPosition = function(widget)
+        _G.TheSim:GetPersistentString(POSITION_FILE, function(success, data)
+            if success and data and data ~= "" then
+                local ok, pos = _G.pcall(_G.json.decode, data)
+                if ok and pos and pos.x and pos.y then
+                    widget:SetPosition(pos.x, pos.y)
+                end
+            end
+        end)
+    end
+
+    -- 右键触发拖动
+    local old_OnControl = self.moon_btn.OnControl
+    self.moon_btn.OnControl = function(widget, control, down)
+        if control == _G.CONTROL_SECONDARY then
+            if down then
+                widget:StartDragging()
+            end
+            return true
+        end
+        if old_OnControl then
+            return old_OnControl(widget, control, down)
+        end
+        return ImageButton.OnControl(widget, control, down)
+    end
+
+    -- 加载保存的位置
+    self.moon_btn:LoadPosition()
+
     self.moon_btn:SetOnClick(function()
         if _G.ThePlayer and _G.ThePlayer.HUD and _G.ThePlayer.HUD.moon_ui then
             _G.ThePlayer.HUD.moon_ui:Toggle()
         end
     end)
-    self.moon_btn:SetHoverText("小月亮宝藏面板", { offset_y = 40 })
+    self.moon_btn:SetHoverText("小月亮宝藏面板 (右键拖动)", { offset_y = 40 })
 end)
 
 -- 3. 注入 UI 界面
