@@ -137,8 +137,10 @@ AddClassPostConstruct("widgets/controls", function(self)
     self.moon_root:SetHAnchor(_G.ANCHOR_LEFT)
     self.moon_root:SetVAnchor(_G.ANCHOR_TOP)
     self.moon_root:SetScaleMode(_G.SCALEMODE_PROPORTIONAL)
-    self.moon_btn = self.moon_root:AddChild(ImageButton("images/scrapbook_icons1.xml", "icon_heat.tex"))
-    self.moon_btn:SetScale(0.4)
+    local tex = "lunar_seed.tex"
+    local atlas = _G.GetInventoryItemAtlas(tex) or "images/inventoryimages.xml"
+    self.moon_btn = self.moon_root:AddChild(ImageButton(atlas, tex))
+    self.moon_btn:SetScale(0.7)
     self.moon_btn:SetPosition(80, -100)
     self.moon_btn:SetOnClick(function()
         if _G.ThePlayer and _G.ThePlayer.HUD and _G.ThePlayer.HUD.moon_ui then
