@@ -9,7 +9,7 @@ local PLAYER_LIMIT = GetModConfigData("PLAYER_LIMIT") or 100
 local GLOBAL_LIMIT = GetModConfigData("GLOBAL_LIMIT") or 500
 local EXPIRY_TIME = GetModConfigData("EXPIRY_TIME") or 480
 local ENABLE_QL_HELPER = GetModConfigData("ENABLE_QL_HELPER")
-local QL_WINDOW_WIDTH = GetModConfigData("QL_WINDOW_WIDTH") or 300
+local LITTLE_MOON_SCALE = GetModConfigData("LITTLE_MOON_SCALE") or 1.0
 
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
@@ -228,24 +228,19 @@ if ENABLE_TREASURE then
         self.moon_btn:LoadPosition()
 
         self.moon_btn:SetOnClick(function()
-            if _G.ThePlayer and _G.ThePlayer.HUD and _G.ThePlayer.HUD.moon_ui then
-                _G.ThePlayer.HUD.moon_ui:Toggle()
+            if _G.ThePlayer and _G.ThePlayer.HUD and _G.ThePlayer.HUD.little_moon_panel then
+                _G.ThePlayer.HUD.little_moon_panel:Toggle()
             end
         end)
-        self.moon_btn:SetHoverText("小月亮宝藏面板 (右键拖动)", { offset_y = 40 })
+        self.moon_btn:SetHoverText("小月亮助手 (右键拖动)", { offset_y = 40 })
     end)
 end
 
 -- 3. 注入 UI 界面
 AddClassPostConstruct("screens/playerhud", function(self)
-    if ENABLE_TREASURE then
-        local MoonUI = require("widgets/moon_ui")
-        self.moon_ui = self:AddChild(MoonUI(PROXIMITY_LIMIT))
-    end
-
-    if ENABLE_QL_HELPER then
-        local QLCleanupPanel = require("widgets/ql_cleanup_panel")
-        self.ql_cleanup_panel = self:AddChild(QLCleanupPanel(self.owner, QL_WINDOW_WIDTH))
-        self.ql_cleanup_panel:MoveToFront()
+    if ENABLE_TREASURE or ENABLE_QL_HELPER then
+        local LittleMoonPanel = require("widgets/little_moon_panel")
+        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE))
+        self.little_moon_panel:MoveToFront()
     end
 end)

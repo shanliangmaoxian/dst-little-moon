@@ -94,14 +94,15 @@ configuration_options = {
         default = true,
     },
     {
-        name = "QL_WINDOW_WIDTH",
-        label = "指令面板宽度",
-        hover = "设置快捷指令面板的宽度",
+        name = "LITTLE_MOON_SCALE",
+        label = "助手面板缩放",
+        hover = "设置小月亮助手面板的整体大小",
         options = {
-            { description = "小", data = 300 },
-            { description = "中", data = 360 },
-            { description = "大", data = 420 },
+            { description = "缩小 (0.8x)", data = 0.8 },
+            { description = "标准 (1.0x)", data = 1.0 },
+            { description = "放大 (1.2x)", data = 1.2 },
+            { description = "特大 (1.5x)", data = 1.5 },
         },
-        default = 300,
+        default = 1.0,
     },
 }
