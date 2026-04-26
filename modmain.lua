@@ -108,27 +108,36 @@ if ENABLE_TREASURE then
         summon_count = _G.math.min(summon_count, GLOBAL_LIMIT - #all_points)
 
         if summon_count > 0 then
-            inv:ConsumeByName(cost_prefab, summon_count)
             local radius = _G.math.max(3, summon_count / 4) 
+            local spawned_actual = 0
             
             for i = 1, summon_count do
                 local angle = i * (2 * _G.math.pi / summon_count)
                 local offset = _G.Vector3(_G.math.cos(angle) * radius, 0, _G.math.sin(angle) * radius)
                 local spawn_pos = player_pos + offset
                 
-                local treasure = _G.SpawnPrefab("hh_treasure_build") 
-                if treasure then
-                    treasure.Transform:SetPosition(spawn_pos:Get())
-                    treasure.moon_owner = player.userid
-                    treasure:AddTag("moon_owner_".._G.tostring(player.userid))
-                    
-                    local fx = _G.SpawnPrefab("small_puff")
-                    if fx then fx.Transform:SetPosition(spawn_pos:Get()) end
+                -- 地皮检测：必须是陆地地皮，且不是海洋
+                if _G.TheWorld.Map:IsVisualGroundAtPoint(spawn_pos.x, spawn_pos.y, spawn_pos.z) then
+                    local treasure = _G.SpawnPrefab("hh_treasure_build") 
+                    if treasure then
+                        treasure.Transform:SetPosition(spawn_pos:Get())
+                        treasure.moon_owner = player.userid
+                        treasure:AddTag("moon_owner_".._G.tostring(player.userid))
+                        
+                        local fx = _G.SpawnPrefab("small_puff")
+                        if fx then fx.Transform:SetPosition(spawn_pos:Get()) end
+                        spawned_actual = spawned_actual + 1
+                    end
                 end
             end
             
-            if player.components.talker then
-                player.components.talker:Say(_G.string.format("成功开启 %d 个宝藏点！", summon_count))
+            if spawned_actual > 0 then
+                inv:ConsumeByName(cost_prefab, spawned_actual)
+                if player.components.talker then
+                    player.components.talker:Say(_G.string.format("成功开启 %d 个宝藏点！", spawned_actual))
+                end
+            else
+                if player.components.talker then player.components.talker:Say("这里没有足够的陆地空间。") end
             end
         else
             if player.components.talker then player.components.talker:Say("无法召唤：卷轴不足或已达上限。") end
