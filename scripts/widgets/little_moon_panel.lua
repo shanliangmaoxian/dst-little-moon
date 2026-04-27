@@ -12,6 +12,7 @@ local DEFAULT_Y = -150
 
 local GOLD = { 0.89, 0.76, 0.47, 1 }
 local LIGHT = { 0.95, 0.92, 0.84, 1 }
+local WHITE = { 1, 1, 1, 1 }
 
 local function Clamp(value, min_value, max_value)
     return math.max(min_value, math.min(max_value, value))
@@ -38,9 +39,9 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 计算面板高度
     local panel_height = 0
     if self.enable_treasure and self.enable_ql_helper then
-        panel_height = 180
+        panel_height = 200 -- 稍微调大一点以容纳更大的字体
     else
-        panel_height = 110
+        panel_height = 120
     end
     self.panel_height = panel_height
 
@@ -52,7 +53,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 背景
     self.background = self:AddChild(Image("images/ui.xml", "white.tex"))
     self.background:SetSize(PANEL_WIDTH, panel_height)
-    self.background:SetTint(0.05, 0.05, 0.06, 0.85)
+    self.background:SetTint(0.05, 0.05, 0.06, 0.95) -- 增加不透明度，让背景更深
     self.background:SetClickable(false)
 
     -- 页眉
@@ -92,23 +93,24 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 第一部分：快捷指令
     -------------------------------------------------------
     if self.enable_ql_helper then
-        local section1_y = (self.enable_treasure and 45 or 0)
-        self.section1_title = self:AddChild(Text(CHATFONT, 22, "快捷指令"))
+        local section1_y = (self.enable_treasure and 55 or 0)
+        self.section1_title = self:AddChild(Text(CHATFONT, 24, "快捷指令"))
         self.section1_title:SetPosition(0, section1_y, 0)
         self.section1_title:SetColour(unpack(GOLD))
+        if self.section1_title.EnableOutline then self.section1_title:EnableOutline(true) end -- 增加描边提高对比度
 
-        local btn_w, btn_h = 110, 30
+        local btn_w, btn_h = 120, 36 -- 增大按钮
         self.ql_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#ql", true) end, "清理返钱 (#ql)", { btn_w, btn_h }))
-        self.ql_button:SetPosition(-65, section1_y - 35, 0)
-        self.ql_button:SetTextSize(16)
+        self.ql_button:SetPosition(-70, section1_y - 40, 0)
+        self.ql_button:SetTextSize(20) -- 增大文字
 
         self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#clean)", { btn_w, btn_h }))
-        self.cleanup_button:SetPosition(65, section1_y - 35, 0)
-        self.cleanup_button:SetTextSize(16)
+        self.cleanup_button:SetPosition(70, section1_y - 40, 0)
+        self.cleanup_button:SetTextSize(20) -- 增大文字
 
         if self.enable_treasure then
             -- 分割线
-            AddBorder(PANEL_WIDTH - 40, 1, 0, -15, {0.3, 0.3, 0.3, 0.5})
+            AddBorder(PANEL_WIDTH - 40, 1, 0, -10, {0.4, 0.4, 0.4, 0.6})
         end
     end
 
@@ -116,13 +118,14 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 第二部分：宝藏召唤
     -------------------------------------------------------
     if self.enable_treasure then
-        local section2_y = (self.enable_ql_helper and -35 or 10)
-        self.section2_title = self:AddChild(Text(CHATFONT, 22, "宝藏点召唤"))
+        local section2_y = (self.enable_ql_helper and -40 or 10)
+        self.section2_title = self:AddChild(Text(CHATFONT, 24, "宝藏点召唤"))
         self.section2_title:SetPosition(0, section2_y, 0)
         self.section2_title:SetColour(unpack(GOLD))
+        if self.section2_title.EnableOutline then self.section2_title:EnableOutline(true) end
 
         -- 数量选择 + 召唤按钮 (同一行)
-        local summon_y = section2_y - 30
+        local summon_y = section2_y - 40
         self.selected_count = 1
         local spinner_data = {}
         for _, count in ipairs({1, 5, 10, 20, 50}) do
@@ -133,25 +136,25 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         if #spinner_data == 0 then table.insert(spinner_data, { text = "1", data = 1 }) end
 
         self.spinner_root = self:AddChild(Widget("spinner_root"))
-        self.spinner_root:SetPosition(-70, summon_y)
+        self.spinner_root:SetPosition(-75, summon_y)
         
-        self.spinner_label = self.spinner_root:AddChild(Text(CHATFONT, 20, "数量:"))
-        self.spinner_label:SetPosition(-45, 0)
-        self.spinner_label:SetColour(unpack(LIGHT))
+        self.spinner_label = self.spinner_root:AddChild(Text(CHATFONT, 22, "数量:"))
+        self.spinner_label:SetPosition(-50, 0)
+        self.spinner_label:SetColour(unpack(WHITE)) -- 改为纯白
 
-        self.spinner = self.spinner_root:AddChild(Spinner(spinner_data, 75, 28, {font = CHATFONT, size = 20}, nil, nil, nil, true))
-        self.spinner:SetTextColour(unpack(LIGHT))
+        self.spinner = self.spinner_root:AddChild(Spinner(spinner_data, 85, 32, {font = CHATFONT, size = 22}, nil, nil, nil, true))
+        self.spinner:SetTextColour(unpack(WHITE))
         self.spinner:SetOnChangedFn(function(data) self.selected_count = data end)
-        self.spinner:SetPosition(15, 0)
+        self.spinner:SetPosition(20, 0)
 
         -- 召唤按钮
         self.btn_summon = self:AddChild(TEMPLATES.StandardButton(function()
             if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["Summon"] then
                 SendModRPCToServer(MOD_RPC["LittleMoon"]["Summon"], self.selected_count)
             end
-        end, "立即召唤", { 100, 32 }))
-        self.btn_summon:SetPosition(70, summon_y)
-        self.btn_summon:SetTextSize(16)
+        end, "立即召唤", { 110, 36 }))
+        self.btn_summon:SetPosition(75, summon_y)
+        self.btn_summon:SetTextSize(20) -- 增大文字
     end
 
     self:LoadPosition()
