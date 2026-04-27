@@ -10,6 +10,8 @@ local GLOBAL_LIMIT = GetModConfigData("GLOBAL_LIMIT") or 500
 local EXPIRY_TIME = GetModConfigData("EXPIRY_TIME") or 480
 local ENABLE_QL_HELPER = GetModConfigData("ENABLE_QL_HELPER")
 local LITTLE_MOON_SCALE = GetModConfigData("LITTLE_MOON_SCALE") or 1.0
+local ENABLE_HEALTH = GetModConfigData("ENABLE_HEALTH")
+local HEALTH_RANGE = GetModConfigData("HEALTH_RANGE") or "nearest"
 
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
@@ -248,8 +250,69 @@ end
 -- 3. 注入 UI 界面
 AddClassPostConstruct("screens/playerhud", function(self)
     if ENABLE_TREASURE or ENABLE_QL_HELPER then
-        local LittleMoonPanel = require("widgets/little_moon_panel")
+        local LittleMoonPanel = _G.require("widgets/little_moon_panel")
         self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER))
         self.little_moon_panel:MoveToFront()
+    end
+
+    -- 血量显示逻辑
+    if ENABLE_HEALTH then
+        local HealthBar = _G.require("widgets/health_bar")
+        self.health_bars = {}
+
+        self.inst:DoPeriodicTask(0.25, function() -- 降低寻找频率
+            if not _G.ThePlayer then return end
+            
+            local x, y, z = _G.ThePlayer.Transform:GetWorldPosition()
+            local ents = _G.TheSim:FindEntities(x, y, z, 25, {"_health"}, {"player", "FX", "DECOR", "INLIMBO"})
+            
+            local target_ents = {}
+            if HEALTH_RANGE == "target" then
+                local combat = _G.ThePlayer.replica.combat
+                local target = combat and combat:GetTarget()
+                if target and target:IsValid() and target.replica.health and not target.replica.health:IsDead() then
+                    table.insert(target_ents, target)
+                end
+            elseif HEALTH_RANGE == "nearest" then
+                local nearest = nil
+                local min_dist = 9999
+                for _, ent in _G.ipairs(ents) do
+                    if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
+                        local dist = ent:GetDistanceSqToInst(_G.ThePlayer)
+                        if dist < min_dist then
+                            min_dist = dist
+                            nearest = ent
+                        end
+                    end
+                end
+                if nearest then table.insert(target_ents, nearest) end
+            else -- "all"
+                -- 性能优化：按距离排序，最多显示前 15 个
+                _G.table.sort(ents, function(a, b)
+                    return a:GetDistanceSqToInst(_G.ThePlayer) < b:GetDistanceSqToInst(_G.ThePlayer)
+                end)
+                for i = 1, _G.math.min(15, #ents) do
+                    table.insert(target_ents, ents[i])
+                end
+            end
+
+            local current_frame_ents = {}
+            for _, ent in _G.ipairs(target_ents) do
+                if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
+                    current_frame_ents[ent] = true
+                    if not self.health_bars[ent] then
+                        self.health_bars[ent] = self:AddChild(HealthBar(ent))
+                    end
+                    -- position and show/hide now handled by bar:OnUpdate()
+                end
+            end
+
+            for ent, bar in _G.pairs(self.health_bars) do
+                if not current_frame_ents[ent] then
+                    bar:Kill()
+                    self.health_bars[ent] = nil
+                end
+            end
+        end)
     end
 end)

@@ -107,4 +107,27 @@ configuration_options = {
         },
         default = true,
     },
+
+    AddTitle("血量显示组件"),
+    {
+        name = "ENABLE_HEALTH",
+        label = "开启血量显示",
+        hover = "是否在游戏中显示生物血量",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "HEALTH_RANGE",
+        label = "血量显示范围",
+        hover = "设置血量条的显示策略",
+        options = {
+            { description = "正在攻击的怪", data = "target" },
+            { description = "距离最近的", data = "nearest" },
+            { description = "全部显示", data = "all" },
+        },
+        default = "nearest",
+    },
 }
