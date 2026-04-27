@@ -153,7 +153,7 @@ local function ScreenYToTopOffset(y)
 end
 
 -- 2. 在左上角添加图标按钮
-if ENABLE_TREASURE then
+if ENABLE_TREASURE or ENABLE_QL_HELPER then
     AddClassPostConstruct("widgets/controls", function(self)
         self.moon_root = self:AddChild(Widget("moon_root"))
         self.moon_root:SetHAnchor(_G.ANCHOR_LEFT)
@@ -249,7 +249,7 @@ end
 AddClassPostConstruct("screens/playerhud", function(self)
     if ENABLE_TREASURE or ENABLE_QL_HELPER then
         local LittleMoonPanel = require("widgets/little_moon_panel")
-        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE))
+        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER))
         self.little_moon_panel:MoveToFront()
     end
 end)
