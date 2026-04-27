@@ -12,6 +12,7 @@ local ENABLE_QL_HELPER = GetModConfigData("ENABLE_QL_HELPER")
 local LITTLE_MOON_SCALE = GetModConfigData("LITTLE_MOON_SCALE") or 1.0
 local ENABLE_HEALTH = GetModConfigData("ENABLE_HEALTH")
 local HEALTH_RANGE = GetModConfigData("HEALTH_RANGE") or "nearest"
+local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
 
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
@@ -301,7 +302,7 @@ AddClassPostConstruct("screens/playerhud", function(self)
                 if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
                     current_frame_ents[ent] = true
                     if not self.health_bars[ent] then
-                        self.health_bars[ent] = self:AddChild(HealthBar(ent))
+                        self.health_bars[ent] = self:AddChild(HealthBar(ent, SHOW_HEALTH_NUM))
                     end
                     -- position and show/hide now handled by bar:OnUpdate()
                 end

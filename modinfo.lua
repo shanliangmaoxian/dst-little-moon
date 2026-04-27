@@ -130,4 +130,14 @@ configuration_options = {
         },
         default = "nearest",
     },
+    {
+        name = "SHOW_HEALTH_NUM",
+        label = "显示血量数字",
+        hover = "是否在血条上方显示具体数值",
+        options = {
+            { description = "显示", data = true },
+            { description = "隐藏", data = false },
+        },
+        default = false,
+    },
 }
