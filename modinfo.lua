@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.4.0"
+version = "1.5.0"
 api_version = 10
 dst_compatible = true
 all_clients_require_mod = true
@@ -20,6 +20,20 @@ local function AddTitle(title)
 end
 
 configuration_options = {
+
+    AddTitle("通用配置"),
+    {
+        name = "LITTLE_MOON_SCALE",
+        label = "助手面板缩放",
+        hover = "设置小月亮助手面板的整体大小",
+        options = {
+            { description = "缩小 (0.8x)", data = 0.8 },
+            { description = "标准 (1.0x)", data = 1.0 },
+            { description = "放大 (1.2x)", data = 1.2 },
+            { description = "特大 (1.5x)", data = 1.5 },
+        },
+        default = 1.0,
+    },
     AddTitle("附魔强化挖宝组件"),
     {
         name = "ENABLE_TREASURE",
@@ -92,17 +106,5 @@ configuration_options = {
             { description = "关闭", data = false },
         },
         default = true,
-    },
-    {
-        name = "LITTLE_MOON_SCALE",
-        label = "助手面板缩放",
-        hover = "设置小月亮助手面板的整体大小",
-        options = {
-            { description = "缩小 (0.8x)", data = 0.8 },
-            { description = "标准 (1.0x)", data = 1.0 },
-            { description = "放大 (1.2x)", data = 1.2 },
-            { description = "特大 (1.5x)", data = 1.5 },
-        },
-        default = 1.0,
     },
 }
