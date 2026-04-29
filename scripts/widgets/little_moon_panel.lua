@@ -23,26 +23,25 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup)
     Widget._ctor(self, "LittleMoonPanel")
 
     self.owner = owner
     self.max_summon = max_summon or 50
     self.enable_treasure = enable_treasure ~= false
     self.enable_ql_helper = enable_ql_helper ~= false
+    self.enable_auto_pickup = enable_auto_pickup ~= false
     
     self.drag_move_handler = nil
     self.drag_button_handler = nil
     self.drag_offset_x = 0
     self.drag_offset_y = 0
 
-    -- 计算面板高度
-    local panel_height = 0
-    if self.enable_treasure and self.enable_ql_helper then
-        panel_height = 200 -- 稍微调大一点以容纳更大的字体
-    else
-        panel_height = 120
-    end
+    -- 1. 动态计算面板总高度
+    local panel_height = HANDLE_HEIGHT + 10 -- 基础高度 (页眉 + 边距)
+    if self.enable_ql_helper then panel_height = panel_height + 80 end
+    if self.enable_treasure then panel_height = panel_height + 85 end
+    if self.enable_auto_pickup then panel_height = panel_height + 45 end
     self.panel_height = panel_height
 
     self:SetScale(scale or 1.0)
@@ -53,7 +52,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 背景
     self.background = self:AddChild(Image("images/ui.xml", "white.tex"))
     self.background:SetSize(PANEL_WIDTH, panel_height)
-    self.background:SetTint(0.05, 0.05, 0.06, 0.95) -- 增加不透明度，让背景更深
+    self.background:SetTint(0.05, 0.05, 0.06, 0.95)
     self.background:SetClickable(false)
 
     -- 页眉
@@ -62,7 +61,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.header:SetTint(0.15, 0.08, 0.05, 0.98)
     self.header:SetPosition(0, panel_height / 2 - HANDLE_HEIGHT / 2, 0)
 
-    -- 边框
+    -- 边框绘制函数
     local function AddBorder(w, h, x, y, tint)
         local b = self:AddChild(Image("images/ui.xml", "white.tex"))
         b:SetSize(w, h)
@@ -89,28 +88,30 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.drag_dots:SetColour(unpack(GOLD))
     self.drag_dots:SetPosition(0, -1, 0)
 
+    -- 2. 堆叠式布局：计算每个部分的起始 Y 坐标
+    local current_y = panel_height / 2 - HANDLE_HEIGHT - 20 
+
     -------------------------------------------------------
     -- 第一部分：快捷指令
     -------------------------------------------------------
     if self.enable_ql_helper then
-        local section1_y = (self.enable_treasure and 55 or 0)
         self.section1_title = self:AddChild(Text(CHATFONT, 24, "快捷指令"))
-        self.section1_title:SetPosition(0, section1_y, 0)
+        self.section1_title:SetPosition(0, current_y, 0)
         self.section1_title:SetColour(unpack(GOLD))
-        if self.section1_title.EnableOutline then self.section1_title:EnableOutline(true) end -- 增加描边提高对比度
+        if self.section1_title.EnableOutline then self.section1_title:EnableOutline(true) end
 
-        local btn_w, btn_h = 120, 36 -- 增大按钮
-        self.ql_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#ql", true) end, "清理返钱 (#ql)", { btn_w, btn_h }))
-        self.ql_button:SetPosition(-70, section1_y - 40, 0)
-        self.ql_button:SetTextSize(20) -- 增大文字
+        self.ql_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#ql", true) end, "清理返钱 (#ql)", { 120, 36 }))
+        self.ql_button:SetPosition(-70, current_y - 38, 0)
+        self.ql_button:SetTextSize(20)
 
-        self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#clean)", { btn_w, btn_h }))
-        self.cleanup_button:SetPosition(70, section1_y - 40, 0)
-        self.cleanup_button:SetTextSize(20) -- 增大文字
+        self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#clean)", { 120, 36 }))
+        self.cleanup_button:SetPosition(70, current_y - 38, 0)
+        self.cleanup_button:SetTextSize(20)
 
-        if self.enable_treasure then
-            -- 分割线
-            AddBorder(PANEL_WIDTH - 40, 1, 0, -10, {0.4, 0.4, 0.4, 0.6})
+        current_y = current_y - 80 -- 减去该块高度
+        
+        if self.enable_treasure or self.enable_auto_pickup then
+            AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6}) -- 分割线
         end
     end
 
@@ -118,14 +119,12 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 第二部分：宝藏召唤
     -------------------------------------------------------
     if self.enable_treasure then
-        local section2_y = (self.enable_ql_helper and -40 or 10)
         self.section2_title = self:AddChild(Text(CHATFONT, 24, "宝藏点召唤"))
-        self.section2_title:SetPosition(0, section2_y, 0)
+        self.section2_title:SetPosition(0, current_y, 0)
         self.section2_title:SetColour(unpack(GOLD))
         if self.section2_title.EnableOutline then self.section2_title:EnableOutline(true) end
 
-        -- 数量选择 + 召唤按钮 (同一行)
-        local summon_y = section2_y - 40
+        local summon_y = current_y - 40
         self.selected_count = 1
         local spinner_data = {}
         for _, count in ipairs({1, 5, 10, 20, 50}) do
@@ -140,21 +139,66 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         
         self.spinner_label = self.spinner_root:AddChild(Text(CHATFONT, 22, "数量:"))
         self.spinner_label:SetPosition(-50, 0)
-        self.spinner_label:SetColour(unpack(WHITE)) -- 改为纯白
+        self.spinner_label:SetColour(unpack(WHITE))
 
         self.spinner = self.spinner_root:AddChild(Spinner(spinner_data, 85, 32, {font = CHATFONT, size = 22}, nil, nil, nil, true))
         self.spinner:SetTextColour(unpack(WHITE))
         self.spinner:SetOnChangedFn(function(data) self.selected_count = data end)
         self.spinner:SetPosition(20, 0)
 
-        -- 召唤按钮
         self.btn_summon = self:AddChild(TEMPLATES.StandardButton(function()
             if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["Summon"] then
                 SendModRPCToServer(MOD_RPC["LittleMoon"]["Summon"], self.selected_count)
             end
         end, "立即召唤", { 110, 36 }))
         self.btn_summon:SetPosition(75, summon_y)
-        self.btn_summon:SetTextSize(20) -- 增大文字
+        self.btn_summon:SetTextSize(20)
+
+        current_y = current_y - 85
+        
+        if self.enable_auto_pickup then
+            AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
+        end
+    end
+
+    -------------------------------------------------------
+    -- 第三部分：助手功能 (自动吸入)
+    -------------------------------------------------------
+    if self.enable_auto_pickup then
+        local assistant_y = current_y - 5
+        local real_owner = self.owner or ThePlayer
+        
+        local initial_checked = false
+        if real_owner and real_owner.auto_pickup_enabled then
+            initial_checked = real_owner.auto_pickup_enabled:value()
+        end
+
+        self.auto_pickup_cb = self:AddChild(TEMPLATES.LabelCheckbox(function(v) 
+            local p = self.owner or ThePlayer
+            if p and MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["SetAutoPickup"] then
+                SendModRPCToServer(MOD_RPC["LittleMoon"]["SetAutoPickup"], v)
+            end
+        end, initial_checked, "开启自动吸入物品", CHATFONT, 22, WHITE))
+        
+        self.auto_pickup_cb:SetPosition(0, assistant_y, 0)
+        
+        if self.auto_pickup_cb.label then
+            self.auto_pickup_cb.label:SetColour(unpack(WHITE))
+            self.auto_pickup_cb.label:SetSize(22)
+        end
+
+        if real_owner then
+            self.inst:ListenForEvent("autopickupdirty", function()
+                if real_owner.auto_pickup_enabled and self.auto_pickup_cb then
+                    local val = real_owner.auto_pickup_enabled:value()
+                    if self.auto_pickup_cb.SetChecked then
+                        self.auto_pickup_cb:SetChecked(val)
+                    elseif self.auto_pickup_cb.cb and self.auto_pickup_cb.cb.SetChecked then
+                        self.auto_pickup_cb.cb:SetChecked(val)
+                    end
+                end
+            end, real_owner)
+        end
     end
 
     self:LoadPosition()
@@ -165,7 +209,6 @@ function LittleMoonPanel:Toggle()
     if self:IsVisible() then self:Hide() else self:Show(); self:MoveToFront() end
 end
 
--- 拖动逻辑
 function LittleMoonPanel:OnHandleMouseButton(button, down)
     if button ~= MOUSEBUTTON_LEFT then return false end
     if down then self:StartDragging() else self:StopDragging() end
