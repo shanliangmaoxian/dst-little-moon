@@ -13,6 +13,8 @@ local LITTLE_MOON_SCALE = GetModConfigData("LITTLE_MOON_SCALE") or 1.0
 local ENABLE_HEALTH = GetModConfigData("ENABLE_HEALTH")
 local HEALTH_RANGE = GetModConfigData("HEALTH_RANGE") or "nearest"
 local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
+local ENABLE_AUTO_PICKUP = GetModConfigData("ENABLE_AUTO_PICKUP")
+local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
@@ -146,7 +148,55 @@ if ENABLE_TREASURE then
             if player.components.talker then player.components.talker:Say("无法召唤：卷轴不足或已达上限。") end
         end
     end)
+
+    AddModRPCHandler("LittleMoon", "SetAutoPickup", function(player, enabled)
+        if player.auto_pickup_enabled ~= nil then
+            player.auto_pickup_enabled:set(enabled)
+        end
+    end)
 end
+
+-- 物品自动吸入逻辑
+AddPlayerPostInit(function(inst)
+    inst.auto_pickup_enabled = _G.net_bool(inst.GUID, "little_moon.auto_pickup_enabled", "autopickupdirty")
+    
+    if not _G.TheWorld.ismastersim then return end
+
+    inst.auto_pickup_enabled:set(ENABLE_AUTO_PICKUP)
+
+    -- 多人优化：错峰执行，避免所有玩家在同一帧处理逻辑
+    inst:DoTaskInTime(_G.math.random() * 1, function()
+        inst:DoPeriodicTask(1, function()
+            if inst.auto_pickup_enabled:value() and inst.components.inventory and not inst:HasTag("playerghost") then
+                local x, y, z = inst.Transform:GetWorldPosition()
+                -- 保持高性能标签过滤
+                local ents = _G.TheSim:FindEntities(x, y, z, AUTO_PICKUP_RANGE, {"_inventoryitem"}, {"INLIMBO", "catchable", "fire", "minespicup", "spider"})
+                
+                local pickup_count = 0
+                local MAX_PICKUP_PER_TICK = 10 -- 每秒最多吸10个，防止极端情况下掉落物过多导致卡顿
+                
+                for _, item in _G.ipairs(ents) do
+                    if pickup_count >= MAX_PICKUP_PER_TICK then break end
+                    if item:IsValid() and item.components.inventoryitem and not item.components.inventoryitem:IsHeld() 
+                       and item.components.inventoryitem.canbepickedup 
+                       and not (item.components.burnable and item.components.burnable:IsBurning()) then
+
+                        -- 仅限吸入背后的背包 (Overflow Container)
+                        local backpack = inst.components.inventory:GetOverflowContainer()
+                        if backpack and not backpack:IsFull() then
+                            -- 只有背包里已经有这个东西了，且是可堆叠物品，才吸
+                            if backpack:Has(item.prefab, 1) and item.components.stackable then
+                                backpack:GiveItem(item, nil, inst:GetPosition())
+                                pickup_count = pickup_count + 1
+                            end
+                        end
+                    end
+
+                end
+            end
+        end)
+    end)
+end)
 
 local POSITION_FILE = "dst_little_moon_position"
 
@@ -250,9 +300,9 @@ end
 
 -- 3. 注入 UI 界面
 AddClassPostConstruct("screens/playerhud", function(self)
-    if ENABLE_TREASURE or ENABLE_QL_HELPER then
+    if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP then
         local LittleMoonPanel = _G.require("widgets/little_moon_panel")
-        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER))
+        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER, ENABLE_AUTO_PICKUP))
         self.little_moon_panel:MoveToFront()
     end
 

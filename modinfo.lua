@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.5.0"
+version = "1.6.0"
 api_version = 10
 dst_compatible = true
 all_clients_require_mod = true
@@ -139,5 +139,29 @@ configuration_options = {
             { description = "隐藏", data = false },
         },
         default = false,
+    },
+
+    AddTitle("物品自动吸入"),
+    {
+        name = "ENABLE_AUTO_PICKUP",
+        label = "开启自动吸入",
+        hover = "是否开启周围物品自动吸入背包功能",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = false,
+    },
+    {
+        name = "AUTO_PICKUP_RANGE",
+        label = "吸入范围",
+        hover = "设置自动吸入物品的距离",
+        options = {
+            { description = "较近 (3码)", data = 3 },
+            { description = "标准 (5码)", data = 5 },
+            { description = "较远 (8码)", data = 8 },
+            { description = "超远 (12码)", data = 12 },
+        },
+        default = 5,
     },
 }
