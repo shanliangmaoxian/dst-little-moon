@@ -11,7 +11,6 @@ local DEFAULT_X = 126
 local DEFAULT_Y = -150
 
 local GOLD = { 0.89, 0.76, 0.47, 1 }
-local LIGHT = { 0.95, 0.92, 0.84, 1 }
 local WHITE = { 1, 1, 1, 1 }
 
 local function Clamp(value, min_value, max_value)
@@ -104,7 +103,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         self.ql_button:SetPosition(-70, current_y - 38, 0)
         self.ql_button:SetTextSize(20)
 
-        self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#clean)", { 120, 36 }))
+        self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#cleanup)", { 120, 36 }))
         self.cleanup_button:SetPosition(70, current_y - 38, 0)
         self.cleanup_button:SetTextSize(20)
 
@@ -261,6 +260,8 @@ function LittleMoonPanel:LoadPosition()
             else
                 self:SetClampedPosition(DEFAULT_X, DEFAULT_Y)
             end
+        else
+            self:SetClampedPosition(DEFAULT_X, DEFAULT_Y)
         end
     end)
 end

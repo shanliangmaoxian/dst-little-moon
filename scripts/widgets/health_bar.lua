@@ -2,6 +2,10 @@ local Widget = require("widgets/widget")
 local Image = require("widgets/image")
 local Text = require("widgets/text")
 
+local function Clamp(value, min_value, max_value)
+    return math.max(min_value, math.min(max_value, value))
+end
+
 local HealthBar = Class(Widget, function(self, target, show_num)
     Widget._ctor(self, "HealthBar")
     self.target = target
@@ -45,7 +49,7 @@ function HealthBar:OnUpdate()
     end
 
     -- 1. 更新血量数值和比例
-    local percent = health:GetPercent()
+    local percent = Clamp(health:GetPercent() or 0, 0, 1)
     self.fill:SetSize(78 * percent, 8)
     self.fill:SetPosition(-(78 * (1 - percent)) / 2, 0)
 

@@ -16,9 +16,78 @@ local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
 local ENABLE_AUTO_PICKUP = GetModConfigData("ENABLE_AUTO_PICKUP")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 
+local treasure_points = {}
+
+local function Say(player, message)
+    if player.components.talker then
+        player.components.talker:Say(message)
+    end
+end
+
+local function RegisterTreasurePoint(inst)
+    treasure_points[inst] = true
+end
+
+local function UnregisterTreasurePoint(inst)
+    treasure_points[inst] = nil
+end
+
+local function GetTreasureCounts(userid)
+    local total_count = 0
+    local player_count = 0
+
+    for inst in _G.pairs(treasure_points) do
+        if inst:IsValid() then
+            total_count = total_count + 1
+            if userid ~= nil and inst.moon_owner == userid then
+                player_count = player_count + 1
+            end
+        else
+            treasure_points[inst] = nil
+        end
+    end
+
+    return total_count, player_count
+end
+
+local function CountInventoryItems(inv, prefab)
+    local count = 0
+
+    local function CountItem(item)
+        if item and item.prefab == prefab then
+            count = count + (item.components.stackable and item.components.stackable:StackSize() or 1)
+        end
+    end
+
+    if inv.itemslots then
+        for _, item in _G.pairs(inv.itemslots) do
+            CountItem(item)
+        end
+    end
+
+    if inv.equipslots then
+        for _, item in _G.pairs(inv.equipslots) do
+            CountItem(item)
+        end
+    end
+
+    CountItem(inv.activeitem)
+
+    local overflow = inv:GetOverflowContainer()
+    if overflow and overflow.slots then
+        for _, item in _G.pairs(overflow.slots) do
+            CountItem(item)
+        end
+    end
+
+    return count
+end
+
 -- 【核心修复：直接使用 AddPrefabPostInit】
 AddPrefabPostInit("hh_treasure_build", function(inst)
     inst:AddTag("hh_treasure_build")
+    RegisterTreasurePoint(inst)
+    inst:ListenForEvent("onremove", UnregisterTreasurePoint)
     
     if _G.TheWorld.ismastersim then
         -- 处理存档保存与读取
@@ -56,34 +125,25 @@ if ENABLE_TREASURE then
         local inv = player.components.inventory
         if not inv or not player.userid then return end
         
-        local count_num = _G.tonumber(count) or 1
-        local player_pos = player:GetPosition()
-        local cost_prefab = "hh_treasure_tally"
-
-        -- (1) 获取全图所有宝藏点
-        local all_points = {}
-        for _, v in _G.pairs(_G.Ents) do
-            if v:HasTag("hh_treasure_build") then
-                _G.table.insert(all_points, v)
-            end
+        local count_num = _G.math.floor(_G.tonumber(count) or 1)
+        if count_num < 1 then
+            Say(player, "召唤数量无效。")
+            return
         end
 
+        local player_pos = player:GetPosition()
+        local cost_prefab = "hh_treasure_tally"
+        local total_points, my_points_count = GetTreasureCounts(player.userid)
+
         -- (2) 全图总数校验
-        if #all_points >= GLOBAL_LIMIT then
-            if player.components.talker then player.components.talker:Say("全服宝藏点已达上限("..GLOBAL_LIMIT..")") end
+        if total_points >= GLOBAL_LIMIT then
+            Say(player, "全服宝藏点已达上限("..GLOBAL_LIMIT..")")
             return
         end
 
         -- (3) 个人上限校验
-        local my_points_count = 0
-        for _, v in _G.ipairs(all_points) do
-            if v.moon_owner == player.userid then
-                my_points_count = my_points_count + 1
-            end
-        end
-        
         if my_points_count >= PLAYER_LIMIT then
-            if player.components.talker then player.components.talker:Say("你的宝藏点已达个人上限("..PLAYER_LIMIT..")") end
+            Say(player, "你的宝藏点已达个人上限("..PLAYER_LIMIT..")")
             return
         end
 
@@ -92,25 +152,18 @@ if ENABLE_TREASURE then
         local allowed_by_density = _G.math.max(0, PROXIMITY_LIMIT - #near_ents)
         
         if allowed_by_density <= 0 then
-            if player.components.talker then player.components.talker:Say("这里太挤了(局部上限"..PROXIMITY_LIMIT.."个)") end
+            Say(player, "这里太挤了(局部上限"..PROXIMITY_LIMIT.."个)")
             return
         end
 
         -- (5) 背包卷轴校验
-        local current_scrolls = 0
-        if inv.itemslots then
-            for _, v in _G.pairs(inv.itemslots) do
-                if v and v.prefab == cost_prefab then
-                    current_scrolls = current_scrolls + (v.components.stackable and v.components.stackable:StackSize() or 1)
-                end
-            end
-        end
+        local current_scrolls = CountInventoryItems(inv, cost_prefab)
 
         -- 执行召唤
         local summon_count = _G.math.min(count_num, current_scrolls)
         summon_count = _G.math.min(summon_count, allowed_by_density)
         summon_count = _G.math.min(summon_count, PLAYER_LIMIT - my_points_count)
-        summon_count = _G.math.min(summon_count, GLOBAL_LIMIT - #all_points)
+        summon_count = _G.math.min(summon_count, GLOBAL_LIMIT - total_points)
 
         if summon_count > 0 then
             local radius = _G.math.max(3, summon_count / 4) 
@@ -122,12 +175,14 @@ if ENABLE_TREASURE then
                 local spawn_pos = player_pos + offset
                 
                 -- 地皮检测：必须是陆地地皮，且不是海洋
-                if _G.TheWorld.Map:IsVisualGroundAtPoint(spawn_pos.x, spawn_pos.y, spawn_pos.z) then
+                if _G.TheWorld.Map:IsVisualGroundAtPoint(spawn_pos.x, spawn_pos.y, spawn_pos.z)
+                    and #_G.TheSim:FindEntities(spawn_pos.x, spawn_pos.y, spawn_pos.z, 1.5, nil, {"INLIMBO"}, {"structure", "wall"}) == 0 then
                     local treasure = _G.SpawnPrefab("hh_treasure_build") 
                     if treasure then
                         treasure.Transform:SetPosition(spawn_pos:Get())
                         treasure.moon_owner = player.userid
                         treasure:AddTag("moon_owner_".._G.tostring(player.userid))
+                        RegisterTreasurePoint(treasure)
                         
                         local fx = _G.SpawnPrefab("small_puff")
                         if fx then fx.Transform:SetPosition(spawn_pos:Get()) end
@@ -138,20 +193,20 @@ if ENABLE_TREASURE then
             
             if spawned_actual > 0 then
                 inv:ConsumeByName(cost_prefab, spawned_actual)
-                if player.components.talker then
-                    player.components.talker:Say(_G.string.format("成功开启 %d 个宝藏点！", spawned_actual))
-                end
+                Say(player, _G.string.format("成功开启 %d 个宝藏点！", spawned_actual))
             else
-                if player.components.talker then player.components.talker:Say("这里没有足够的陆地空间。") end
+                Say(player, "这里没有足够的陆地空间。")
             end
         else
-            if player.components.talker then player.components.talker:Say("无法召唤：卷轴不足或已达上限。") end
+            Say(player, "无法召唤：卷轴不足或已达上限。")
         end
     end)
+end
 
+if ENABLE_AUTO_PICKUP then
     AddModRPCHandler("LittleMoon", "SetAutoPickup", function(player, enabled)
         if player.auto_pickup_enabled ~= nil then
-            player.auto_pickup_enabled:set(enabled)
+            player.auto_pickup_enabled:set(enabled == true)
         end
     end)
 end
@@ -160,7 +215,7 @@ end
 AddPlayerPostInit(function(inst)
     inst.auto_pickup_enabled = _G.net_bool(inst.GUID, "little_moon.auto_pickup_enabled", "autopickupdirty")
     
-    if not _G.TheWorld.ismastersim then return end
+    if not _G.TheWorld.ismastersim or not ENABLE_AUTO_PICKUP then return end
 
     inst.auto_pickup_enabled:set(ENABLE_AUTO_PICKUP)
 
@@ -171,6 +226,8 @@ AddPlayerPostInit(function(inst)
                 local x, y, z = inst.Transform:GetWorldPosition()
                 -- 保持高性能标签过滤
                 local ents = _G.TheSim:FindEntities(x, y, z, AUTO_PICKUP_RANGE, {"_inventoryitem"}, {"INLIMBO", "catchable", "fire", "minespicup", "spider"})
+                local backpack = inst.components.inventory:GetOverflowContainer()
+                if not backpack or backpack:IsFull() then return end
                 
                 local pickup_count = 0
                 local MAX_PICKUP_PER_TICK = 10 -- 每秒最多吸10个，防止极端情况下掉落物过多导致卡顿
@@ -180,15 +237,10 @@ AddPlayerPostInit(function(inst)
                     if item:IsValid() and item.components.inventoryitem and not item.components.inventoryitem:IsHeld() 
                        and item.components.inventoryitem.canbepickedup 
                        and not (item.components.burnable and item.components.burnable:IsBurning()) then
-
-                        -- 仅限吸入背后的背包 (Overflow Container)
-                        local backpack = inst.components.inventory:GetOverflowContainer()
-                        if backpack and not backpack:IsFull() then
-                            -- 只有背包里已经有这个东西了，且是可堆叠物品，才吸
-                            if backpack:Has(item.prefab, 1) and item.components.stackable then
-                                backpack:GiveItem(item, nil, inst:GetPosition())
-                                pickup_count = pickup_count + 1
-                            end
+                        -- 只有背包里已经有这个东西了，且是可堆叠物品，才吸
+                        if backpack:Has(item.prefab, 1) and item.components.stackable then
+                            backpack:GiveItem(item, nil, inst:GetPosition())
+                            pickup_count = pickup_count + 1
                         end
                     end
 
@@ -205,8 +257,22 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
+local function Clamp(value, min_value, max_value)
+    return _G.math.max(min_value, _G.math.min(max_value, value))
+end
+
+local function SetClampedButtonPosition(widget, x, y)
+    local screen_w, screen_h = _G.TheSim:GetScreenSize()
+    local size = 64 * 1.4
+    widget:SetPosition(
+        Clamp(x, size / 2, screen_w - size / 2),
+        Clamp(y, -screen_h + size / 2, -size / 2),
+        0
+    )
+end
+
 -- 2. 在左上角添加图标按钮
-if ENABLE_TREASURE or ENABLE_QL_HELPER then
+if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP then
     AddClassPostConstruct("widgets/controls", function(self)
         self.moon_root = self:AddChild(Widget("moon_root"))
         self.moon_root:SetHAnchor(_G.ANCHOR_LEFT)
@@ -235,7 +301,7 @@ if ENABLE_TREASURE or ENABLE_QL_HELPER then
             widget.drag_offset_y = pos_y - ScreenYToTopOffset(mouse_pos.y)
 
             widget.drag_move_handler = _G.TheInput:AddMoveHandler(function(x, y)
-                widget:SetPosition(x + widget.drag_offset_x, ScreenYToTopOffset(y) + widget.drag_offset_y)
+                SetClampedButtonPosition(widget, x + widget.drag_offset_x, ScreenYToTopOffset(y) + widget.drag_offset_y)
             end)
 
             widget.drag_button_handler = _G.TheInput:AddMouseButtonHandler(function(button_id, is_down)
@@ -256,19 +322,34 @@ if ENABLE_TREASURE or ENABLE_QL_HELPER then
             end
             
             -- 保存位置
-            local x, y = widget:GetPositionXYZ()
-            _G.TheSim:SetPersistentString(POSITION_FILE, _G.json.encode({x = x, y = y}), false)
+            if _G.json ~= nil then
+                local x, y = widget:GetPositionXYZ()
+                _G.TheSim:SetPersistentString(POSITION_FILE, _G.json.encode({x = x, y = y}), false)
+            end
         end
 
         self.moon_btn.LoadPosition = function(widget)
+            if _G.json == nil then
+                SetClampedButtonPosition(widget, default_x, default_y)
+                return
+            end
+
             _G.TheSim:GetPersistentString(POSITION_FILE, function(success, data)
                 if success and data and data ~= "" then
                     local ok, pos = _G.pcall(_G.json.decode, data)
                     if ok and pos and pos.x and pos.y then
-                        widget:SetPosition(pos.x, pos.y)
+                        SetClampedButtonPosition(widget, pos.x, pos.y)
+                    else
+                        SetClampedButtonPosition(widget, default_x, default_y)
                     end
+                else
+                    SetClampedButtonPosition(widget, default_x, default_y)
                 end
             end)
+        end
+
+        self.moon_btn.OnRemoveEntity = function(widget)
+            widget:StopDragging()
         end
 
         -- 右键触发拖动
@@ -338,12 +419,19 @@ AddClassPostConstruct("screens/playerhud", function(self)
                 end
                 if nearest then table.insert(target_ents, nearest) end
             else -- "all"
+                local alive_ents = {}
+                for _, ent in _G.ipairs(ents) do
+                    if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
+                        _G.table.insert(alive_ents, ent)
+                    end
+                end
+
                 -- 性能优化：按距离排序，最多显示前 15 个
-                _G.table.sort(ents, function(a, b)
+                _G.table.sort(alive_ents, function(a, b)
                     return a:GetDistanceSqToInst(_G.ThePlayer) < b:GetDistanceSqToInst(_G.ThePlayer)
                 end)
-                for i = 1, _G.math.min(15, #ents) do
-                    table.insert(target_ents, ents[i])
+                for i = 1, _G.math.min(15, #alive_ents) do
+                    table.insert(target_ents, alive_ents[i])
                 end
             end
 
