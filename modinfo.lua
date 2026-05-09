@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.7.0"
+version = "1.8.0"
 api_version = 10
 dst_compatible = true
 all_clients_require_mod = true
@@ -28,11 +28,11 @@ configuration_options = {
         hover = "设置小月亮助手面板的整体大小",
         options = {
             { description = "缩小 (0.8x)", data = 0.8 },
-            { description = "标准 (1.0x)", data = 1.0 },
-            { description = "放大 (1.2x)", data = 1.2 },
-            { description = "特大 (1.5x)", data = 1.5 },
+            { description = "小 (1.0x)", data = 1.0 },
+            { description = "中 (1.2x)", data = 1.2 },
+            { description = "大 (1.5x)", data = 1.5 },
         },
-        default = 1.0,
+        default = 1.2,
     },
     AddTitle("附魔强化挖宝组件"),
     {
