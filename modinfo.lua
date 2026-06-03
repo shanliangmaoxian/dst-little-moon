@@ -6,6 +6,9 @@ api_version = 10
 dst_compatible = true
 all_clients_require_mod = true
 client_only_mod = false
+dependencies = {
+    {workshop = "2526778484"},
+}
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
 
@@ -163,5 +166,17 @@ configuration_options = {
             { description = "超远 (12码)", data = 12 },
         },
         default = 5,
+    },
+
+    AddTitle("虚空异界(泰拉)"),
+    {
+        name = "ENABLE_DEMON_ALTAR",
+        label = "恶魔祭坛可制作",
+        hover = "是否允许在暗影操控器（魔法二本）制作 emojitan",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
     },
 }

@@ -15,6 +15,7 @@ local HEALTH_RANGE = GetModConfigData("HEALTH_RANGE") or "nearest"
 local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
 local ENABLE_AUTO_PICKUP = GetModConfigData("ENABLE_AUTO_PICKUP")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
+local ENABLE_DEMON_ALTAR = GetModConfigData("ENABLE_DEMON_ALTAR")
 
 local treasure_points = {}
 
@@ -455,3 +456,29 @@ AddClassPostConstruct("screens/playerhud", function(self)
         end)
     end
 end)
+
+-- 虚空异界(泰拉)：恶魔祭坛制作配方
+if ENABLE_DEMON_ALTAR then
+    local Ingredient = GLOBAL.Ingredient
+    local RECIPETABS = GLOBAL.RECIPETABS
+    local TECH = GLOBAL.TECH
+
+    local ok, err = GLOBAL.pcall(AddRecipe, "emojitan",
+        {
+            Ingredient("thulecite", 6),          -- 铥矿 ×6
+            Ingredient("purplegem", 4),          -- 紫宝石 ×4
+            Ingredient("livinglog", 6),          -- 活木 ×6
+            Ingredient("goldnugget", 10),        -- 金块 ×10
+            Ingredient("nightmarefuel", 20),     -- 噩梦燃料 ×20
+        },
+        RECIPETABS.MAGIC,       -- 魔法分类
+        TECH.MAGIC_TWO,         -- 暗影操控器（魔法二本）
+        nil,                    -- 不需要额外配置
+        nil,                    -- 不需要蓝图解锁
+        nil,                    -- 不需要特定角色
+        1                       -- 每次制作数量
+    )
+    if not ok then
+        GLOBAL.print("[小月亮] emojitan 配方注册失败: " .. GLOBAL.tostring(err))
+    end
+end
