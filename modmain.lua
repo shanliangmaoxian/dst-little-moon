@@ -444,7 +444,6 @@ AddClassPostConstruct("screens/playerhud", function(self)
                     if not self.health_bars[ent] then
                         self.health_bars[ent] = self:AddChild(HealthBar(ent, SHOW_HEALTH_NUM))
                     end
-                    -- position and show/hide now handled by bar:OnUpdate()
                 end
             end
 
