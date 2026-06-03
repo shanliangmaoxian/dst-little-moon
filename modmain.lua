@@ -473,9 +473,13 @@ if ENABLE_DEMON_ALTAR then
         },
         RECIPETABS.MAGIC,       -- 魔法分类
         TECH.MAGIC_TWO,         -- 暗影操控器（魔法二本）
-        nil,                    -- 不需要额外配置
-        nil,                    -- 不需要蓝图解锁
-        nil,                    -- 不需要特定角色
+        {
+            placer = "emojitan_placer",    -- 进入摆放模式
+            min_spacing = 2,               -- 最小间距
+            nounlock = true,               -- 不需要原型解锁
+        },
+        nil,                    -- 不需要角色过滤
+        nil,                    -- product 默认就是 emojitan
         1                       -- 每次制作数量
     )
     if not ok then
