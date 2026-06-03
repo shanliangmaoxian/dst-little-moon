@@ -16,6 +16,7 @@ local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
 local ENABLE_AUTO_PICKUP = GetModConfigData("ENABLE_AUTO_PICKUP")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 local ENABLE_DEMON_ALTAR = GetModConfigData("ENABLE_DEMON_ALTAR")
+local ENABLE_DISABLE_RESELECT = GetModConfigData("ENABLE_DISABLE_RESELECT")
 
 local treasure_points = {}
 
@@ -485,4 +486,44 @@ if ENABLE_DEMON_ALTAR then
     if not ok then
         GLOBAL.print("[小月亮] emojitan 配方注册失败: " .. GLOBAL.tostring(err))
     end
+end
+
+-- 客户端换人控制：禁用 /reselect 和 /重选角色 指令
+-- 策略：本 mod 优先级 -1，先于 3607443539 加载，保存原始函数后在游戏初始化时恢复
+local _originalSendResumeRequest = nil
+GLOBAL.pcall(function()
+    _originalSendResumeRequest = GLOBAL.NetworkProxy.SendResumeRequestToServer
+end)
+
+if ENABLE_DISABLE_RESELECT then
+    -- 1. 覆盖聊天指令（若能覆盖则提示已禁用）
+    local function disabled_msg()
+        if GLOBAL.TheFrontEnd then
+            GLOBAL.TheFrontEnd:PopScreen()
+        end
+    end
+    GLOBAL.pcall(GLOBAL.AddUserCommand, "reselect", {}, disabled_msg)
+    GLOBAL.pcall(GLOBAL.AddUserCommand, "重选角色", {}, disabled_msg)
+
+    -- 2. 拦截 mod 3607443539 的存档写入，阻止换人状态持久化
+    GLOBAL.pcall(function()
+        local oldSave = GLOBAL.SavePersistentString
+        GLOBAL.SavePersistentString = function(filepath, data, ...)
+            if filepath == "mod_config_data/resetplayer" then
+                return 0, 0  -- 静默丢弃
+            end
+            return oldSave(filepath, data, ...)
+        end
+    end)
+
+    -- 3. 游戏初始化后：恢复原始 SendResumeRequestToServer，剥离 3607443539 的换人 hook
+    GLOBAL.pcall(function()
+        GLOBAL.AddPrefabPostInit("world", function(inst)
+            if _originalSendResumeRequest then
+                GLOBAL.NetworkProxy.SendResumeRequestToServer = _originalSendResumeRequest
+            end
+            -- 清理残留存档
+            GLOBAL.TheSim:SetPersistentString("mod_config_data/resetplayer", "", false)
+        end)
+    end)
 end
