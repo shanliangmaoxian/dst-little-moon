@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.8.0"
+version = "1.9.0"
 api_version = 10
 priority = -1
 dst_compatible = true
@@ -112,35 +112,14 @@ configuration_options = {
         default = true,
     },
 
-    AddTitle("血量显示组件"),
+    AddTitle("禁止打包"),
     {
-        name = "ENABLE_HEALTH",
-        label = "开启血量显示",
-        hover = "是否在游戏中显示生物血量",
+        name = "DISABLE_KRAMPUS_PACK",
+        label = "坎普斯",
+        hover = "是否禁止坎普斯被打包",
         options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = true,
-    },
-    {
-        name = "HEALTH_RANGE",
-        label = "血量显示范围",
-        hover = "设置血量条的显示策略",
-        options = {
-            { description = "正在攻击的怪", data = "target" },
-            { description = "距离最近的", data = "nearest" },
-            { description = "全部显示", data = "all" },
-        },
-        default = "nearest",
-    },
-    {
-        name = "SHOW_HEALTH_NUM",
-        label = "显示血量数字",
-        hover = "是否在血条上方显示具体数值",
-        options = {
-            { description = "显示", data = true },
-            { description = "隐藏", data = false },
+            { description = "禁止", data = true },
+            { description = "不禁止", data = false },
         },
         default = false,
     },

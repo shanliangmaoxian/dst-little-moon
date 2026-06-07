@@ -10,13 +10,42 @@ local GLOBAL_LIMIT = GetModConfigData("GLOBAL_LIMIT") or 500
 local EXPIRY_TIME = GetModConfigData("EXPIRY_TIME") or 480
 local ENABLE_QL_HELPER = GetModConfigData("ENABLE_QL_HELPER")
 local LITTLE_MOON_SCALE = GetModConfigData("LITTLE_MOON_SCALE") or 1.0
-local ENABLE_HEALTH = GetModConfigData("ENABLE_HEALTH")
-local HEALTH_RANGE = GetModConfigData("HEALTH_RANGE") or "nearest"
-local SHOW_HEALTH_NUM = GetModConfigData("SHOW_HEALTH_NUM")
 local ENABLE_AUTO_PICKUP = GetModConfigData("ENABLE_AUTO_PICKUP")
+local DISABLE_KRAMPUS_PACK = GetModConfigData("DISABLE_KRAMPUS_PACK")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 local ENABLE_DEMON_ALTAR = GetModConfigData("ENABLE_DEMON_ALTAR")
 local ENABLE_DISABLE_RESELECT = GetModConfigData("ENABLE_DISABLE_RESELECT")
+
+-- 强化版防打包拦截逻辑
+local function ApplyAntiPacking(inst)
+    -- 1. 基础标签协议
+    inst:AddTag("nopack")
+    inst:AddTag("nonpackable")
+    inst:AddTag("backpack")
+    inst:AddTag("irreplaceable")
+    inst:AddTag("questitem")
+    
+    -- 2. 移除常见的打包组件 (延迟执行以覆盖其他 Mod 的注入)
+    if _G.TheWorld.ismastersim then
+        inst:DoTaskInTime(0, function()
+            -- 移除 "Architect" 或 "Pack Everything" 等 Mod 可能添加的组件
+            if inst.components.packable then
+                inst:RemoveComponent("packable")
+            end
+            
+            -- 针对特定 Mod 的属性设置
+            inst.not_packable = true
+            
+            if inst.components.inventoryitem then
+                inst.components.inventoryitem.cangoincontainer = false
+            end
+        end)
+    end
+end
+
+if DISABLE_KRAMPUS_PACK then
+    AddPrefabPostInit("krampus", ApplyAntiPacking)
+end
 
 local treasure_points = {}
 
@@ -389,72 +418,6 @@ AddClassPostConstruct("screens/playerhud", function(self)
         self.little_moon_panel:MoveToFront()
     end
 
-    -- 血量显示逻辑
-    if ENABLE_HEALTH then
-        local HealthBar = _G.require("widgets/health_bar")
-        self.health_bars = {}
-
-        self.inst:DoPeriodicTask(0.25, function() -- 降低寻找频率
-            if not _G.ThePlayer then return end
-            
-            local x, y, z = _G.ThePlayer.Transform:GetWorldPosition()
-            local ents = _G.TheSim:FindEntities(x, y, z, 25, {"_health"}, {"player", "FX", "DECOR", "INLIMBO"})
-            
-            local target_ents = {}
-            if HEALTH_RANGE == "target" then
-                local combat = _G.ThePlayer.replica.combat
-                local target = combat and combat:GetTarget()
-                if target and target:IsValid() and target.replica.health and not target.replica.health:IsDead() then
-                    table.insert(target_ents, target)
-                end
-            elseif HEALTH_RANGE == "nearest" then
-                local nearest = nil
-                local min_dist = 9999
-                for _, ent in _G.ipairs(ents) do
-                    if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
-                        local dist = ent:GetDistanceSqToInst(_G.ThePlayer)
-                        if dist < min_dist then
-                            min_dist = dist
-                            nearest = ent
-                        end
-                    end
-                end
-                if nearest then table.insert(target_ents, nearest) end
-            else -- "all"
-                local alive_ents = {}
-                for _, ent in _G.ipairs(ents) do
-                    if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
-                        _G.table.insert(alive_ents, ent)
-                    end
-                end
-
-                -- 性能优化：按距离排序，最多显示前 15 个
-                _G.table.sort(alive_ents, function(a, b)
-                    return a:GetDistanceSqToInst(_G.ThePlayer) < b:GetDistanceSqToInst(_G.ThePlayer)
-                end)
-                for i = 1, _G.math.min(15, #alive_ents) do
-                    table.insert(target_ents, alive_ents[i])
-                end
-            end
-
-            local current_frame_ents = {}
-            for _, ent in _G.ipairs(target_ents) do
-                if ent:IsValid() and ent.replica.health and not ent.replica.health:IsDead() then
-                    current_frame_ents[ent] = true
-                    if not self.health_bars[ent] then
-                        self.health_bars[ent] = self:AddChild(HealthBar(ent, SHOW_HEALTH_NUM))
-                    end
-                end
-            end
-
-            for ent, bar in _G.pairs(self.health_bars) do
-                if not current_frame_ents[ent] then
-                    bar:Kill()
-                    self.health_bars[ent] = nil
-                end
-            end
-        end)
-    end
 end)
 
 -- 虚空异界(泰拉)：恶魔祭坛制作配方
