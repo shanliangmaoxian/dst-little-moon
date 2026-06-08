@@ -15,6 +15,8 @@ local DISABLE_KRAMPUS_PACK = GetModConfigData("DISABLE_KRAMPUS_PACK")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 local ENABLE_DEMON_ALTAR = GetModConfigData("ENABLE_DEMON_ALTAR")
 local ENABLE_DISABLE_RESELECT = GetModConfigData("ENABLE_DISABLE_RESELECT")
+local ENABLE_LOOT_LIMITER = GetModConfigData("ENABLE_LOOT_LIMITER")
+local MAX_NON_STACKABLE = GetModConfigData("MAX_NON_STACKABLE") or 5
 
 -- 强化版防打包拦截逻辑
 local function ApplyAntiPacking(inst)
@@ -45,6 +47,125 @@ end
 
 if DISABLE_KRAMPUS_PACK then
     AddPrefabPostInit("krampus", ApplyAntiPacking)
+end
+
+-- 掉落物优化限流逻辑 (最高优先级拦截)
+if ENABLE_LOOT_LIMITER then
+    local _SpawnPrefab = _G.SpawnPrefab
+    local last_tick = -1
+    local tick_counts = {}
+
+    -- 判定是否为“高频垃圾掉落物”
+    local function IsJunkLoot(prefab)
+        if not prefab then return false end
+        local name = _G.tostring(prefab):lower()
+        if name == "minimap" then return false end
+        return name:find("blueprint") 
+            or name:find("recipe") 
+            or name:find("schematic")
+            or name:find("tally") 
+            or name:find("scroll")
+            or name:find("treasure_map")
+    end
+
+    -- 全局拦截器 (瞬时返回 nil，确保宣告 Mod 拿不到多余信号)
+    _G.SpawnPrefab = function(name, ...)
+        if _G.TheWorld and _G.TheWorld.ismastersim then
+            local tick = _G.TheSim:GetTick()
+            if tick ~= last_tick then
+                last_tick = tick
+                tick_counts = {}
+            end
+
+            -- 针对不可堆叠物或垃圾物品进行瞬时限流
+            -- 注意：这里使用较宽松的 2 倍限制，主要靠下方的 DropLoot 精确限流
+            if IsJunkLoot(name) then
+                local count = (tick_counts[name] or 0) + 1
+                tick_counts[name] = count
+                if count > (MAX_NON_STACKABLE * 2) then
+                    return nil
+                end
+            end
+        end
+        
+        local inst = _SpawnPrefab(name, ...)
+        
+        -- 辅助限流：针对所有非堆叠物品的空间密度检查 (双重保险)
+        if inst and _G.TheWorld and _G.TheWorld.ismastersim then
+            inst:DoTaskInTime(0, function(i)
+                if not i:IsValid() or not i.Transform then return end
+                if (i.components.inventoryitem and not i.components.stackable) or IsJunkLoot(i.prefab) then
+                    local x, y, z = i.Transform:GetWorldPosition()
+                    local ents = _G.TheSim:FindEntities(x, y, z, 6)
+                    local count = 0
+                    for _, ent in _G.ipairs(ents) do
+                        if ent.prefab == i.prefab then count = count + 1 end
+                    end
+                    if count > MAX_NON_STACKABLE then i:Remove() end
+                end
+            end)
+        end
+        return inst
+    end
+
+    -- 组件级精确限流：同步修正“宣告 Mod”的统计数值
+    AddComponentPostInit("lootdropper", function(self)
+        local old_DropLoot = self.DropLoot
+        self.DropLoot = function(self, pt, attacker)
+            local prefabs = self:GenerateLoot()
+            if not prefabs or #prefabs == 0 then
+                return old_DropLoot(self, pt, attacker)
+            end
+
+            local counts = {}
+            for _, v in _G.ipairs(prefabs) do
+                counts[v] = (counts[v] or 0) + 1
+            end
+
+            if _G.TheWorld.components.lootreplicator ~= nil then
+                _G.TheWorld.components.lootreplicator:OnDropLoot(self.inst, prefabs, pt)
+            end
+
+            for prefab, total_count in _G.pairs(counts) do
+                if total_count > 0 then
+                    -- 预判：如果是不可堆叠物品，直接在源头截断循环
+                    local is_stackable_test = false
+                    local test_loot = self:SpawnLootPrefab(prefab, pt)
+                    if test_loot then
+                        is_stackable_test = test_loot.components.stackable ~= nil
+                        self.inst:PushEvent("onlootdropped", { loot = test_loot, attacker = attacker })
+                        
+                        if is_stackable_test then
+                            -- 【可堆叠】逻辑：合并
+                            local max_size = test_loot.components.stackable.maxsize or 40
+                            local current_count = _G.math.min(total_count, max_size)
+                            test_loot.components.stackable:SetStackSize(current_count)
+                            local remaining = total_count - current_count
+                            while remaining > 0 do
+                                local next_loot = self:SpawnLootPrefab(prefab, pt)
+                                if next_loot then
+                                    self.inst:PushEvent("onlootdropped", { loot = next_loot, attacker = attacker })
+                                    local drop_count = _G.math.min(remaining, max_size)
+                                    next_loot.components.stackable:SetStackSize(drop_count)
+                                    remaining = remaining - drop_count
+                                else break end
+                            end
+                        else
+                            -- 【不可堆叠】核心修复：强制截断循环次数
+                            -- 这样 PushEvent 只会触发 MAX_NON_STACKABLE 次，宣告 Mod 就会变准确
+                            local actual_to_drop = _G.math.min(total_count, MAX_NON_STACKABLE)
+                            for i = 1, actual_to_drop - 1 do
+                                local extra_loot = self:SpawnLootPrefab(prefab, pt)
+                                if extra_loot then
+                                    self.inst:PushEvent("onlootdropped", { loot = extra_loot, attacker = attacker })
+                                else break end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
 end
 
 local treasure_points = {}
@@ -422,31 +543,43 @@ end)
 
 -- 虚空异界(泰拉)：恶魔祭坛制作配方
 if ENABLE_DEMON_ALTAR then
-    local Ingredient = GLOBAL.Ingredient
-    local RECIPETABS = GLOBAL.RECIPETABS
-    local TECH = GLOBAL.TECH
+    local Ingredient = _G.Ingredient
+    local RECIPETABS = _G.RECIPETABS
+    local TECH = _G.TECH
 
-    local ok, err = GLOBAL.pcall(AddRecipe, "emojitan",
-        {
-            Ingredient("thulecite", 6),          -- 铥矿 ×6
-            Ingredient("purplegem", 4),          -- 紫宝石 ×4
-            Ingredient("livinglog", 6),          -- 活木 ×6
-            Ingredient("goldnugget", 10),        -- 金块 ×10
-            Ingredient("nightmarefuel", 20),     -- 噩梦燃料 ×20
-        },
-        RECIPETABS.MAGIC,       -- 魔法分类
-        TECH.MAGIC_TWO,         -- 暗影操控器（魔法二本）
-        {
-            placer = "emojitan_placer",    -- 进入摆放模式
-            min_spacing = 2,               -- 最小间距
-            nounlock = true,               -- 不需要原型解锁
-        },
-        nil,                    -- 不需要角色过滤
-        nil,                    -- product 默认就是 emojitan
-        1                       -- 每次制作数量
-    )
-    if not ok then
-        GLOBAL.print("[小月亮] emojitan 配方注册失败: " .. GLOBAL.tostring(err))
+    -- 补全基础字符串，防止没有泰拉 Mod 时蓝图加载崩溃
+    if not _G.STRINGS.NAMES.EMOJITAN then _G.STRINGS.NAMES.EMOJITAN = "恶魔祭坛" end
+    if not _G.STRINGS.RECIPE_DESC.EMOJITAN then _G.STRINGS.RECIPE_DESC.EMOJITAN = "虚空异界的远古祭坛" end
+    if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN = "散发着不详的气息。" end
+
+    -- 检查是否已经存在该配方，避免重复注册导致蓝图系统混乱
+    if _G.AllRecipes and _G.AllRecipes["emojitan"] then
+        _G.print("[小月亮] emojitan 配方已存在，跳过注册")
+    else
+        local ok, err = _G.pcall(function()
+            -- 使用标准 AddRecipe
+            AddRecipe("emojitan",
+                {
+                    Ingredient("thulecite", 6),
+                    Ingredient("purplegem", 4),
+                    Ingredient("livinglog", 6),
+                    Ingredient("goldnugget", 10),
+                    Ingredient("nightmarefuel", 20),
+                },
+                RECIPETABS.MAGIC,
+                TECH.MAGIC_TWO,
+                {
+                    placer = "emojitan_placer",
+                    min_spacing = 2,
+                    nounlock = true,
+                }
+            )
+        end)
+        if not ok then
+            _G.print("[小月亮] emojitan 配方注册失败: " .. _G.tostring(err))
+        else
+            _G.print("[小月亮] emojitan 配方注册成功")
+        end
     end
 end
 
