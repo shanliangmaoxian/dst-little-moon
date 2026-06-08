@@ -543,21 +543,24 @@ end)
 
 -- 虚空异界(泰拉)：恶魔祭坛制作配方
 if ENABLE_DEMON_ALTAR then
-    local Ingredient = _G.Ingredient
-    local RECIPETABS = _G.RECIPETABS
-    local TECH = _G.TECH
+    -- 只有当欧皇模拟器 Mod 开启（存在 emojitan 预制体）时才注册配方
+    -- 我们在后期检查，或者使用 PrefabExists
+    local function RegisterAltarRecipe()
+        local Ingredient = _G.Ingredient
+        local RECIPETABS = _G.RECIPETABS
+        local TECH = _G.TECH
 
-    -- 补全基础字符串，防止没有泰拉 Mod 时蓝图加载崩溃
-    if not _G.STRINGS.NAMES.EMOJITAN then _G.STRINGS.NAMES.EMOJITAN = "恶魔祭坛" end
-    if not _G.STRINGS.RECIPE_DESC.EMOJITAN then _G.STRINGS.RECIPE_DESC.EMOJITAN = "虚空异界的远古祭坛" end
-    if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN = "散发着不详的气息。" end
+        -- 检查配方是否已存在，或预制体是否【不存在】
+        if (_G.AllRecipes and _G.AllRecipes["emojitan"]) or not _G.PrefabExists("emojitan") then
+            return 
+        end
 
-    -- 检查是否已经存在该配方，避免重复注册导致蓝图系统混乱
-    if _G.AllRecipes and _G.AllRecipes["emojitan"] then
-        _G.print("[小月亮] emojitan 配方已存在，跳过注册")
-    else
+        -- 补全基础字符串，防止蓝图加载崩溃
+        if not _G.STRINGS.NAMES.EMOJITAN then _G.STRINGS.NAMES.EMOJITAN = "恶魔祭坛" end
+        if not _G.STRINGS.RECIPE_DESC.EMOJITAN then _G.STRINGS.RECIPE_DESC.EMOJITAN = "虚空异界的远古祭坛" end
+        if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN = "散发着不详的气息。" end
+
         local ok, err = _G.pcall(function()
-            -- 使用标准 AddRecipe
             AddRecipe("emojitan",
                 {
                     Ingredient("thulecite", 6),
@@ -575,12 +578,15 @@ if ENABLE_DEMON_ALTAR then
                 }
             )
         end)
-        if not ok then
-            _G.print("[小月亮] emojitan 配方注册失败: " .. _G.tostring(err))
-        else
+        if ok then
             _G.print("[小月亮] emojitan 配方注册成功")
         end
     end
+
+    -- 延迟注册，确保所有 Mod 的 Prefab 都已加载完成
+    AddPrefabPostInit("world", function(inst)
+        RegisterAltarRecipe()
+    end)
 end
 
 -- 客户端换人控制：禁用 /reselect 和 /重选角色 指令
