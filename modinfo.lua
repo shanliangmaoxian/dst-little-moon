@@ -172,6 +172,18 @@ configuration_options = {
         default = true,
     },
 
+    AddTitle("快捷自杀组件"),
+    {
+        name = "ENABLE_SUICIDE",
+        label = "开启快捷自杀",
+        hover = "是否开启聊天指令（#zs, #kill, #自杀）及面板按钮",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+
     AddTitle("掉落优化 (防卡顿)"),
     {
         name = "ENABLE_LOOT_LIMITER",

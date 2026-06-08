@@ -22,7 +22,7 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide)
     Widget._ctor(self, "LittleMoonPanel")
 
     self.owner = owner
@@ -30,6 +30,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.enable_treasure = enable_treasure ~= false
     self.enable_ql_helper = enable_ql_helper ~= false
     self.enable_auto_pickup = enable_auto_pickup ~= false
+    self.enable_suicide = enable_suicide ~= false
     
     self.drag_move_handler = nil
     self.drag_button_handler = nil
@@ -41,6 +42,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     if self.enable_ql_helper then panel_height = panel_height + 80 end
     if self.enable_treasure then panel_height = panel_height + 85 end
     if self.enable_auto_pickup then panel_height = panel_height + 45 end
+    if self.enable_suicide then panel_height = panel_height + 45 end
     self.panel_height = panel_height
 
     self:SetScale(scale or 1.0)
@@ -109,8 +111,28 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 
         current_y = current_y - 80 -- 减去该块高度
         
-        if self.enable_treasure or self.enable_auto_pickup then
+        if self.enable_suicide or self.enable_treasure or self.enable_auto_pickup then
             AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6}) -- 分割线
+        end
+    end
+
+    -------------------------------------------------------
+    -- 自杀功能
+    -------------------------------------------------------
+    if self.enable_suicide then
+        local suicide_y = current_y - 5
+        self.suicide_button = self:AddChild(TEMPLATES.StandardButton(function()
+            if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["Suicide"] then
+                SendModRPCToServer(MOD_RPC["LittleMoon"]["Suicide"])
+            end
+        end, "快捷自杀", { 120, 36 }))
+        self.suicide_button:SetPosition(0, suicide_y, 0)
+        self.suicide_button:SetTextSize(20)
+        
+        current_y = current_y - 45
+        
+        if self.enable_treasure or self.enable_auto_pickup then
+            AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
         end
     end
 
