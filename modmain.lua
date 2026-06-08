@@ -15,6 +15,7 @@ local DISABLE_KRAMPUS_PACK = GetModConfigData("DISABLE_KRAMPUS_PACK")
 local AUTO_PICKUP_RANGE = GetModConfigData("AUTO_PICKUP_RANGE") or 5
 local ENABLE_DEMON_ALTAR = GetModConfigData("ENABLE_DEMON_ALTAR")
 local ENABLE_DISABLE_RESELECT = GetModConfigData("ENABLE_DISABLE_RESELECT")
+local ENABLE_SUICIDE = GetModConfigData("ENABLE_SUICIDE")
 local ENABLE_LOOT_LIMITER = GetModConfigData("ENABLE_LOOT_LIMITER")
 local MAX_NON_STACKABLE = GetModConfigData("MAX_NON_STACKABLE") or 5
 
@@ -363,6 +364,43 @@ if ENABLE_AUTO_PICKUP then
     end)
 end
 
+local function DoSuicide(player)
+    if player and not player:HasTag("playerghost") and player.components.health then
+        if player.components.talker then
+            player.components.talker:Say("我杀死了我", 2)
+        end
+        player.components.health:Kill()
+    elseif player and player:HasTag("playerghost") then
+        if player.components.talker then
+            player.components.talker:Say("死的不能再死了", 2)
+        end
+    end
+end
+
+if ENABLE_SUICIDE then
+    AddModRPCHandler("LittleMoon", "Suicide", function(player)
+        DoSuicide(player)
+    end)
+
+    -- 聊天指令监听实现
+    local Old_Networking_Say = _G.Networking_Say
+    _G.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
+        if Old_Networking_Say then
+            Old_Networking_Say(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
+        end
+
+        if _G.TheWorld and _G.TheWorld.ismastersim and message and message:sub(1, 1) == "#" then
+            local cmd = message:sub(2):lower()
+            if cmd == "zs" or cmd == "kill" or cmd == "自杀" then
+                local player = _G.UserToPlayer(userid)
+                if player then
+                    DoSuicide(player)
+                end
+            end
+        end
+    end
+end
+
 -- 物品自动吸入逻辑
 AddPlayerPostInit(function(inst)
     inst.auto_pickup_enabled = _G.net_bool(inst.GUID, "little_moon.auto_pickup_enabled", "autopickupdirty")
@@ -424,7 +462,7 @@ local function SetClampedButtonPosition(widget, x, y)
 end
 
 -- 2. 在左上角添加图标按钮
-if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP then
+if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP or ENABLE_SUICIDE then
     AddClassPostConstruct("widgets/controls", function(self)
         self.moon_root = self:AddChild(Widget("moon_root"))
         self.moon_root:SetHAnchor(_G.ANCHOR_LEFT)
@@ -533,9 +571,9 @@ end
 
 -- 3. 注入 UI 界面
 AddClassPostConstruct("screens/playerhud", function(self)
-    if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP then
+    if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP or ENABLE_SUICIDE then
         local LittleMoonPanel = _G.require("widgets/little_moon_panel")
-        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER, ENABLE_AUTO_PICKUP))
+        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER, ENABLE_AUTO_PICKUP, ENABLE_SUICIDE))
         self.little_moon_panel:MoveToFront()
     end
 
