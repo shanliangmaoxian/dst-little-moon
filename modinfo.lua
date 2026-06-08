@@ -1,9 +1,9 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.9.0"
+version = "1.10.0"
 api_version = 10
-priority = -1
+priority = 1000
 dst_compatible = true
 all_clients_require_mod = true
 client_only_mod = false
@@ -13,7 +13,7 @@ dependencies = {
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
 
--- 定义标题函数 (参考 3253273657)
+-- 定义标题函数
 local function AddTitle(title)
     return { 
         name = " ", 
@@ -170,5 +170,29 @@ configuration_options = {
             { description = "允许", data = false },
         },
         default = true,
+    },
+
+    AddTitle("掉落优化 (防卡顿)"),
+    {
+        name = "ENABLE_LOOT_LIMITER",
+        label = "开启掉落限流",
+        hover = "合并可堆叠物品，限制不可堆叠物品数量",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "MAX_NON_STACKABLE",
+        label = "不可堆叠上限",
+        hover = "同种不可堆叠物品单次掉落的最大数量",
+        options = {
+            { description = "3个", data = 3 },
+            { description = "5个", data = 5 },
+            { description = "10个", data = 10 },
+            { description = "20个", data = 20 },
+        },
+        default = 5,
     },
 }
