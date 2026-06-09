@@ -159,6 +159,16 @@ configuration_options = {
         },
         default = true,
     },
+    {
+        name = "ENABLE_SHIJIZHIHUA_BULB",
+        label = "世纪之花球茎可制作",
+        hover = "是否允许在恶魔祭坛制作世纪之花球茎",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
 
     AddTitle("客户端换人控制"),
     {

@@ -18,6 +18,7 @@ local ENABLE_DISABLE_RESELECT = GetModConfigData("ENABLE_DISABLE_RESELECT")
 local ENABLE_SUICIDE = GetModConfigData("ENABLE_SUICIDE")
 local ENABLE_LOOT_LIMITER = GetModConfigData("ENABLE_LOOT_LIMITER")
 local MAX_NON_STACKABLE = GetModConfigData("MAX_NON_STACKABLE") or 5
+local ENABLE_SHIJIZHIHUA_BULB = GetModConfigData("ENABLE_SHIJIZHIHUA_BULB")
 
 -- 强化版防打包拦截逻辑
 local function ApplyAntiPacking(inst)
@@ -623,6 +624,31 @@ if ENABLE_DEMON_ALTAR then
         end)
         if ok then
             _G.print("[小月亮] emojitan 配方注册成功")
+        end
+
+        -- 世纪之花球茎
+        if ENABLE_SHIJIZHIHUA_BULB then
+            if not _G.STRINGS.NAMES.SHIJIZHIHUA_BULB then _G.STRINGS.NAMES.SHIJIZHIHUA_BULB = "世纪之花球茎" end
+            if not _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB then _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB = "原地放置，召唤世纪之花" end
+            if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB = "一颗散发着自然与机械气息的球茎。" end
+
+            local ok2, err2 = _G.pcall(function()
+                AddRecipe("shijizhihua_bulb",
+                    {
+                        Ingredient("jixiemoyan", 3),
+                        Ingredient("jixiexinbiao", 3),
+                        Ingredient("laohuaxinhaofasheqi", 3),
+                    },
+                    RECIPETABS.MAGIC,
+                    TECH.NONE,
+                    {
+                        nounlock = true,
+                    }
+                )
+            end)
+            if ok2 then
+                _G.print("[小月亮] shijizhihua_bulb 配方注册成功")
+            end
         end
     end
 
