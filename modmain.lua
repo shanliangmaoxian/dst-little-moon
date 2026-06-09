@@ -130,12 +130,11 @@ if ENABLE_LOOT_LIMITER then
             for prefab, total_count in _G.pairs(counts) do
                 if total_count > 0 then
                     -- 预判：如果是不可堆叠物品，直接在源头截断循环
-                    local is_stackable_test = false
                     local test_loot = self:SpawnLootPrefab(prefab, pt)
                     if test_loot then
-                        is_stackable_test = test_loot.components.stackable ~= nil
+                        local is_stackable_test = test_loot.components.stackable ~= nil
                         self.inst:PushEvent("onlootdropped", { loot = test_loot, attacker = attacker })
-                        
+
                         if is_stackable_test then
                             -- 【可堆叠】逻辑：合并
                             local max_size = test_loot.components.stackable.maxsize or 40
@@ -161,6 +160,12 @@ if ENABLE_LOOT_LIMITER then
                                     self.inst:PushEvent("onlootdropped", { loot = extra_loot, attacker = attacker })
                                 else break end
                             end
+                        end
+                    else
+                        -- SpawnLootPrefab 返回 nil：说明被其他 Mod（如 1.5.4 金币系统）拦截处理
+                        -- 需要为全部数量调用 SpawnLootPrefab，确保拦截方能正确处理每一份掉落
+                        for i = 2, total_count do
+                            self:SpawnLootPrefab(prefab, pt)
                         end
                     end
                 end
