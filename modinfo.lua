@@ -228,7 +228,7 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
+        default = false,
     },
     {
         name = "MAX_NON_STACKABLE",
