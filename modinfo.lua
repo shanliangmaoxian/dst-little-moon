@@ -99,6 +99,31 @@ configuration_options = {
         },
         default = 480,
     },
+    {
+        name = "DIG_TREASURE_MODE",
+        label = "一键挖宝",
+        hover = "跳过宝藏点和铲子挖掘，消耗卷轴直接出怪。选择每次挖宝数量。",
+        options = {
+            { description = "关闭", data = 0 },
+            { description = "1个", data = 1 },
+            { description = "3个", data = 3 },
+            { description = "5个", data = 5 },
+            { description = "10个", data = 10 },
+        },
+        default = 0,
+    },
+    {
+        name = "MAX_NEARBY_MONSTERS",
+        label = "周边怪物上限",
+        hover = "一键挖宝时玩家周边20码内怪物超过此数量则禁止使用，防止服务器卡顿",
+        options = {
+            { description = "10只", data = 10 },
+            { description = "20只", data = 20 },
+            { description = "30只", data = 30 },
+            { description = "50只", data = 50 },
+        },
+        default = 20,
+    },
 
     AddTitle("欧皇模拟器清理组件"),
     {

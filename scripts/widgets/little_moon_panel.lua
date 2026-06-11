@@ -22,7 +22,7 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode)
     Widget._ctor(self, "LittleMoonPanel")
 
     self.owner = owner
@@ -31,7 +31,8 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.enable_ql_helper = enable_ql_helper ~= false
     self.enable_auto_pickup = enable_auto_pickup ~= false
     self.enable_suicide = enable_suicide ~= false
-    
+    self.dig_treasure_mode = dig_treasure_mode or 0
+
     self.drag_move_handler = nil
     self.drag_button_handler = nil
     self.drag_offset_x = 0
@@ -40,7 +41,12 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     -- 1. 动态计算面板总高度
     local panel_height = HANDLE_HEIGHT + 10 -- 基础高度 (页眉 + 边距)
     if self.enable_ql_helper then panel_height = panel_height + 80 end
-    if self.enable_treasure then panel_height = panel_height + 85 end
+    if self.enable_treasure then
+        panel_height = panel_height + 85
+        if self.dig_treasure_mode > 0 then
+            panel_height = panel_height + 45
+        end
+    end
     if self.enable_auto_pickup then panel_height = panel_height + 45 end
     if self.enable_suicide then panel_height = panel_height + 45 end
     self.panel_height = panel_height
@@ -176,7 +182,56 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         self.btn_summon:SetTextSize(20)
 
         current_y = current_y - 85
-        
+
+        -- 一键挖宝子区域
+        if self.dig_treasure_mode > 0 then
+            local dig_y = current_y + 5
+
+            -- 初始化 dig 数量选择
+            self.dig_count = self.dig_treasure_mode
+            local dig_spinner_data = {}
+            for _, dcount in ipairs({0, 1, 3, 5, 10}) do
+                if dcount == 0 then
+                    table.insert(dig_spinner_data, { text = "关闭", data = 0 })
+                elseif dcount <= self.dig_treasure_mode then
+                    table.insert(dig_spinner_data, { text = tostring(dcount), data = dcount })
+                end
+            end
+            if #dig_spinner_data == 0 then
+                table.insert(dig_spinner_data, { text = "关闭", data = 0 })
+            end
+
+            self.dig_spinner_root = self:AddChild(Widget("dig_spinner_root"))
+            self.dig_spinner_root:SetPosition(-75, dig_y)
+
+            self.dig_spinner_label = self.dig_spinner_root:AddChild(Text(CHATFONT, 22, "一键:"))
+            self.dig_spinner_label:SetPosition(-50, 0)
+            self.dig_spinner_label:SetColour(unpack(WHITE))
+
+            self.dig_spinner = self.dig_spinner_root:AddChild(Spinner(dig_spinner_data, 85, 32, {font = CHATFONT, size = 22}, nil, nil, nil, true))
+            self.dig_spinner:SetTextColour(unpack(WHITE))
+            self.dig_spinner:SetOnChangedFn(function(data) self.dig_count = data end)
+            self.dig_spinner:SetPosition(20, 0)
+
+            -- 根据 dig_treasure_mode 设置 spinner 默认选中项
+            for _, item in ipairs(dig_spinner_data) do
+                if item.data == self.dig_treasure_mode then
+                    self.dig_spinner:SetSelected(item)
+                    break
+                end
+            end
+
+            self.btn_quick_dig = self:AddChild(TEMPLATES.StandardButton(function()
+                if self.dig_count > 0 and MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["QuickDig"] then
+                    SendModRPCToServer(MOD_RPC["LittleMoon"]["QuickDig"], self.dig_count)
+                end
+            end, "一键挖宝", { 110, 36 }))
+            self.btn_quick_dig:SetPosition(75, dig_y)
+            self.btn_quick_dig:SetTextSize(20)
+
+            current_y = current_y - 45
+        end
+
         if self.enable_auto_pickup then
             AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
         end

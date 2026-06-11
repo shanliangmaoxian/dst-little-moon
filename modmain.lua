@@ -19,6 +19,8 @@ local ENABLE_SUICIDE = GetModConfigData("ENABLE_SUICIDE")
 local ENABLE_LOOT_LIMITER = GetModConfigData("ENABLE_LOOT_LIMITER")
 local MAX_NON_STACKABLE = GetModConfigData("MAX_NON_STACKABLE") or 5
 local ENABLE_SHIJIZHIHUA_BULB = GetModConfigData("ENABLE_SHIJIZHIHUA_BULB")
+local DIG_TREASURE_MODE = GetModConfigData("DIG_TREASURE_MODE") or 0
+local MAX_NEARBY_MONSTERS = GetModConfigData("MAX_NEARBY_MONSTERS") or 20
 
 -- 强化版防打包拦截逻辑
 local function ApplyAntiPacking(inst)
@@ -362,6 +364,90 @@ if ENABLE_TREASURE then
     end)
 end
 
+-- 一键挖宝 RPC：跳过宝藏点放置，直接出怪
+if DIG_TREASURE_MODE > 0 then
+    AddModRPCHandler("LittleMoon", "QuickDig", function(player, count)
+        local inv = player.components.inventory
+        if not inv or not player.userid then return end
+
+        -- 防止回调重入
+        if player._quick_dig_in_progress then
+            return
+        end
+        player._quick_dig_in_progress = true
+
+        local count_num = _G.math.floor(_G.tonumber(count) or 0)
+        if count_num < 1 then
+            Say(player, "请选择挖宝数量。")
+            player._quick_dig_in_progress = nil
+            return
+        end
+
+        local player_pos = player:GetPosition()
+
+        -- 怪物数量检查（控制机制）
+        local nearby_monsters = _G.TheSim:FindEntities(
+            player_pos.x, player_pos.y, player_pos.z, 20,
+            {"monster"}, nil, {"INLIMBO", "player"}
+        )
+        if #nearby_monsters > MAX_NEARBY_MONSTERS then
+            Say(player, _G.string.format("周边怪物太多了(%d只)，先清理一下", #nearby_monsters))
+            player._quick_dig_in_progress = nil
+            return
+        end
+
+        -- 卷轴检查
+        local cost_prefab = "hh_treasure_tally"
+        local current_scrolls = CountInventoryItems(inv, cost_prefab)
+        if current_scrolls <= 0 then
+            Say(player, "背包里没有寻宝图卷轴。")
+            player._quick_dig_in_progress = nil
+            return
+        end
+
+        -- 计算实际可挖数量
+        local actual_count = _G.math.min(count_num, current_scrolls)
+
+        -- 执行挖宝：创建宝藏点 + 立即挖掉触发怪物
+        local radius = _G.math.max(3, actual_count / 4)
+        local spawned = 0
+        for i = 1, actual_count do
+            local angle = i * (2 * _G.math.pi / actual_count)
+            local offset = _G.Vector3(_G.math.cos(angle) * radius, 0, _G.math.sin(angle) * radius)
+            local spawn_pos = player_pos + offset
+
+            -- 地皮检测：必须是陆地地皮，且不是海洋
+            if _G.TheWorld.Map:IsVisualGroundAtPoint(spawn_pos.x, spawn_pos.y, spawn_pos.z)
+                and #_G.TheSim:FindEntities(spawn_pos.x, spawn_pos.y, spawn_pos.z, 1.5, nil, {"INLIMBO"}, {"structure", "wall"}) == 0 then
+                local treasure = _G.SpawnPrefab("hh_treasure_build")
+                if treasure then
+                    treasure.Transform:SetPosition(spawn_pos:Get())
+                    treasure.moon_owner = player.userid
+                    treasure:AddTag("moon_owner_" .. _G.tostring(player.userid))
+                    RegisterTreasurePoint(treasure)
+
+                    -- 立刻挖掉：调用 workable:Destroy 跳过动画直接出怪
+                    if treasure.components.workable then
+                        treasure.components.workable:Destroy(player)
+                        spawned = spawned + 1
+                    else
+                        -- 安全回退：如果没有 workable 组件，直接移除
+                        treasure:Remove()
+                    end
+                end
+            end
+        end
+
+        if spawned > 0 then
+            inv:ConsumeByName(cost_prefab, spawned)
+            Say(player, _G.string.format("一键挖宝完成！挖了 %d 个宝藏", spawned))
+        else
+            Say(player, "挖宝失败，请重试。")
+        end
+        player._quick_dig_in_progress = nil
+    end)
+end
+
 if ENABLE_AUTO_PICKUP then
     AddModRPCHandler("LittleMoon", "SetAutoPickup", function(player, enabled)
         if player.auto_pickup_enabled ~= nil then
@@ -579,7 +665,7 @@ end
 AddClassPostConstruct("screens/playerhud", function(self)
     if ENABLE_TREASURE or ENABLE_QL_HELPER or ENABLE_AUTO_PICKUP or ENABLE_SUICIDE then
         local LittleMoonPanel = _G.require("widgets/little_moon_panel")
-        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER, ENABLE_AUTO_PICKUP, ENABLE_SUICIDE))
+        self.little_moon_panel = self:AddChild(LittleMoonPanel(self.owner, PROXIMITY_LIMIT, LITTLE_MOON_SCALE, ENABLE_TREASURE, ENABLE_QL_HELPER, ENABLE_AUTO_PICKUP, ENABLE_SUICIDE, DIG_TREASURE_MODE))
         self.little_moon_panel:MoveToFront()
     end
 
