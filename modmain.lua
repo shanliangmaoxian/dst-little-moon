@@ -386,12 +386,19 @@ if DIG_TREASURE_MODE > 0 then
         local player_pos = player:GetPosition()
 
         -- 怪物数量检查（控制机制）
-        local nearby_monsters = _G.TheSim:FindEntities(
+        -- 使用组件检测代替标签，兼容不同 Mod 生成的怪物
+        local nearby_ents = _G.TheSim:FindEntities(
             player_pos.x, player_pos.y, player_pos.z, 20,
-            {"monster"}, nil, {"INLIMBO", "player"}
+            nil, {"INLIMBO", "player", "FX", "NOCLICK", "DECOR", "INVALID"}
         )
-        if #nearby_monsters > MAX_NEARBY_MONSTERS then
-            Say(player, _G.string.format("周边怪物太多了(%d只)，先清理一下", #nearby_monsters))
+        local monster_count = 0
+        for _, ent in _G.ipairs(nearby_ents) do
+            if ent.components.combat and ent.components.health and not ent:HasTag("player") then
+                monster_count = monster_count + 1
+            end
+        end
+        if monster_count > MAX_NEARBY_MONSTERS then
+            Say(player, _G.string.format("周边怪物太多了(%d只)，先清理一下", monster_count))
             player._quick_dig_in_progress = nil
             return
         end
