@@ -125,6 +125,18 @@ configuration_options = {
         default = 20,
     },
 
+    AddTitle("更多附魔"),
+    {
+        name = "ENABLE_MORE_ENCHANTS",
+        label = "开启更多附魔",
+        hover = "是否开启额外的附魔词条（如灵尾印记等）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+
     AddTitle("欧皇模拟器清理组件"),
     {
         name = "ENABLE_QL_HELPER",
