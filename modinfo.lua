@@ -129,7 +129,7 @@ configuration_options = {
     {
         name = "ENABLE_MORE_ENCHANTS",
         label = "开启更多附魔",
-        hover = "是否开启额外的附魔词条（如灵尾印记等）",
+        hover = "是否开启额外的附魔词条 目前只有灵尾印记",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
