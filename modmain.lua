@@ -841,6 +841,18 @@ local function Moon_GetTotalEffectValue(inst, Effect_type)
     return total
 end
 
+local function Moon_HasEffect(inst, Effect_type)
+    if not inst then return false end
+    local Effect_table = Effect_type .. "_sources"
+    if not inst[Effect_table] then return false end
+    for k, v in pairs(inst[Effect_table]) do
+        if v == true or (type(v) == "number" and v ~= 0) then
+            return true
+        end
+    end
+    return false
+end
+
 -- 检测 Mod 是否启用（通过 GLOBAL 访问，兼容不同加载阶段）
 local function IsModEnabled(id)
     if not GLOBAL.KnownModIndex then return false end
@@ -907,6 +919,167 @@ if ENABLE_MORE_ENCHANTS then
             inst:ListenForEvent("death", function(inst, data)
                 if math.random() > DROP_CHANCE_MX then return end
                 local stone = GLOBAL.HHSpawnStoneById("Legend_MX_HEALTH")
+                if stone then
+                    local pt = inst:GetPosition()
+                    local killer = data and data.afflicter
+                    if killer and killer:IsValid() and killer.components.inventory then
+                        killer.components.inventory:GiveItem(stone, nil, pt)
+                    else
+                        stone.Transform:SetPosition(pt:Get())
+                    end
+                end
+            end)
+        end)
+
+        -- ========================================
+        -- 紫蝶：破茧成蝶，每天一次免死满血复活
+        -- ========================================
+        GLOBAL.AddSpecialEquipEffect("Legend_ZD_BUTTERFLY", {
+            name = "紫蝶",
+            client_text = "紫\n蝶",
+            desc = "蝶破茧，人不灭",
+            check_desc = "受到致命伤害时免疫死亡\n满血复活 冷却1天",
+            can_add = false,                -- 不可通过附魔卷轴附魔
+            only_one = true,                -- 唯一（多件也只生效一次免死）
+            is_special = false,             -- 正常途径获取
+            client_color = { 0.8, 0, 0.8, 1 }, -- 紫色
+            check_equip_can_add = function(inst)
+                return true, "满足条件"
+            end,
+            on_equip_fn = function(inst, owner, value)
+                Moon_AddEffect(owner, "zd_butterfly", "Legend_ZD_BUTTERFLY", 1)
+                -- 首次装备时安装死亡拦截钩子
+                if not owner._zd_death_hook_installed then
+                    owner._zd_death_hook_installed = true
+                    owner._zd_revive_cooldown = false
+
+                    local oldPushEvent = owner.PushEvent
+                    owner.PushEvent = function(self, event, ...)
+                        if Moon_HasEffect(self, "zd_butterfly") and not self._zd_revive_cooldown then
+                            if event == "death" then
+                                local health = self.components.health
+                                if health then
+                                    -- 满血复活
+                                    health:SetVal(health.maxhealth)
+                                    self:PushEvent("respawnfromghost")
+                                    -- 触发冷却
+                                    self._zd_revive_cooldown = true
+                                    if self._zd_cooldown_task then
+                                        self._zd_cooldown_task:Cancel()
+                                    end
+                                    -- 1天(480秒)冷却
+                                    self._zd_cooldown_task = self:DoTaskInTime(480, function()
+                                        self._zd_revive_cooldown = false
+                                    end)
+                                    if self.components.talker then
+                                        self.components.talker:Say("紫蝶护主，破茧重生！")
+                                    end
+                                    return
+                                end
+                            end
+                            if event == "makeplayerghost" then
+                                return
+                            end
+                        end
+                        return oldPushEvent(self, event, ...)
+                    end
+                end
+            end,
+            un_equip_fn = function(inst, owner, value)
+                Moon_ReduceEffect(owner, "zd_butterfly", "Legend_ZD_BUTTERFLY", 1)
+            end,
+        })
+
+        -- 精英/Boss 掉落 紫蝶（3%概率）
+        AddPrefabPostInitAny(function(inst)
+            if not GLOBAL.TheWorld.ismastersim then return end
+            if not inst:HasTag("epic") then return end
+            inst:ListenForEvent("death", function(inst, data)
+                if math.random() > 0.03 then return end
+                local stone = GLOBAL.HHSpawnStoneById("Legend_ZD_BUTTERFLY")
+                if stone then
+                    local pt = inst:GetPosition()
+                    local killer = data and data.afflicter
+                    if killer and killer:IsValid() and killer.components.inventory then
+                        killer.components.inventory:GiveItem(stone, nil, pt)
+                    else
+                        stone.Transform:SetPosition(pt:Get())
+                    end
+                end
+            end)
+        end)
+
+        -- ========================================
+        -- 番茄炒蛋：san值恢复8倍，消耗减半，每秒回san
+        -- ========================================
+        GLOBAL.AddSpecialEquipEffect("Legend_FQCD_SANITY", {
+            name = "番茄炒蛋",
+            client_text = "番\n茄",
+            desc = "san值恢复速度大幅提升,san值消耗减半,每5秒回复20点san",
+            check_desc = "san恢复8倍\nsan消耗-50%\n每5秒+20san",
+            can_add = false,                -- 不可通过附魔卷轴附魔
+            only_one = true,                -- 唯一
+            is_special = false,             -- 正常途径获取
+            client_color = { 1, 0, 0, 1 },    -- 猩红（稀有）
+            check_equip_can_add = function(inst)
+                return true, "满足条件"
+            end,
+            on_equip_fn = function(inst, owner, value)
+                Moon_AddEffect(owner, "fqcd_sanity", "Legend_FQCD_SANITY", 1)
+                if not owner._fqcd_sanity_hooked then
+                    owner._fqcd_sanity_hooked = true
+                    local sanity = owner.components.sanity
+                    if sanity then
+                        -- san恢复 8倍速
+                        sanity.externalmodifiers:SetModifier("番茄炒蛋", 8)
+                        -- san消耗减半
+                        if not sanity._fqcd_DoDelta then
+                            local original_do_delta = sanity.DoDelta
+                            sanity._fqcd_DoDelta = original_do_delta
+                            sanity.DoDelta = function(self, delta, overtime, ...)
+                                if delta < 0 then
+                                    delta = delta * 0.5
+                                end
+                                return original_do_delta(self, delta, overtime, ...)
+                            end
+                        end
+                        -- 每5秒回20san
+                        if not owner._fqcd_regen_task then
+                            owner._fqcd_regen_task = owner:DoPeriodicTask(5, function()
+                                if Moon_HasEffect(owner, "fqcd_sanity") and owner.components.sanity then
+                                    owner.components.sanity:DoDelta(20)
+                                end
+                            end)
+                        end
+                    end
+                end
+            end,
+            un_equip_fn = function(inst, owner, value)
+                Moon_ReduceEffect(owner, "fqcd_sanity", "Legend_FQCD_SANITY", 1)
+                if not Moon_HasEffect(owner, "fqcd_sanity") then
+                    local sanity = owner.components.sanity
+                    if sanity then
+                        sanity.externalmodifiers:RemoveModifier("番茄炒蛋")
+                        if sanity._fqcd_DoDelta then
+                            sanity.DoDelta = sanity._fqcd_DoDelta
+                            sanity._fqcd_DoDelta = nil
+                        end
+                    end
+                    if owner._fqcd_regen_task then
+                        owner._fqcd_regen_task:Cancel()
+                        owner._fqcd_regen_task = nil
+                    end
+                end
+            end,
+        })
+
+        -- 精英/Boss 掉落 番茄炒蛋（3%概率）
+        AddPrefabPostInitAny(function(inst)
+            if not GLOBAL.TheWorld.ismastersim then return end
+            if not inst:HasTag("epic") then return end
+            inst:ListenForEvent("death", function(inst, data)
+                if math.random() > 0.03 then return end
+                local stone = GLOBAL.HHSpawnStoneById("Legend_FQCD_SANITY")
                 if stone then
                     local pt = inst:GetPosition()
                     local killer = data and data.afflicter
