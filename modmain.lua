@@ -21,6 +21,7 @@ local MAX_NON_STACKABLE = GetModConfigData("MAX_NON_STACKABLE") or 5
 local ENABLE_SHIJIZHIHUA_BULB = GetModConfigData("ENABLE_SHIJIZHIHUA_BULB")
 local DIG_TREASURE_MODE = GetModConfigData("DIG_TREASURE_MODE") or 0
 local MAX_NEARBY_MONSTERS = GetModConfigData("MAX_NEARBY_MONSTERS") or 20
+local ENABLE_MORE_ENCHANTS = GetModConfigData("ENABLE_MORE_ENCHANTS")
 
 -- 强化版防打包拦截逻辑
 local function ApplyAntiPacking(inst)
@@ -787,6 +788,117 @@ if ENABLE_DISABLE_RESELECT then
             end
             -- 清理残留存档
             GLOBAL.TheSim:SetPersistentString("mod_config_data/resetplayer", "", false)
+        end)
+    end)
+end
+
+-- ============================================================================================================== --
+-- 附魔：灵尾印记 (每天灵尾+1,上限2)
+-- 依赖：璇儿 Mod (workshop-3014076942)
+-- ============================================================================================================== --
+
+-- 效果管理工具函数
+local function Moon_AddEffect(inst, Effect_type, source, value)
+    if not inst then return end
+    local Effect_table = Effect_type .. "_sources"
+    if not inst[Effect_table] then
+        inst[Effect_table] = {}
+    end
+    if value then
+        local current_value = inst[Effect_table][source] or 0
+        inst[Effect_table][source] = current_value + value
+    else
+        inst[Effect_table][source] = true
+    end
+end
+
+local function Moon_ReduceEffect(inst, Effect_type, source, value)
+    if not inst or not value then return end
+    local Effect_table = Effect_type .. "_sources"
+    if inst[Effect_table] and inst[Effect_table][source] then
+        local current_value = inst[Effect_table][source]
+        if type(current_value) == "number" then
+            local new_value = current_value - value
+            if new_value == 0 then
+                inst[Effect_table][source] = nil
+            else
+                inst[Effect_table][source] = new_value
+            end
+        end
+    end
+end
+
+local function Moon_GetTotalEffectValue(inst, Effect_type)
+    if not inst then return 0 end
+    local Effect_table = Effect_type .. "_sources"
+    if not inst[Effect_table] then return 0 end
+    local total = 0
+    for k, v in pairs(inst[Effect_table]) do
+        if type(v) == "number" then
+            total = total + v
+        end
+    end
+    return total
+end
+
+-- 检测 Mod 是否启用（通过 GLOBAL 访问，兼容不同加载阶段）
+local function IsModEnabled(id)
+    if not GLOBAL.KnownModIndex then return false end
+    return GLOBAL.KnownModIndex:IsModEnabledAny(id)
+end
+
+-- 检测 HH 附魔框架是否启用
+local function IsHHEnabled()
+    return IsModEnabled("workshop-3096210166")
+        or IsModEnabled("workshop-3709314660")
+end
+
+-- 检测璇儿 Mod 是否启用
+local function IsMYXLEnabled()
+    return IsModEnabled("workshop-3014076942")
+end
+
+-- 延迟注册附魔（等 KnownModIndex 就绪）
+if ENABLE_MORE_ENCHANTS then
+    AddPrefabPostInit("world", function(inst)
+        if not IsHHEnabled() or not IsMYXLEnabled() then
+            return
+        end
+
+        -- 注册附魔效果
+        GLOBAL.AddSpecialEquipEffect("Legend_MYXL_LEVEL", {
+            name = "灵尾印记",
+            client_text = "灵\n尾印",
+            desc = "每天灵尾+1(上限2)",
+            check_desc = "只对璇儿生效",
+            can_add = true,          -- 可通过附魔卷轴附魔
+            only_one = false,        -- 可叠加（多件装备效果累加）
+            is_special = false,      -- 正常途径获取
+            client_color = { 0.5, 0.5, 0.5, 1 },  -- 普通灰色
+            check_equip_can_add = function(inst)
+                return true, "满足条件"
+            end,
+            on_equip_fn = function(inst, owner, value)
+                Moon_AddEffect(owner, "myxl_level", "Legend_MYXL_LEVEL", 1)
+            end,
+            un_equip_fn = function(inst, owner, value)
+                Moon_ReduceEffect(owner, "myxl_level", "Legend_MYXL_LEVEL", 1)
+            end,
+        })
+
+        -- 每日周期：灵尾+1
+        AddPrefabPostInitAny(function(inst)
+            if not GLOBAL.TheWorld.ismastersim then return end
+            if not inst:HasTag("player") then return end
+            inst:WatchWorldState("cycles", function(inst, cycles)
+                local level = Moon_GetTotalEffectValue(inst, "myxl_level")
+                if level > 0 then
+                    local myxl_level = inst.components.myxl_level
+                    if myxl_level and myxl_level.LevelUp then
+                        myxl_level:LevelUp(false, math.min(level, 2))
+                    end
+                end
+            end)
         end)
     end)
 end
