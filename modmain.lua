@@ -869,12 +869,13 @@ if ENABLE_MORE_ENCHANTS then
         GLOBAL.AddSpecialEquipEffect("Legend_MYXL_LEVEL", {
             name = "灵尾印记",
             client_text = "灵\n尾印",
-            desc = "每天灵尾+1(上限2)",
+            desc = "每天灵尾+1(上限2) 只对璇儿生效",
             check_desc = "只对璇儿生效",
-            can_add = true,          -- 可通过附魔卷轴附魔
+            can_add = false,         -- 不可通过附魔卷轴附魔
             only_one = false,        -- 可叠加（多件装备效果累加）
             is_special = false,      -- 正常途径获取
-            client_color = { 0.5, 0.5, 0.5, 1 },  -- 普通灰色
+            client_color = { 1, 0, 0, 1 },    -- 猩红（稀有）
+            ui_from_desc = "击败精英/Boss概率掉落",
             check_equip_can_add = function(inst)
                 return true, "满足条件"
             end,
@@ -896,6 +897,26 @@ if ENABLE_MORE_ENCHANTS then
                     local myxl_level = inst.components.myxl_level
                     if myxl_level and myxl_level.LevelUp then
                         myxl_level:LevelUp(false, math.min(level, 2))
+                    end
+                end
+            end)
+        end)
+
+        -- 精英/Boss 掉落（15%概率）
+        local DROP_CHANCE = 0.05
+        AddPrefabPostInitAny(function(inst)
+            if not GLOBAL.TheWorld.ismastersim then return end
+            if not inst:HasTag("epic") then return end
+            inst:ListenForEvent("death", function(inst, data)
+                if math.random() > DROP_CHANCE then return end
+                local stone = GLOBAL.HHSpawnStoneById("Legend_MYXL_LEVEL")
+                if stone then
+                    local pt = inst:GetPosition()
+                    local killer = data and data.afflicter
+                    if killer and killer:IsValid() and killer.components.inventory then
+                        killer.components.inventory:GiveItem(stone, nil, pt)
+                    else
+                        stone.Transform:SetPosition(pt:Get())
                     end
                 end
             end)
