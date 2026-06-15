@@ -861,11 +861,71 @@ end
 -- 延迟注册附魔（等 KnownModIndex 就绪）
 if ENABLE_MORE_ENCHANTS then
     AddPrefabPostInit("world", function(inst)
-        if not IsHHEnabled() or not IsMYXLEnabled() then
+        if not IsHHEnabled() then
             return
         end
 
-        -- 注册附魔效果
+        -- ========================================
+        -- 毛旭：血量+200
+        -- ========================================
+        GLOBAL.AddSpecialEquipEffect("Legend_MX_HEALTH", {
+            name = "毛旭",
+            client_text = "毛\n旭",
+            desc = "geigei,带我吃鸭蛋",
+            check_desc = "人物血量上限+200",
+            can_add = false,            -- 不可通过附魔卷轴附魔
+            only_one = false,           -- 可叠加（多件装备效果累加）
+            is_special = false,         -- 正常途径获取
+            -- client_color = { 1, 0.5, 0, 1 }, -- 橙色
+            client_color = { 1, 0, 0, 1 },    -- 猩红（稀有）
+            check_equip_can_add = function(inst)
+                return true, "满足条件"
+            end,
+            on_equip_fn = function(inst, owner, value)
+                if not owner._mx_health_base then
+                    owner._mx_health_base = owner.components.health.maxhealth
+                end
+                Moon_AddEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
+                local total_bonus = Moon_GetTotalEffectValue(owner, "mx_health")
+                owner.components.health:SetMaxHealth(owner._mx_health_base + total_bonus)
+                owner.components.health:DoDelta(200)
+            end,
+            un_equip_fn = function(inst, owner, value)
+                Moon_ReduceEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
+                local total_bonus = Moon_GetTotalEffectValue(owner, "mx_health")
+                if owner._mx_health_base then
+                    owner.components.health:SetMaxHealth(owner._mx_health_base + total_bonus)
+                end
+            end,
+        })
+
+        -- 精英/Boss 掉落 毛旭（3%概率）
+        local DROP_CHANCE_MX = 0.03
+        AddPrefabPostInitAny(function(inst)
+            if not GLOBAL.TheWorld.ismastersim then return end
+            if not inst:HasTag("epic") then return end
+            inst:ListenForEvent("death", function(inst, data)
+                if math.random() > DROP_CHANCE_MX then return end
+                local stone = GLOBAL.HHSpawnStoneById("Legend_MX_HEALTH")
+                if stone then
+                    local pt = inst:GetPosition()
+                    local killer = data and data.afflicter
+                    if killer and killer:IsValid() and killer.components.inventory then
+                        killer.components.inventory:GiveItem(stone, nil, pt)
+                    else
+                        stone.Transform:SetPosition(pt:Get())
+                    end
+                end
+            end)
+        end)
+
+        -- ========================================
+        -- 灵尾印记（依赖璇儿 Mod）
+        -- ========================================
+        if not IsMYXLEnabled() then
+            return
+        end
+
         GLOBAL.AddSpecialEquipEffect("Legend_MYXL_LEVEL", {
             name = "灵尾印记",
             client_text = "灵\n尾印",
@@ -902,7 +962,7 @@ if ENABLE_MORE_ENCHANTS then
             end)
         end)
 
-        -- 精英/Boss 掉落（3%概率）
+        -- 精英/Boss 掉落 灵尾印记（3%概率）
         local DROP_CHANCE = 0.03
         AddPrefabPostInitAny(function(inst)
             if not GLOBAL.TheWorld.ismastersim then return end
