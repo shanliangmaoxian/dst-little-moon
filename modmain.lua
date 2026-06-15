@@ -902,8 +902,8 @@ if ENABLE_MORE_ENCHANTS then
             end)
         end)
 
-        -- 精英/Boss 掉落（15%概率）
-        local DROP_CHANCE = 0.05
+        -- 精英/Boss 掉落（3%概率）
+        local DROP_CHANCE = 0.03
         AddPrefabPostInitAny(function(inst)
             if not GLOBAL.TheWorld.ismastersim then return end
             if not inst:HasTag("epic") then return end
