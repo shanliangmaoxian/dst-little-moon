@@ -95,7 +95,8 @@ AddPrefabPostInit("world", function(inst)
                                 and killer ~= owner and killer:GetDistanceSqToPoint(x, y, z) < 225 then
                                 -- 队友击杀，掉落一件物品
                                 if ent.components.lootdropper and not ent._genzhe_looted then
-                                    ent.components.lootdropper:DropLoot(ent.Transform:GetWorldPosition())
+                                    local ex, ey, ez = ent.Transform:GetWorldPosition()
+                                    pcall(ent.components.lootdropper.DropLoot, ent.components.lootdropper, Vector3(ex, ey, ez))
                                     ent._genzhe_looted = true
                                     break
                                 end

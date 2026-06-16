@@ -72,7 +72,7 @@ AddPrefabPostInit("world", function(inst)
                     owner._zd_in_burst = true
                 end
 
-                local function removeButterflyBurst()
+                owner._zd_removeBurst = function()
                     if not owner._zd_in_burst then return end
                     owner._zd_in_burst = false
                     local hh = owner.components.hh_player
@@ -128,7 +128,7 @@ AddPrefabPostInit("world", function(inst)
                                     self._zd_burst_task:Cancel()
                                 end
                                 self._zd_burst_task = self:DoTaskInTime(15, function()
-                                    removeButterflyBurst()
+                                    owner._zd_removeBurst()
                                 end)
 
                                 -- 开始冷却
@@ -164,7 +164,7 @@ AddPrefabPostInit("world", function(inst)
             if not _G.Moon_HasEffect(owner, "zd_butterfly") then
                 -- 移除蝶变状态（如果还在）
                 if owner._zd_in_burst then
-                    removeButterflyBurst()
+                    owner._zd_removeBurst()
                     if owner._zd_burst_task then
                         owner._zd_burst_task:Cancel()
                         owner._zd_burst_task = nil
