@@ -18,7 +18,7 @@ AddPrefabPostInit("world", function(inst)
         can_add = false,
         only_one = false,           -- 可叠加
         is_special = false,
-        client_color = { 1, 0, 0, 1 },
+        client_color = { 0.8, 0, 0.8, 1 },
         ui_from_desc = "击败精英/Boss概率掉落",
         check_equip_can_add = function(inst)
             if inst:HasTag("backpack") then
@@ -51,5 +51,5 @@ AddPrefabPostInit("world", function(inst)
     end)
 
     -- 精英/Boss 掉落 (3%)
-    _G.Moon_RegisterEnchantDrop("Legend_MYXL_LEVEL", 0.03)
+    _G.Moon_RegisterEnchantDrop("Legend_MYXL_LEVEL", 0.01)
 end)

@@ -17,7 +17,7 @@ AddPrefabPostInit("world", function(inst)
         can_add = false,
         only_one = false,           -- 可叠加
         is_special = false,
-        client_color = { 1, 0, 0, 1 },
+        client_color = { 0.8, 0, 0.8, 1 },
         check_equip_can_add = function(inst)
             return true, "满足条件"
         end,
@@ -47,5 +47,5 @@ AddPrefabPostInit("world", function(inst)
     })
 
     -- 精英/Boss 掉落 (3%)
-    _G.Moon_RegisterEnchantDrop("Legend_MX_HEALTH", 0.03)
+    _G.Moon_RegisterEnchantDrop("Legend_MX_HEALTH", 0.01)
 end)
