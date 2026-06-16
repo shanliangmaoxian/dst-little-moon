@@ -1102,15 +1102,18 @@ if ENABLE_MORE_ENCHANTS then
         GLOBAL.AddSpecialEquipEffect("Legend_MYXL_LEVEL", {
             name = "灵尾印记",
             client_text = "灵\n尾印",
-            desc = "每天灵尾+1(上限2) 只对璇儿生效",
-            check_desc = "只对璇儿生效",
+            desc = "每天灵尾+1~5(上限5)",
+            check_desc = "只对璇儿生效\n仅限背包类装备附魔",
             can_add = false,         -- 不可通过附魔卷轴附魔
             only_one = false,        -- 可叠加（多件装备效果累加）
             is_special = false,      -- 正常途径获取
             client_color = { 1, 0, 0, 1 },    -- 猩红（稀有）
             ui_from_desc = "击败精英/Boss概率掉落",
             check_equip_can_add = function(inst)
-                return true, "满足条件"
+                if inst:HasTag("backpack") then
+                    return true, "满足条件"
+                end
+                return false, "只允许附魔在背包上"
             end,
             on_equip_fn = function(inst, owner, value)
                 Moon_AddEffect(owner, "myxl_level", "Legend_MYXL_LEVEL", 1)
@@ -1120,7 +1123,7 @@ if ENABLE_MORE_ENCHANTS then
             end,
         })
 
-        -- 每日周期：灵尾+1
+        -- 每日周期：灵尾+1~5
         AddPrefabPostInitAny(function(inst)
             if not GLOBAL.TheWorld.ismastersim then return end
             if not inst:HasTag("player") then return end
@@ -1129,7 +1132,8 @@ if ENABLE_MORE_ENCHANTS then
                 if level > 0 then
                     local myxl_level = inst.components.myxl_level
                     if myxl_level and myxl_level.LevelUp then
-                        myxl_level:LevelUp(false, math.min(level, 2))
+                        local daily_gain = math.random(1, 5)
+                        myxl_level:LevelUp(false, math.min(level * daily_gain, 5))
                     end
                 end
             end)
