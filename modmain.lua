@@ -899,10 +899,19 @@ if ENABLE_MORE_ENCHANTS then
                 end
                 Moon_AddEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
                 local total_bonus = Moon_GetTotalEffectValue(owner, "mx_health")
-                owner.components.health:SetMaxHealth(owner._mx_health_base + total_bonus)
-                owner.components.health:DoDelta(200)
+                local new_max = owner._mx_health_base + total_bonus
+                owner.components.health:SetMaxHealth(new_max)
+                -- 如果之前脱装备时保存了血量，恢复到保存值；否则（首次装备）填充新增血量
+                if owner._mx_health_saved_hp ~= nil then
+                    owner.components.health:SetCurrentHealth(math.min(owner._mx_health_saved_hp, new_max))
+                    owner._mx_health_saved_hp = nil
+                else
+                    owner.components.health:DoDelta(200)
+                end
             end,
             un_equip_fn = function(inst, owner, value)
+                -- 脱下前保存当前血量，防止重新装备时通过 DoDelta 刷血
+                owner._mx_health_saved_hp = owner.components.health.currenthealth
                 Moon_ReduceEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
                 local total_bonus = Moon_GetTotalEffectValue(owner, "mx_health")
                 if owner._mx_health_base then
