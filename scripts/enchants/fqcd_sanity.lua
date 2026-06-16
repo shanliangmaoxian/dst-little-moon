@@ -12,8 +12,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_FQCD_SANITY", {
         name = "番茄炒蛋",
         client_text = "番\n茄",
-        desc = "san值恢复速度大幅提升,san值消耗减半,每5秒回复20点san",
-        check_desc = "san恢复8倍\nsan消耗-50%\n每5秒+20san",
+        desc = "一盘热腾腾的番茄炒蛋\n酸甜咸香，最抚凡人心\nsan恢复8倍 消耗减半 每5秒+20san",
+        check_desc = "家的味道，最治愈～",
         can_add = false,
         only_one = true,                -- 唯一
         is_special = false,
