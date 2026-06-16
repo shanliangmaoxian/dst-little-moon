@@ -138,7 +138,7 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:ReduceEffectValueByKey("immunityKnockBack", 1)
                     hh:ReduceEffectValueByKey("immunityFreeze", 1)
-                    hh:ReduceEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 25)
+                    hh:ReduceEffectValueByKey("addComDamagePercent", (owner._kongbai_stacks or 0) * 25)
                 end
                 owner._kongbai_stacks = nil
             end
