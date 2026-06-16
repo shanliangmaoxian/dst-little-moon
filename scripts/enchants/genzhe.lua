@@ -53,7 +53,7 @@ AddPrefabPostInit("world", function(inst)
                 end
 
                 -- 移除队友buff
-                local function removeTeammateBuffs()
+                owner._genzhe_removeBuffs = function()
                     if not owner._genzhe_applied then return end
                     owner._genzhe_applied = false
                     local hh = owner.components.hh_player
@@ -70,7 +70,7 @@ AddPrefabPostInit("world", function(inst)
                     if hasNearbyTeammate() then
                         applyTeammateBuffs()
                     else
-                        removeTeammateBuffs()
+                        owner._genzhe_removeBuffs()
                     end
                 end)
 
@@ -116,7 +116,9 @@ AddPrefabPostInit("world", function(inst)
                     owner._genzhe_kill_task:Cancel()
                     owner._genzhe_kill_task = nil
                 end
-                removeTeammateBuffs()
+                if owner._genzhe_removeBuffs then
+                    owner._genzhe_removeBuffs()
+                end
             end
         end,
     })
