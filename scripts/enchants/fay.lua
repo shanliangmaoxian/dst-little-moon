@@ -1,0 +1,136 @@
+-- 小月亮 附魔：妖精庇护（fay）
+-- 攻击附带目标已损失生命值8%的真实伤害，击杀敌人时回复30点精神值
+-- 夜间获得夜视效果，移动速度+20%，攻击有15%几率释放妖精之尘使目标减速40%持续3秒
+
+local _G = GLOBAL
+local CFG = GLOBAL.MOON_CFG
+
+if not CFG.ENABLE_MORE_ENCHANTS then return end
+
+AddPrefabPostInit("world", function(inst)
+    if not _G.Moon_IsHHEnabled() then return end
+
+    GLOBAL.AddSpecialEquipEffect("Legend_FAY", {
+        name = "妖精庇护",
+        client_text = "妖精\n庇护",
+        desc = "fay的祝福\n攻击附带目标已损失生命值8%的真实伤害\n击杀敌人回复30精神值\n夜间+20%移速和夜视\n15%几率释放妖精之尘(伤害+特效)",
+        check_desc = "妖精之力的庇护",
+        can_add = false,
+        only_one = true,
+        is_special = false,
+        client_color = { 0.8, 0, 0.8, 1 },
+        check_equip_can_add = function(inst)
+            return true, "满足条件"
+        end,
+        on_equip_fn = function(inst, owner, value)
+            _G.Moon_AddEffect(owner, "fay", "Legend_FAY", 1)
+            if not owner._fay_hooked then
+                owner._fay_hooked = true
+
+                -- 攻击时触发妖精之尘 + 真实伤害
+                owner._fay_attack_handler = function(attacker, data)
+                    if not _G.Moon_HasEffect(owner, "fay") then return end
+                    local target = data and data.target
+                    if not target or not target:IsValid() then return end
+
+                    -- 真实伤害：目标已损失生命值的8%
+                    if target.components.health then
+                        local max_hp = target.components.health.maxhealth or 100
+                        local cur_hp = target.components.health.currenthealth or max_hp
+                        local missing = max_hp - cur_hp
+                        if missing > 0 then
+                            local true_dmg = missing * 0.08
+                            -- 使用 DoHHDelta 造成真实伤害（如果有的话）
+                            if target.components.health.DoHHDelta then
+                                target.components.health:DoHHDelta(-true_dmg, owner, nil)
+                            else
+                                target.components.health:DoDelta(-true_dmg, false, nil)
+                            end
+                        end
+                    end
+
+                    -- 15% 几率释放妖精之尘减速
+                    if math.random() <= 0.15 then
+                        -- 特效
+                        if GLOBAL.SpawnPrefab then
+                            local x, y, z = target.Transform:GetWorldPosition()
+                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                            if fx then
+                                fx.Transform:SetPosition(x, y, z)
+                            end
+                        end
+                    end
+                end
+                owner:ListenForEvent("onattackother", owner._fay_attack_handler)
+
+                -- 击杀回复30精神值
+                owner._fay_kill_handler = function(attacker, data)
+                    if not _G.Moon_HasEffect(owner, "fay") then return end
+                    if owner.components.sanity then
+                        owner.components.sanity:DoDelta(30)
+                    end
+                end
+                owner:ListenForEvent("killed", owner._fay_kill_handler)
+
+                -- 周期性检测夜间buff
+                owner._fay_night_task = owner:DoPeriodicTask(1, function()
+                    if not _G.Moon_HasEffect(owner, "fay") then return end
+                    local is_night = GLOBAL.TheWorld.state.isnight
+                    local hh = owner.components.hh_player
+
+                    if is_night and not owner._fay_night_active then
+                        owner._fay_night_active = true
+                        if hh then
+                            hh:AddEffectValueByKey("addSpeedPercent", 20)
+                        end
+                        -- 夜视：设置灯光组件
+                        if owner.components.playervision then
+                            owner.components.playervision:ForceNightVision(true)
+                            owner._fay_nightvision = true
+                        end
+                    elseif not is_night and owner._fay_night_active then
+                        owner._fay_night_active = false
+                        if hh then
+                            hh:ReduceEffectValueByKey("addSpeedPercent", 20)
+                        end
+                        if owner._fay_nightvision and owner.components.playervision then
+                            owner.components.playervision:ForceNightVision(false)
+                            owner._fay_nightvision = false
+                        end
+                    end
+                end)
+            end
+        end,
+        un_equip_fn = function(inst, owner, value)
+            _G.Moon_ReduceEffect(owner, "fay", "Legend_FAY", 1)
+            if not _G.Moon_HasEffect(owner, "fay") then
+                if owner._fay_attack_handler then
+                    owner:RemoveEventCallback("onattackother", owner._fay_attack_handler)
+                    owner._fay_attack_handler = nil
+                end
+                if owner._fay_kill_handler then
+                    owner:RemoveEventCallback("killed", owner._fay_kill_handler)
+                    owner._fay_kill_handler = nil
+                end
+                if owner._fay_night_task then
+                    owner._fay_night_task:Cancel()
+                    owner._fay_night_task = nil
+                end
+                -- 清理夜间效果
+                if owner._fay_night_active then
+                    local hh = owner.components.hh_player
+                    if hh then
+                        hh:ReduceEffectValueByKey("addSpeedPercent", 20)
+                    end
+                    if owner._fay_nightvision and owner.components.playervision then
+                        owner.components.playervision:ForceNightVision(false)
+                        owner._fay_nightvision = false
+                    end
+                end
+                owner._fay_night_active = nil
+            end
+        end,
+    })
+
+    _G.Moon_RegisterEnchantDrop("Legend_FAY", 0.01)
+end)
