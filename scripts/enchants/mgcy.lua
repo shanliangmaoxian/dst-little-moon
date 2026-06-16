@@ -36,7 +36,8 @@ AddPrefabPostInit("world", function(inst)
                     if math.random() <= 0.5 then
                         -- 尝试让目标再次掉落
                         if victim.components.lootdropper then
-                            victim.components.lootdropper:DropLoot(victim.Transform:GetWorldPosition())
+                            local x, y, z = victim.Transform:GetWorldPosition()
+                            pcall(victim.components.lootdropper.DropLoot, victim.components.lootdropper, Vector3(x, y, z))
                         end
                     end
                 end
