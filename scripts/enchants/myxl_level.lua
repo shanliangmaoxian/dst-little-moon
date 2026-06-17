@@ -14,7 +14,7 @@ AddPrefabPostInit("world", function(inst)
         name = "灵尾印记",
         client_text = "灵\n尾印",
         desc = "每天灵尾+1~5(上限5)",
-        check_desc = "只对璇儿生效\n仅限背包类装备附魔",
+        check_desc = "只对璇儿生效\n仅限背包/百宝囊附魔",
         can_add = false,
         only_one = false,           -- 可叠加
         is_special = false,
@@ -24,7 +24,10 @@ AddPrefabPostInit("world", function(inst)
             if inst:HasTag("backpack") then
                 return true, "满足条件"
             end
-            return false, "只允许附魔在背包上"
+            if inst.prefab == "myxl_bag3x3" then
+                return true, "满足条件"
+            end
+            return false, "只允许附魔在背包或百宝囊上"
         end,
         on_equip_fn = function(inst, owner, value)
             _G.Moon_AddEffect(owner, "myxl_level", "Legend_MYXL_LEVEL", 1)

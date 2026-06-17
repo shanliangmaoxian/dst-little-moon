@@ -39,7 +39,7 @@ modimport("scripts/enchants/wjbd")
 modimport("scripts/enchants/lanqiu")
 modimport("scripts/enchants/aiyo")
 modimport("scripts/enchants/fay")
-modimport("scripts/enchants/yzq")
+-- modimport("scripts/enchants/yzq")  -- 云中雀已注释
 modimport("scripts/enchants/mgcy")
 modimport("scripts/enchants/kongbai")
 modimport("scripts/enchants/strawberry")
