@@ -49,7 +49,7 @@ modimport("scripts/enchants/ganfan")
 modimport("scripts/enchants/hufei")
 modimport("scripts/enchants/qianyue")
 modimport("scripts/enchants/xping")
-modimport("scripts/enchants/jiuyue")
+-- modimport("scripts/enchants/jiuyue") -- 九月已注释，后续可能重做
 modimport("scripts/enchants/genzhe")
 
 -- ------------------------------------------------------------------
