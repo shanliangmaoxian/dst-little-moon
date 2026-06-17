@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_HUFEI", {
         name = "蝴蝶的小阿飞",
         client_text = "蝶\n飞",
-        desc = "最多3只蝴蝶护体\n受到伤害时消耗1只蝴蝶抗伤\n击杀回复15生命+10精神\n移速+20%",
+        desc = "最多3只光翼蝴蝶护体\n受到伤害时消耗1只光翼蝴蝶抗伤\n击杀回复15生命+10精神\n移速+20%",
         check_desc = "蝶翼护体，抗伤保命！",
         can_add = false,
         only_one = true,
@@ -46,15 +46,12 @@ AddPrefabPostInit("world", function(inst)
                                 local butterflies = owner._hufei_butterflies or 0
                                 if butterflies > 0 then
                                     owner._hufei_butterflies = butterflies - 1
-                                    -- 召唤蝴蝶抗伤特效
+                                    -- 蝶翼抗伤特效
                                     if GLOBAL.SpawnPrefab then
                                         local x, y, z = owner.Transform:GetWorldPosition()
-                                        local bf = GLOBAL.SpawnPrefab("butterfly")
-                                        if bf then
-                                            bf.Transform:SetPosition(x + math.random() - 0.5, y + 1, z + math.random() - 0.5)
-                                            bf:DoTaskInTime(0.8, function()
-                                                if bf:IsValid() then bf:Remove() end
-                                            end)
+                                        local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                        if fx then
+                                            fx.Transform:SetPosition(x, y, z)
                                         end
                                     end
                                     -- 抵消伤害，不调用原始 DoDelta
@@ -81,21 +78,16 @@ AddPrefabPostInit("world", function(inst)
                     if owner.components.sanity then
                         owner.components.sanity:DoDelta(10)
                     end
-                    -- 击杀恢复1只蝴蝶（上限3只，满时不再生成特效避免连击视觉泛滥）
+                    -- 击杀恢复1只蝴蝶（上限3只）
                     local current = owner._hufei_butterflies or 0
                     if current < 3 then
                         owner._hufei_butterflies = current + 1
-                        -- 蝴蝶特效（只在真正恢复蝴蝶时生成）
+                        -- 蝶翼恢复光效
                         if GLOBAL.SpawnPrefab then
                             local x, y, z = owner.Transform:GetWorldPosition()
-                            for _ = 1, 2 do
-                                local bf = GLOBAL.SpawnPrefab("butterfly")
-                                if bf then
-                                    bf.Transform:SetPosition(x + math.random() * 2 - 1, y + 1, z + math.random() * 2 - 1)
-                                    bf:DoTaskInTime(2, function()
-                                        if bf:IsValid() then bf:Remove() end
-                                    end)
-                                end
+                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                            if fx then
+                                fx.Transform:SetPosition(x, y, z)
                             end
                         end
                     end
