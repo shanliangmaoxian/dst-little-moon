@@ -81,18 +81,21 @@ AddPrefabPostInit("world", function(inst)
                     if owner.components.sanity then
                         owner.components.sanity:DoDelta(10)
                     end
-                    -- 击杀恢复1只蝴蝶
-                    owner._hufei_butterflies = math.min(3, (owner._hufei_butterflies or 0) + 1)
-                    -- 蝴蝶特效
-                    if GLOBAL.SpawnPrefab then
-                        local x, y, z = owner.Transform:GetWorldPosition()
-                        for _ = 1, 2 do
-                            local bf = GLOBAL.SpawnPrefab("butterfly")
-                            if bf then
-                                bf.Transform:SetPosition(x + math.random() * 2 - 1, y + 1, z + math.random() * 2 - 1)
-                                bf:DoTaskInTime(2, function()
-                                    if bf:IsValid() then bf:Remove() end
-                                end)
+                    -- 击杀恢复1只蝴蝶（上限3只，满时不再生成特效避免连击视觉泛滥）
+                    local current = owner._hufei_butterflies or 0
+                    if current < 3 then
+                        owner._hufei_butterflies = current + 1
+                        -- 蝴蝶特效（只在真正恢复蝴蝶时生成）
+                        if GLOBAL.SpawnPrefab then
+                            local x, y, z = owner.Transform:GetWorldPosition()
+                            for _ = 1, 2 do
+                                local bf = GLOBAL.SpawnPrefab("butterfly")
+                                if bf then
+                                    bf.Transform:SetPosition(x + math.random() * 2 - 1, y + 1, z + math.random() * 2 - 1)
+                                    bf:DoTaskInTime(2, function()
+                                        if bf:IsValid() then bf:Remove() end
+                                    end)
+                                end
                             end
                         end
                     end
