@@ -122,6 +122,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._lanqiu_combo = nil
                 owner._lanqiu_combo_old = nil
                 owner._lanqiu_last_target = nil
+                owner._lanqiu_hooked = nil
             end
         end,
     })

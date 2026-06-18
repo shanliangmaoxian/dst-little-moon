@@ -146,6 +146,7 @@ AddPrefabPostInit("world", function(inst)
                     owner._jiuyue_tree_task:Cancel()
                     owner._jiuyue_tree_task = nil
                 end
+                owner._jiuyue_hooked = nil
             end
         end,
     })

@@ -152,6 +152,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner._qianyue_light = nil
                 owner._qianyue_transformed = nil
+                owner._qianyue_hooked = nil
             end
         end,
     })

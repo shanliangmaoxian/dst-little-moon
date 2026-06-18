@@ -157,6 +157,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._wywq_meditating = false
                 owner._wywq_idle_time = 0
                 owner._wywq_last_pos = nil
+                owner._wywq_inited = nil
             end
         end,
     })

@@ -121,6 +121,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 -- 清除蝴蝶计数
                 owner._hufei_butterflies = nil
+                owner._hufei_hooked = nil
             end
         end,
     })

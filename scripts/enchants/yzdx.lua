@@ -160,6 +160,7 @@ AddPrefabPostInit("world", function(inst)
                     owner._yzdx_old_truedmg = nil
                 end
                 owner._yzdx_effect_applied = nil
+                owner._yzdx_inited = nil
             end
         end,
     })

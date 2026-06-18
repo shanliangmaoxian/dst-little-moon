@@ -66,6 +66,7 @@ AddPrefabPostInit("world", function(inst)
                     owner._fqcd_regen_task:Cancel()
                     owner._fqcd_regen_task = nil
                 end
+                owner._fqcd_sanity_hooked = nil
             end
         end,
     })
