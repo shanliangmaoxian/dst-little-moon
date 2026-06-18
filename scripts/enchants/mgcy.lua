@@ -37,7 +37,7 @@ AddPrefabPostInit("world", function(inst)
                         -- 尝试让目标再次掉落
                         if victim.components.lootdropper then
                             local x, y, z = victim.Transform:GetWorldPosition()
-                            pcall(victim.components.lootdropper.DropLoot, victim.components.lootdropper, Vector3(x, y, z))
+                            _G.pcall(victim.components.lootdropper.DropLoot, victim.components.lootdropper, Vector3(x, y, z))
                         end
                     end
                 end
