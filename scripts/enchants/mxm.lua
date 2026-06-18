@@ -43,16 +43,14 @@ AddPrefabPostInit("world", function(inst)
                                 self._mxm_death_cooldown = true
 
                                 -- 隐身3秒
-                                if self.components.playervision then
-                                    self.components.playervision:SetInvisible(true)
-                                    self._mxm_invisible = true
-                                    self:DoTaskInTime(3, function()
-                                        if self:IsValid() and self.components.playervision then
-                                            self.components.playervision:SetInvisible(false)
-                                            self._mxm_invisible = false
-                                        end
-                                    end)
-                                end
+                                self:Hide()
+                                self._mxm_invisible = true
+                                self:DoTaskInTime(3, function()
+                                    if self:IsValid() then
+                                        self:Show()
+                                        self._mxm_invisible = false
+                                    end
+                                end)
 
                                 -- 90秒冷却
                                 if self._mxm_cooldown_task then
@@ -139,8 +137,8 @@ AddPrefabPostInit("world", function(inst)
                     owner._mxm_attack_handler = nil
                 end
                 -- 恢复隐身
-                if owner._mxm_invisible and owner.components.playervision then
-                    owner.components.playervision:SetInvisible(false)
+                if owner._mxm_invisible then
+                    owner:Show()
                     owner._mxm_invisible = false
                 end
                 -- 移除不掉落标签
