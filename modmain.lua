@@ -51,6 +51,10 @@ modimport("scripts/enchants/qianyue")
 modimport("scripts/enchants/xping")
 -- modimport("scripts/enchants/jiuyue") -- 九月已注释，后续可能重做
 modimport("scripts/enchants/genzhe")
+modimport("scripts/enchants/suansuancao")
+modimport("scripts/enchants/panghu")
+modimport("scripts/enchants/dagongren")
+modimport("scripts/enchants/dengqiuling")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
