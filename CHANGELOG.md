@@ -1,5 +1,11 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.13.4 - 2026-06-18
+
+### 修复
+- **是萌新喵**：修复玩家死亡时 `SetInvisible` 方法不存在导致的崩溃
+  - `playervision:SetInvisible()` 并非 DST 标准 API，替换为 `inst:Hide()` / `inst:Show()`
+
 ## 1.13.3 - 2026-06-17
 
 ### 优化
