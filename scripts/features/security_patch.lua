@@ -10,8 +10,8 @@ AddComponentPostInit("moneymanager", function(self)
     end
     local _oldOnBuy = self.OnBuy
     self.OnBuy = function(self, itemName, number, lastskin)
-        if TUNING.slotmachineutils and TUNING.slotmachineutils.findItemInShopMap then
-            if not TUNING.slotmachineutils.findItemInShopMap(itemName) then
+        if _G.TUNING.slotmachineutils and _G.TUNING.slotmachineutils.findItemInShopMap then
+            if not _G.TUNING.slotmachineutils.findItemInShopMap(itemName) then
                 print("[小月亮] 拦截非法购买: " .. GLOBAL.tostring(itemName))
                 return false, 0
             end

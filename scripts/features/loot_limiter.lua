@@ -110,13 +110,24 @@ AddComponentPostInit("lootdropper", function(self)
                             else break end
                         end
                     else
-                        -- 不可堆叠：强制截断
-                        local actual_to_drop = _G.math.min(total_count, MAX_NON_STACKABLE)
-                        for i = 1, actual_to_drop - 1 do
-                            local extra_loot = self:SpawnLootPrefab(prefab, pt)
-                            if extra_loot then
-                                self.inst:PushEvent("onlootdropped", { loot = extra_loot, attacker = attacker })
-                            else break end
+                        -- 不可堆叠
+                        if IsJunkLoot(prefab) then
+                            -- 垃圾物品：强制截断
+                            local actual_to_drop = _G.math.min(total_count, MAX_NON_STACKABLE)
+                            for i = 1, actual_to_drop - 1 do
+                                local extra_loot = self:SpawnLootPrefab(prefab, pt)
+                                if extra_loot then
+                                    self.inst:PushEvent("onlootdropped", { loot = extra_loot, attacker = attacker })
+                                else break end
+                            end
+                        else
+                            -- 非垃圾物品：全部生成，不做截断
+                            for i = 2, total_count do
+                                local extra_loot = self:SpawnLootPrefab(prefab, pt)
+                                if extra_loot then
+                                    self.inst:PushEvent("onlootdropped", { loot = extra_loot, attacker = attacker })
+                                else break end
+                            end
                         end
                     end
                 else
