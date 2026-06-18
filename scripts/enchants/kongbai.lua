@@ -141,6 +141,7 @@ AddPrefabPostInit("world", function(inst)
                     hh:ReduceEffectValueByKey("addComDamagePercent", (owner._kongbai_stacks or 0) * 25)
                 end
                 owner._kongbai_stacks = nil
+                owner._kongbai_hooked = nil
             end
         end,
     })

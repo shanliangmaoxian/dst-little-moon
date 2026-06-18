@@ -92,6 +92,7 @@ AddPrefabPostInit("world", function(inst)
                     hh:ReduceEffectValueByKey("workAddSpeed", 1)
                 end
                 owner:RemoveTag("notarget")
+                owner._mgcy_hooked = nil
             end
         end,
     })

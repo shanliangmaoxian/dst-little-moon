@@ -120,6 +120,7 @@ AddPrefabPostInit("world", function(inst)
                 if owner._genzhe_removeBuffs then
                     owner._genzhe_removeBuffs()
                 end
+                owner._genzhe_hooked = nil
             end
         end,
     })

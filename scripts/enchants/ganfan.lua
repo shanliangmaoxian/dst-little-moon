@@ -142,6 +142,7 @@ AddPrefabPostInit("world", function(inst)
                     owner:RemoveEventCallback("oneat", owner._ganfan_eat_handler)
                     owner._ganfan_eat_handler = nil
                 end
+                owner._ganfan_hooked = nil
             end
         end,
     })

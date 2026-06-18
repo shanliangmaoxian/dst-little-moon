@@ -130,6 +130,7 @@ AddPrefabPostInit("world", function(inst)
                     owner._wjbd_monitor_task:Cancel()
                     owner._wjbd_monitor_task = nil
                 end
+                owner._wjbd_hooked = nil
             end
         end,
     })

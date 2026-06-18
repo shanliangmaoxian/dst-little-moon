@@ -141,6 +141,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner._yzq_soaring = nil
                 owner._yzq_soar_ready = nil
+                owner._yzq_hooked = nil
             end
         end,
     })

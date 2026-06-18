@@ -146,6 +146,7 @@ AddPrefabPostInit("world", function(inst)
                     owner:RemoveTag("keepinventory")
                     owner._mxm_added_keeptag = nil
                 end
+                owner._mxm_hooked = nil
             end
         end,
     })

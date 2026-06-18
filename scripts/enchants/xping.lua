@@ -134,6 +134,7 @@ AddPrefabPostInit("world", function(inst)
                     owner:RemoveEventCallback("attacked", owner._xping_attacked_handler)
                     owner._xping_attacked_handler = nil
                 end
+                owner._xping_hooked = nil
             end
         end,
     })

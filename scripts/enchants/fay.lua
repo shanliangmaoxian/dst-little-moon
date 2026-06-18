@@ -128,6 +128,7 @@ AddPrefabPostInit("world", function(inst)
                     end
                 end
                 owner._fay_night_active = nil
+                owner._fay_hooked = nil
             end
         end,
     })

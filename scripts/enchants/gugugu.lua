@@ -166,6 +166,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner._gugugu_dodged = nil
                 owner._gugugu_dodge_cooldown = nil
+                owner._gugugu_hooked = nil
             end
         end,
     })

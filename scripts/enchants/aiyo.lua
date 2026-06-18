@@ -74,6 +74,7 @@ AddPrefabPostInit("world", function(inst)
                     health.DoDelta = health._aiyo_old_dodelta
                     health._aiyo_old_dodelta = nil
                 end
+                owner._aiyo_hooked = nil
             end
         end,
     })
