@@ -1,7 +1,7 @@
 -- 小月亮 附魔：空白
--- 攻击时30%几率清除目标身上所有增益效果
+-- 攻击时60%几率清除目标身上所有增益效果
 -- 自身免疫所有控制效果（冰冻、眩晕、击退）
--- 每成功清除一个增益，获得+25%伤害加成，持续10秒（最多5层+125%）
+-- 每成功清除一个增益，获得+60%伤害加成，持续30秒（最多5层+300%）
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -14,7 +14,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_KONGBAI", {
         name = "空白",
         client_text = "空\n白",
-        desc = "攻击30%几率清除目标所有增益\n免疫冰冻/眩晕/击退\n每清除一个增益+25%伤害(最多5层+125%)\n持续10秒",
+        desc = "攻击60%几率清除目标所有增益\n免疫冰冻/眩晕/击退\n每清除一个增益+60%伤害(最多5层+300%)\n持续30秒",
         check_desc = "归于虚无，万物皆空",
         can_add = false,
         only_one = true,
@@ -43,7 +43,7 @@ AddPrefabPostInit("world", function(inst)
                     local target = data and data.target
                     if not target or not target:IsValid() then return end
 
-                    if math.random() <= 0.3 then
+                    if math.random() <= 0.6 then
                         local buffs_cleared = 0
 
                         -- 清除目标的伤害吸收buff
@@ -90,19 +90,19 @@ AddPrefabPostInit("world", function(inst)
                             local hh_player = owner.components.hh_player
                             if hh_player then
                                 -- 移除旧层
-                                hh_player:ReduceEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 25)
+                                hh_player:ReduceEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 60)
                                 -- 增加新层
                                 owner._kongbai_stacks = math.min(owner._kongbai_stacks + buffs_cleared, 5)
-                                hh_player:AddEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 25)
+                                hh_player:AddEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 60)
 
-                                -- 10秒后衰减
+                                -- 30秒后衰减
                                 if owner._kongbai_decay_task then
                                     owner._kongbai_decay_task:Cancel()
                                 end
-                                owner._kongbai_decay_task = owner:DoTaskInTime(10, function()
+                                owner._kongbai_decay_task = owner:DoTaskInTime(30, function()
                                     if owner:IsValid() then
                                         if owner.components.hh_player then
-                                            owner.components.hh_player:ReduceEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 25)
+                                            owner.components.hh_player:ReduceEffectValueByKey("addComDamagePercent", owner._kongbai_stacks * 60)
                                         end
                                         owner._kongbai_stacks = 0
                                     end
@@ -138,7 +138,7 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:ReduceEffectValueByKey("immunityKnockBack", 1)
                     hh:ReduceEffectValueByKey("immunityFreeze", 1)
-                    hh:ReduceEffectValueByKey("addComDamagePercent", (owner._kongbai_stacks or 0) * 25)
+                    hh:ReduceEffectValueByKey("addComDamagePercent", (owner._kongbai_stacks or 0) * 60)
                 end
                 owner._kongbai_stacks = nil
                 owner._kongbai_hooked = nil
