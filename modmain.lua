@@ -55,6 +55,7 @@ modimport("scripts/enchants/suansuancao")
 modimport("scripts/enchants/panghu")
 modimport("scripts/enchants/dagongren")
 modimport("scripts/enchants/dengqiuling")
+modimport("scripts/enchants/junjun")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
