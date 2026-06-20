@@ -1,6 +1,5 @@
 -- 小月亮 附魔：空白
 -- 攻击时60%几率清除目标身上所有增益效果
--- 自身免疫所有控制效果（冰冻、眩晕、击退）
 -- 每成功清除一个增益，获得+60%伤害加成，持续30秒（最多5层+300%）
 
 local _G = GLOBAL
@@ -14,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_KONGBAI", {
         name = "空白",
         client_text = "空\n白",
-        desc = "攻击60%几率清除目标所有增益\n免疫冰冻/眩晕/击退\n每清除一个增益+60%伤害(最多5层+300%)\n持续30秒",
+        desc = "攻击60%几率清除目标所有增益\n每清除一个增益+60%伤害(最多5层+300%)\n持续30秒",
         check_desc = "归于虚无，万物皆空",
         can_add = false,
         only_one = true,
@@ -28,14 +27,6 @@ AddPrefabPostInit("world", function(inst)
             if not owner._kongbai_hooked then
                 owner._kongbai_hooked = true
                 owner._kongbai_stacks = 0
-
-                -- 免疫控制效果
-                -- 免疫冰冻
-                local hh = owner.components.hh_player
-                if hh then
-                    hh:AddEffectValueByKey("immunityKnockBack", 1)
-                    hh:AddEffectValueByKey("immunityFreeze", 1)
-                end
 
                 -- 攻击时清除目标增益
                 owner._kongbai_attack_handler = function(attacker, data)
@@ -136,8 +127,6 @@ AddPrefabPostInit("world", function(inst)
                 end
                 local hh = owner.components.hh_player
                 if hh then
-                    hh:ReduceEffectValueByKey("immunityKnockBack", 1)
-                    hh:ReduceEffectValueByKey("immunityFreeze", 1)
                     hh:ReduceEffectValueByKey("addComDamagePercent", (owner._kongbai_stacks or 0) * 60)
                 end
                 owner._kongbai_stacks = nil

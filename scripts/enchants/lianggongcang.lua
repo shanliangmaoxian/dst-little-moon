@@ -1,5 +1,5 @@
 -- 小月亮 附魔：良弓藏
--- 飞鸟尽，良弓藏 — 自身伤害-100%，每3秒自动射箭攻击最近敌人
+-- 飞鸟尽，良弓藏 — 自身伤害-100%，每30秒自动射箭攻击最近敌人
 -- 每箭造成300%攻击力伤害，遵循"藏弓待发"之意
 
 local _G = GLOBAL
@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LIANGGONG", {
         name = "良弓藏",
         client_text = "良弓\n藏",
-        desc = "自身伤害-100%\n每3秒自动射箭攻击最近敌人(300%伤害)\n飞鸟尽，良弓藏…",
+        desc = "自身伤害-100%\n每30秒自动射箭攻击最近敌人(300%伤害)\n飞鸟尽，良弓藏…",
         check_desc = "弓藏箭犹发，万物皆可杀！",
         can_add = false,
         only_one = true,
@@ -34,7 +34,7 @@ AddPrefabPostInit("world", function(inst)
                 end
 
                 -- 每3秒自动射箭
-                owner._lianggong_auto_task = owner:DoPeriodicTask(3, function()
+                owner._lianggong_auto_task = owner:DoPeriodicTask(30, function()
                     if not _G.Moon_HasEffect(owner, "lianggongcang") then return end
                     if not owner:IsValid() then return end
 

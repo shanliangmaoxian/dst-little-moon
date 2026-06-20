@@ -231,6 +231,18 @@ configuration_options = {
         default = true,
     },
 
+    AddTitle("快捷发言"),
+    {
+        name = "ENABLE_QUICK_CHAT",
+        label = "开启快捷发言",
+        hover = "是否在助手面板中显示快捷发言输入框",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+
     AddTitle("掉落优化 (防卡顿)"),
     {
         name = "ENABLE_LOOT_LIMITER",
