@@ -1,6 +1,7 @@
 local Widget = require("widgets/widget")
 local Image = require("widgets/image")
 local Text = require("widgets/text")
+local TextEdit = require("widgets/textedit")
 local Spinner = require("widgets/spinner")
 local TEMPLATES = require("widgets/redux/templates")
 
@@ -22,7 +23,7 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat)
     Widget._ctor(self, "LittleMoonPanel")
 
     self.owner = owner
@@ -32,6 +33,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.enable_auto_pickup = enable_auto_pickup ~= false
     self.enable_suicide = enable_suicide ~= false
     self.dig_treasure_mode = dig_treasure_mode or 0
+    self.enable_quick_chat = enable_quick_chat ~= false
 
     self.drag_move_handler = nil
     self.drag_button_handler = nil
@@ -49,6 +51,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     end
     if self.enable_auto_pickup then panel_height = panel_height + 45 end
     if self.enable_suicide then panel_height = panel_height + 45 end
+    if self.enable_quick_chat then panel_height = panel_height + 85 end
     self.panel_height = panel_height
 
     self:SetScale(scale or 1.0)
@@ -275,6 +278,48 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
                 end
             end, real_owner)
         end
+    end
+
+    -------------------------------------------------------
+    -- 快捷发送
+    -------------------------------------------------------
+    if self.enable_quick_chat then
+        -- 分割线
+        if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup then
+            AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
+        end
+
+        self.chat_title = self:AddChild(Text(CHATFONT, 24, "快捷发送"))
+        self.chat_title:SetPosition(0, current_y, 0)
+        self.chat_title:SetColour(unpack(GOLD))
+        if self.chat_title.EnableOutline then self.chat_title:EnableOutline(true) end
+
+        local chat_y = current_y - 38
+
+        self.chat_input_bg = self:AddChild(Image("images/ui.xml", "white.tex"))
+        self.chat_input_bg:SetSize(175, 30)
+        self.chat_input_bg:SetTint(0.9, 0.9, 0.9, 1)
+        self.chat_input_bg:SetPosition(-50, chat_y, 0)
+
+        self.chat_input = self:AddChild(TextEdit(CHATFONT, 22))
+        self.chat_input:SetPosition(-50, chat_y + 0.5, 0)
+        self.chat_input:SetColour(0, 0, 0, 255)
+        self.chat_input:SetEditTextColour(0, 0, 0, 255)
+        self.chat_input:SetIdleTextColour(0, 0, 0, 255)
+        self.chat_input:SetRegionSize(170, 28)
+        self.chat_input:SetVAlign(ANCHOR_MIDDLE)
+        self.chat_input:SetHAlign(ANCHOR_LEFT)
+
+        self.chat_send_btn = self:AddChild(TEMPLATES.StandardButton(function()
+            local msg = self.chat_input:GetString()
+            if msg and msg ~= "" then
+                TheNet:Say(msg, true)
+            end
+        end, "发送", { 65, 30 }))
+        self.chat_send_btn:SetPosition(105, chat_y, 0)
+        self.chat_send_btn:SetTextSize(18)
+
+        current_y = current_y - 50
     end
 
     self:LoadPosition()
