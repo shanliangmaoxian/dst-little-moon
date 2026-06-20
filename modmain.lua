@@ -43,7 +43,7 @@ modimport("scripts/enchants/fay")
 modimport("scripts/enchants/mgcy")
 modimport("scripts/enchants/kongbai")
 modimport("scripts/enchants/strawberry")
-modimport("scripts/enchants/mxm")
+-- modimport("scripts/enchants/mxm")  -- 萌新已注释
 modimport("scripts/enchants/gugugu")
 modimport("scripts/enchants/ganfan")
 modimport("scripts/enchants/hufei")
@@ -56,6 +56,9 @@ modimport("scripts/enchants/panghu")
 modimport("scripts/enchants/dagongren")
 modimport("scripts/enchants/dengqiuling")
 modimport("scripts/enchants/junjun")
+modimport("scripts/enchants/luo")
+modimport("scripts/enchants/lianggongcang")
+modimport("scripts/enchants/huaimin")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
