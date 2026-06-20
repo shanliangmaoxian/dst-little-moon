@@ -24,7 +24,7 @@ AddPrefabPostInit("world", function(inst)
             if inst:HasTag("backpack") then
                 return true, "满足条件"
             end
-            if inst.prefab == "myxl_bag3x3" then
+            if inst.prefab and string.find(inst.prefab, "myxl_bag3x") then
                 return true, "满足条件"
             end
             return false, "只允许附魔在背包或百宝囊上"
