@@ -18,7 +18,7 @@ AddPrefabPostInit("world", function(inst)
         can_add = false,
         only_one = true,
         is_special = false,
-        client_color = { 0.6, 0.4, 0.2, 1 },
+        client_color = { 0.8, 0, 0.8, 1 },
         check_equip_can_add = function(inst)
             return true, "满足条件"
         end,
@@ -46,8 +46,8 @@ AddPrefabPostInit("world", function(inst)
 
                     for _, e in ipairs(enemies) do
                         if e ~= owner and e:IsValid() and e.components.health and not e.components.health:IsDead() then
-                            local dx = x - e.Transform:GetWorldPosition()
-                            local dz = z - e.Transform:GetWorldPosition()
+                            local ex, ey, ez = e.Transform:GetWorldPosition()
+                            local dx, dz = x - ex, z - ez
                             local dist = dx * dx + dz * dz
                             if dist < nearest_dist then
                                 nearest_dist = dist
@@ -62,9 +62,9 @@ AddPrefabPostInit("world", function(inst)
                         if nearest.components.health then
                             -- 使用HH真实伤害（如果有）
                             if nearest.components.health.DoHHDelta then
-                                nearest.components.health:DoHHDelta(-dmg * 3, owner, "lianggong_auto")
+                                nearest.components.health:DoHHDelta(-dmg * 3, owner, "良弓_自动箭")
                             else
-                                nearest.components.health:DoDelta(-dmg * 3, false, "lianggong_auto")
+                                nearest.components.health:DoDelta(-dmg * 3, false, "良弓_自动箭")
                             end
                         end
 
