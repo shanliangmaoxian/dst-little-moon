@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_YZDX", {
         name = "一枝独秀",
         client_text = "一枝\n独秀",
-        desc = "1%血量(撕裂/噩梦)+8%吸血+50%增强\n周围无队友时效果翻倍",
+        desc = "有托托莉就1%的噩梦伤害，没有就1%血量伤害+8%吸血+50%增强\n周围无队友时效果翻倍",
         check_desc = "一枝独秀，傲视群雄！\n周围15码内无队友时效果翻倍",
         can_add = false,
         only_one = true,
