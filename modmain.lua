@@ -59,6 +59,7 @@ modimport("scripts/enchants/junjun")
 modimport("scripts/enchants/luo")
 modimport("scripts/enchants/lianggongcang")
 modimport("scripts/enchants/huaimin")
+modimport("scripts/enchants/laodong")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)

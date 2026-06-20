@@ -85,7 +85,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     AddBorder(2, panel_height, -PANEL_WIDTH / 2 + 1, 0, {0.25, 0.20, 0.14, 0.85}) -- Left
     AddBorder(2, panel_height, PANEL_WIDTH / 2 - 1, 0, {0.25, 0.20, 0.14, 0.85}) -- Right
 
-    -- 拖动手柄
+    -- 拖动手柄 - 顶部
     self.handle = self:AddChild(Image("images/ui.xml", "white.tex"))
     self.handle:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
     self.handle:SetTint(1, 1, 1, 0)
@@ -97,6 +97,19 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.drag_dots = self.handle:AddChild(Text(CHATFONT, 24, "::: 小月亮助手 :::"))
     self.drag_dots:SetColour(unpack(GOLD))
     self.drag_dots:SetPosition(0, -1, 0)
+
+    -- 拖动手柄 - 底部
+    self.handle_bottom = self:AddChild(Image("images/ui.xml", "white.tex"))
+    self.handle_bottom:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
+    self.handle_bottom:SetTint(1, 1, 1, 0)
+    self.handle_bottom:SetPosition(0, -panel_height / 2 + HANDLE_HEIGHT / 2, 0)
+    self.handle_bottom:SetClickable(true)
+    self.handle_bottom:SetHoverText("拖动面板")
+    self.handle_bottom.OnMouseButton = function(_, button, down) return self:OnHandleMouseButton(button, down) end
+
+    self.drag_dots_bottom = self.handle_bottom:AddChild(Text(CHATFONT, 24, "::: 小月亮助手 :::"))
+    self.drag_dots_bottom:SetColour(unpack(GOLD))
+    self.drag_dots_bottom:SetPosition(0, -1, 0)
 
     -- 2. 堆叠式布局：计算每个部分的起始 Y 坐标
     local current_y = panel_height / 2 - HANDLE_HEIGHT - 20 
