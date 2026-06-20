@@ -96,7 +96,7 @@ AddPrefabPostInit("world", function(inst)
                                 -- 队友击杀，掉落一件物品
                                 if ent.components.lootdropper and not ent._genzhe_looted then
                                     local ex, ey, ez = ent.Transform:GetWorldPosition()
-                                    _G.pcall(ent.components.lootdropper.DropLoot, ent.components.lootdropper, Vector3(ex, ey, ez))
+                                    _G.pcall(ent.components.lootdropper.DropLoot, ent.components.lootdropper, _G.Vector3(ex, ey, ez))
                                     ent._genzhe_looted = true
                                     break
                                 end

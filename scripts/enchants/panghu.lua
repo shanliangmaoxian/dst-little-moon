@@ -56,7 +56,7 @@ AddPrefabPostInit("world", function(inst)
                         end
 
                         -- 吓跑周围小动物
-                        local animals = _G.TheSim:FindEntities(x, y, z, 12, nil, nil, { "rabbit", "butterfly", "bird", "mole", "perd", "penguin" })
+                        local animals = _G.TheSim:FindEntities(x, y, z, 12, nil, { "rabbit", "butterfly", "bird", "mole", "perd", "penguin" })
                         for _, animal in ipairs(animals) do
                             if animal:IsValid() then
                                 animal:PushEvent("panic")
