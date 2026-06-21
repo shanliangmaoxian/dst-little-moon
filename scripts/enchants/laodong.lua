@@ -91,7 +91,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中20%概率获得藏宝图",
+        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图",
         check_desc = "吃烤土豆获得（135保底），劳动最光荣！",
         can_add = false,
         only_one = true,
@@ -129,7 +129,7 @@ AddPrefabPostInit("world", function(inst)
                     if not _G.Moon_HasEffect(owner, "laodong") then return end
                     local target = data and data.target
                     if not target or not target:IsValid() then return end
-                    if math.random() > 0.2 then return end
+                    if math.random() > 0.05 then return end
 
                     local tally = _G.SpawnPrefab("hh_treasure_tally")
                     if tally and owner.components.inventory then
@@ -145,7 +145,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._ldg_pick_handler = function(inst, data)
                     if not _G.Moon_HasEffect(owner, "laodong") then return end
                     if not data or not data.loot then return end
-                    if math.random() > 0.2 then return end
+                    if math.random() > 0.05 then return end
 
                     local tally = _G.SpawnPrefab("hh_treasure_tally")
                     if tally and owner.components.inventory then
