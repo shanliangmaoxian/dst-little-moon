@@ -50,47 +50,35 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
 
-    -- 烹饪秒出锅（全局只挂一次）
+    -- 烹饪秒出锅：hook StartCooking，调用完原始函数强制 cooktime=0（下一帧自动触发完成）
     local _ldg_cook_hooked = false
     if not _ldg_cook_hooked then
         _ldg_cook_hooked = true
 
-        AddPrefabPostInit("cookpot", function(cookpot)
+        local function hookCookPot(cookpot)
             if not _G.TheWorld.ismastersim then return end
             if not cookpot.components.stewer then return end
 
-            local old_fn = cookpot.components.stewer.StartCooking
+            local old_start = cookpot.components.stewer.StartCooking
             cookpot.components.stewer.StartCooking = function(self, doer)
-                local result = old_fn(self, doer)
-                if doer and doer:IsValid() and doer:HasTag("player")
+                local result = old_start(self, doer)
+                if self:IsCooking() and doer and doer:IsValid() and doer:HasTag("player")
                     and _G.Moon_HasEffect(doer, "laodong") then
-                    self.cooktimemult = 0.01
+                    self.cooktime = 0
                 end
                 return result
             end
-        end)
+        end
 
-        AddPrefabPostInit("portablecookpot", function(cookpot)
-            if not _G.TheWorld.ismastersim then return end
-            if not cookpot.components.stewer then return end
-
-            local old_fn = cookpot.components.stewer.StartCooking
-            cookpot.components.stewer.StartCooking = function(self, doer)
-                local result = old_fn(self, doer)
-                if doer and doer:IsValid() and doer:HasTag("player")
-                    and _G.Moon_HasEffect(doer, "laodong") then
-                    self.cooktimemult = 0.01
-                end
-                return result
-            end
-        end)
+        AddPrefabPostInit("cookpot", hookCookPot)
+        AddPrefabPostInit("portablecookpot", hookCookPot)
     end
 
     -- 附魔注册
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 快速采集：采集/砍伐/挖掘速度+100%\n● 快速制作：制作速度+20倍（秒做）\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中20%概率获得藏宝图",
+        desc = "劳动最光荣！\n● 秒采：采集/砍伐/挖掘瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中20%概率获得藏宝图",
         check_desc = "吃烤土豆获得（135保底），劳动最光荣！",
         can_add = false,
         only_one = true,
@@ -105,15 +93,15 @@ AddPrefabPostInit("world", function(inst)
                 owner._ldg_hooked = true
                 local hh = owner.components.hh_player
 
-                -- 1) 快采：工作效率+100%
+                -- 1) 快采：工作效率+100倍（真正的秒完成）
                 if hh then
-                    hh:AddEffectValueByKey("workAddSpeed", 1)
+                    hh:AddEffectValueByKey("workAddSpeed", 100)
                 end
 
-                -- 2) 快速制作
+                -- 2) 秒制作
                 if owner.components.builder then
                     owner._ldg_old_buildtime = owner.components.builder.buildingtime or 1
-                    owner.components.builder.buildingtime = owner._ldg_old_buildtime * 0.05
+                    owner.components.builder.buildingtime = 0.001
                 end
 
                 -- 3) 劳动中20%获得藏宝图（完成工作）
@@ -155,7 +143,7 @@ AddPrefabPostInit("world", function(inst)
             if not _G.Moon_HasEffect(owner, "laodong") then
                 local hh = owner.components.hh_player
                 if hh then
-                    hh:ReduceEffectValueByKey("workAddSpeed", 1)
+                    hh:ReduceEffectValueByKey("workAddSpeed", 100)
                 end
 
                 -- 恢复制作速度
