@@ -5,50 +5,53 @@
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
 
-if not CFG.ENABLE_MORE_ENCHANTS then return end
-
 -- =========================================================
--- 135烤土豆保底计数 & 烹饪秒出锅钩子
--- 用局部变量（closure）替代全局守卫，避免 strict 模式报错
+-- 135烤土豆保底计数（独立于 HH 框架，无条件注册）
+-- 避免在部署环境中 Moon_IsHHEnabled() 返回 false 导致计数器不生效
 -- =========================================================
 local _ldg_potato_counter = {}
-local _ldg_cook_hooked = false
+
+AddPrefabPostInitAny(function(inst2)
+    if not _G.TheWorld.ismastersim then return end
+    if not inst2:HasTag("player") then return end
+
+    inst2:ListenForEvent("oneat", function(_, data)
+        local food = data and data.food
+        if not food or not food:IsValid() then return end
+        if food.prefab ~= "potato_cooked" then return end
+
+        local userid = inst2.userid
+        if not userid then return end
+
+        _ldg_potato_counter[userid] = (_ldg_potato_counter[userid] or 0) + 1
+        local count = _ldg_potato_counter[userid]
+
+        if count >= 135 then
+            -- HHSpawnStoneById 可能不存在（HH框架未启用），用 pcall 兜一下
+            local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_LDG")
+            if success and stone and inst2.components.inventory then
+                inst2.components.inventory:GiveItem(stone, nil, inst2:GetPosition())
+                if inst2.components.talker then
+                    inst2.components.talker:Say("劳动最光荣！吃了135个烤土豆，获得劳动附魔石！")
+                end
+            end
+            _ldg_potato_counter[userid] = 0
+        elseif count % 15 == 0 and inst2.components.talker then
+            inst2.components.talker:Say("吃了" .. count .. "个烤土豆，再吃" .. (135 - count) .. "个保底劳动附魔石！")
+        end
+    end)
+end)
+
+-- =========================================================
+-- 以下内容需要 HH 附魔框架
+-- =========================================================
+if not CFG.ENABLE_MORE_ENCHANTS then return end
 
 AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
 
-    -- 135烤土豆保底（每个玩家独立计数）
-    AddPrefabPostInitAny(function(inst2)
-        if not _G.TheWorld.ismastersim then return end
-        if not inst2:HasTag("player") then return end
-
-        inst2:ListenForEvent("oneat", function(_, data)
-            local food = data and data.food
-            if not food or not food:IsValid() then return end
-            if food.prefab ~= "potato_cooked" then return end
-
-            local userid = inst2.userid
-            if not userid then return end
-
-            _ldg_potato_counter[userid] = (_ldg_potato_counter[userid] or 0) + 1
-            local count = _ldg_potato_counter[userid]
-
-            if count >= 135 then
-                local stone = _G.HHSpawnStoneById("Legend_LDG")
-                if stone and inst2.components.inventory then
-                    inst2.components.inventory:GiveItem(stone, nil, inst2:GetPosition())
-                    if inst2.components.talker then
-                        inst2.components.talker:Say("劳动最光荣！吃了135个烤土豆，获得劳动附魔石！")
-                    end
-                end
-                _ldg_potato_counter[userid] = 0
-            elseif count % 15 == 0 and inst2.components.talker then
-                inst2.components.talker:Say("吃了" .. count .. "个烤土豆，再吃" .. (135 - count) .. "个保底劳动附魔石！")
-            end
-        end)
-    end)
-
     -- 烹饪秒出锅（全局只挂一次）
+    local _ldg_cook_hooked = false
     if not _ldg_cook_hooked then
         _ldg_cook_hooked = true
 
@@ -175,4 +178,6 @@ AddPrefabPostInit("world", function(inst)
             end
         end,
     })
+
+    _G.Moon_RegisterEnchantDrop("Legend_LDG", 0.01)
 end)
