@@ -1,13 +1,20 @@
 -- 小月亮 附魔：劳动最光荣
 -- 吃烤土豆获得（135保底）
 -- 效果：快采、快速制作、烹饪秒出锅、劳动中20%概率获得藏宝图
+--
+-- 实现原理：
+--   秒采/秒交互 → HH框架 fast_act 效果（stategraph钩子）
+--   秒砍挖 → 自建 stategraph 钩子 CHOP/MINE → doshortaction
+--   秒制作 → builder.buildingtime = 0.001
+--   秒出锅 → stewer.StartCooking 前 cooktimemult = 0.001
+--   快敲击 → WorkedBy_Internal 100x 工作量
+--   藏宝图 → finishedwork / picksomething 事件 20% 概率
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
 
 -- =========================================================
 -- 135烤土豆保底计数（独立于 HH 框架，无条件注册）
--- 避免在部署环境中 Moon_IsHHEnabled() 返回 false 导致计数器不生效
 -- =========================================================
 local _ldg_potato_counter = {}
 
@@ -27,7 +34,6 @@ AddPrefabPostInitAny(function(inst2)
         local count = _ldg_potato_counter[userid]
 
         if count >= 135 then
-            -- HHSpawnStoneById 可能不存在（HH框架未启用），用 pcall 兜一下
             local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_LDG")
             if success and stone and inst2.components.inventory then
                 inst2.components.inventory:GiveItem(stone, nil, inst2:GetPosition())
@@ -47,38 +53,100 @@ end)
 -- =========================================================
 if not CFG.ENABLE_MORE_ENCHANTS then return end
 
+-- 判断玩家是否有 fast_act（客户端 → hh_client 组件）
+local function clientHasFastAct(inst)
+    if not inst or not inst.components then return false end
+    local hh_client = inst.components.hh_client
+    if hh_client and hh_client.GetValue then
+        return hh_client:GetValue("hh_fast_act") == true
+    end
+    return false
+end
+
+-- 判断玩家是否有 fast_act（服务端 → hh_player 组件）
+local function serverHasFastAct(inst)
+    if not inst or not inst.components then return false end
+    local hh = inst.components.hh_player
+    if hh and hh.HasSpecialEffect then
+        return hh:HasSpecialEffect("fast_act")
+    end
+    return false
+end
+
+-- =========================================================
+-- 1. CHOP / MINE 秒动作（补充 HH 框架 fast_act 未覆盖的动作）
+-- =========================================================
+AddStategraphPostInit("wilson", function(sg)
+    if not sg["actionhandlers"] then return end
+    for _, act in ipairs({ _G.ACTIONS.CHOP, _G.ACTIONS.MINE }) do
+        local handler = sg["actionhandlers"][act]
+        if handler then
+            local old_dest = handler["deststate"]
+            handler["deststate"] = function(inst, action)
+                if serverHasFastAct(inst) then
+                    return "doshortaction"
+                end
+                return old_dest(inst, action)
+            end
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson_client", function(sg)
+    if not sg["actionhandlers"] then return end
+    for _, act in ipairs({ _G.ACTIONS.CHOP, _G.ACTIONS.MINE }) do
+        local handler = sg["actionhandlers"][act]
+        if handler then
+            local old_dest = handler["deststate"]
+            handler["deststate"] = function(inst, action)
+                if clientHasFastAct(inst) then
+                    return "doshortaction"
+                end
+                return old_dest(inst, action)
+            end
+        end
+    end
+end)
+
+-- =========================================================
+-- 2. workable 组件钩子 — 敲击 100x
+-- =========================================================
+AddComponentPostInit("workable", function(self)
+    local old_fn = self["WorkedBy_Internal"]
+    self["WorkedBy_Internal"] = function(self, worker, numworks, ...)
+        if worker and worker:IsValid() and worker:HasTag("player")
+                and _G.Moon_HasEffect(worker, "laodong")
+                and self["action"] ~= _G.ACTIONS["HAMMER"] then
+            numworks = (numworks or 1) * 100
+        end
+        return old_fn(self, worker, numworks, ...)
+    end
+end)
+
+-- =========================================================
+-- 3. stewer 组件钩子 — 烹饪秒出锅
+-- =========================================================
+AddComponentPostInit("stewer", function(self)
+    local _old_StartCooking = self.StartCooking
+    self.StartCooking = function(self, doer)
+        if doer and doer:IsValid() and doer:HasTag("player")
+                and _G.Moon_HasEffect(doer, "laodong") then
+            self.cooktimemult = 0.001
+        end
+        return _old_StartCooking(self, doer)
+    end
+end)
+
+-- =========================================================
+-- 4. 附魔注册（world 初始化后）
+-- =========================================================
 AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
 
-    -- 烹饪秒出锅：hook StartCooking，调用完原始函数强制 cooktime=0（下一帧自动触发完成）
-    local _ldg_cook_hooked = false
-    if not _ldg_cook_hooked then
-        _ldg_cook_hooked = true
-
-        local function hookCookPot(cookpot)
-            if not _G.TheWorld.ismastersim then return end
-            if not cookpot.components.stewer then return end
-
-            local old_start = cookpot.components.stewer.StartCooking
-            cookpot.components.stewer.StartCooking = function(self, doer)
-                local result = old_start(self, doer)
-                if self:IsCooking() and doer and doer:IsValid() and doer:HasTag("player")
-                    and _G.Moon_HasEffect(doer, "laodong") then
-                    self.cooktime = 0
-                end
-                return result
-            end
-        end
-
-        AddPrefabPostInit("cookpot", hookCookPot)
-        AddPrefabPostInit("portablecookpot", hookCookPot)
-    end
-
-    -- 附魔注册
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/砍伐/挖掘瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中20%概率获得藏宝图",
+        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中20%概率获得藏宝图",
         check_desc = "吃烤土豆获得（135保底），劳动最光荣！",
         can_add = false,
         only_one = true,
@@ -93,18 +161,25 @@ AddPrefabPostInit("world", function(inst)
                 owner._ldg_hooked = true
                 local hh = owner.components.hh_player
 
-                -- 1) 快采：工作效率+100倍（真正的秒完成）
+                -- fast_act — HH框架 stategraph 钩子（加速 PICK/COOK/BUILD/HARVEST）
                 if hh then
-                    hh:AddEffectValueByKey("workAddSpeed", 100)
+                    hh:AddEffectValueByKey("fast_act", 1)
                 end
 
-                -- 2) 秒制作
+                -- 同步 fast_act 到客户端（wilson_client 侧 stategraph 需要）
+                _G.pcall(function()
+                    if owner.userid then
+                        _G.SendModRPCToClient(_G.CLIENT_MOD_RPC["hh_rpc"]["hh_client_value"], owner.userid, "hh_fast_act", true)
+                    end
+                end)
+
+                -- 秒制作
                 if owner.components.builder then
                     owner._ldg_old_buildtime = owner.components.builder.buildingtime or 1
                     owner.components.builder.buildingtime = 0.001
                 end
 
-                -- 3) 劳动中20%获得藏宝图（完成工作）
+                -- 劳动中20%概率获得藏宝图（完成工作）
                 owner._ldg_work_handler = function(inst, data)
                     if not _G.Moon_HasEffect(owner, "laodong") then return end
                     local target = data and data.target
@@ -121,7 +196,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner:ListenForEvent("finishedwork", owner._ldg_work_handler)
 
-                -- 3b) 采摘也有概率获得藏宝图
+                -- 采摘也有概率获得藏宝图
                 owner._ldg_pick_handler = function(inst, data)
                     if not _G.Moon_HasEffect(owner, "laodong") then return end
                     if not data or not data.loot then return end
@@ -142,9 +217,18 @@ AddPrefabPostInit("world", function(inst)
             _G.Moon_ReduceEffect(owner, "laodong", "Legend_LDG", 1)
             if not _G.Moon_HasEffect(owner, "laodong") then
                 local hh = owner.components.hh_player
+
                 if hh then
-                    hh:ReduceEffectValueByKey("workAddSpeed", 100)
+                    hh:ReduceEffectValueByKey("fast_act", 1)
                 end
+
+                -- 同步客户端 fast_act：有其他来源（如传武快速交互）时仍为 true
+                _G.pcall(function()
+                    if owner.userid then
+                        local still_active = hh and hh:HasSpecialEffect("fast_act")
+                        _G.SendModRPCToClient(_G.CLIENT_MOD_RPC["hh_rpc"]["hh_client_value"], owner.userid, "hh_fast_act", still_active)
+                    end
+                end)
 
                 -- 恢复制作速度
                 if owner.components.builder and owner._ldg_old_buildtime then
