@@ -1,5 +1,5 @@
 -- 小月亮 附魔：胖虎
--- 攻击有15%几率释放「魔音贯耳」：大范围眩晕敌人2秒并造成200点伤害。周围小动物会被吓跑。
+-- 攻击有15%几率释放「魔音贯耳」：对周围敌人造成200点伤害。周围小动物会被吓跑。
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -12,7 +12,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_PANGHU", {
         name = "胖虎",
         client_text = "胖\n虎",
-        desc = "攻击有15%几率释放「魔音贯耳」\n对周围敌人造成200点伤害并强制眩晕2秒\n震撼威压：释放时周围小动物惊恐逃跑",
+        desc = "攻击有15%几率释放「魔音贯耳」\n对周围敌人造成200点伤害\n震撼威压：释放时周围小动物惊恐逃跑",
         check_desc = "我是胖虎，我是孩子王！",
         can_add = false,
         only_one = true,
@@ -41,14 +41,6 @@ AddPrefabPostInit("world", function(inst)
                             if victim ~= owner and victim.components.health and not victim.components.health:IsDead() then
                                 -- 造成200点物理伤害
                                 victim.components.health:DoDelta(-200, false, owner)
-                                
-                                -- 眩晕/打断
-                                if victim.components.combat then
-                                    victim.components.combat:SetTarget(nil)
-                                end
-                                if victim.sg then
-                                    _G.pcall(function() victim.sg:GoToState("hit") end)
-                                end
                                 if victim.components.talker then
                                     _G.pcall(function() victim.components.talker:Say("好难听啊！") end)
                                 end
