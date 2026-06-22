@@ -17,11 +17,19 @@ local CFG = GLOBAL.MOON_CFG
 -- 多维劳动保底计数（独立于 HH 框架，无条件注册）
 -- 挖矿/砍树/采集作物/烹饪/制作各300 + 采集巨大作物50
 -- =========================================================
-local _ldg_counter = {}
 local _LDG_TARGETS = { mine = 300, chop = 300, harvest = 300, cook = 300, build = 300, giant = 50 }
 local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪", build = "制作", giant = "巨大作物" }
 
-local function _ldg_check_all(inst, c, userid)
+local function _ldg_init(inst)
+    if not inst._ldg_counter then
+        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
+    end
+    return inst._ldg_counter
+end
+
+local function _ldg_check_all(inst)
+    local c = inst._ldg_counter
+    if not c then return end
     if (c.mine or 0) >= 300 and (c.chop or 0) >= 300
             and (c.harvest or 0) >= 300 and (c.cook or 0) >= 300
             and (c.build or 0) >= 300 and (c.giant or 0) >= 50 then
@@ -32,26 +40,18 @@ local function _ldg_check_all(inst, c, userid)
                 inst.components.talker:Say("劳动最光荣！六项劳动目标全部达成，获得劳动附魔石！")
             end
         end
-        _ldg_counter[userid] = nil
+        -- 重置所有进度
+        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
     end
 end
 
-local function _ldg_inc(userid, key)
-    if not _ldg_counter[userid] then
-        _ldg_counter[userid] = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
-    end
-    local c = _ldg_counter[userid]
+local function _ldg_do_inc(inst, key)
+    local c = _ldg_init(inst)
     local target = _LDG_TARGETS[key]
     c[key] = math.min((c[key] or 0) + 1, target)
-    return c
-end
-
-local function _ldg_do_inc(inst, userid, key)
-    local c = _ldg_inc(userid, key)
-    _ldg_check_all(inst, c, userid)
+    _ldg_check_all(inst)
     -- 全维度进度播报（每50/巨大作物10的倍数时触发）
     local count = c[key] or 0
-    local target = _LDG_TARGETS[key]
     if count > 0 and count < target then
         local interval = (key == "giant") and 10 or 50
         if count % interval == 0 and inst.components.talker then
@@ -68,8 +68,25 @@ AddPrefabPostInitAny(function(inst2)
     if not _G.TheWorld.ismastersim then return end
     if not inst2:HasTag("player") then return end
 
-    local userid = inst2.userid
-    if not userid then return end
+    -- 持久化：从存档恢复进度
+    _ldg_init(inst2)
+    local _old_OnSave = inst2.OnSave
+    inst2.OnSave = function(inst, data)
+        if _old_OnSave then _old_OnSave(inst, data) end
+        if inst._ldg_counter then
+            local t = {}
+            for k, v in pairs(inst._ldg_counter) do t[k] = v end
+            data._ldg_counter = t
+        end
+    end
+    local _old_OnLoad = inst2.OnLoad
+    inst2.OnLoad = function(inst, data)
+        if _old_OnLoad then _old_OnLoad(inst, data) end
+        if data and data._ldg_counter then
+            inst._ldg_counter = {}
+            for k, v in pairs(data._ldg_counter) do inst._ldg_counter[k] = v end
+        end
+    end
 
     -- 挖矿 / 砍树 / 制作
     inst2:ListenForEvent("finishedwork", function(_, data)
@@ -87,7 +104,7 @@ AddPrefabPostInitAny(function(inst2)
         end
 
         if key then
-            _ldg_do_inc(inst2, userid, key)
+            _ldg_do_inc(inst2, key)
         end
     end)
 
@@ -103,9 +120,9 @@ AddPrefabPostInitAny(function(inst2)
             local prefab = pickable.inst.prefab or ""
             if string.find(prefab, "farm_plant") then
                 if string.find(prefab, "giant") then
-                    _ldg_do_inc(inst2, userid, "giant")
+                    _ldg_do_inc(inst2, "giant")
                 else
-                    _ldg_do_inc(inst2, userid, "harvest")
+                    _ldg_do_inc(inst2, "harvest")
                 end
             end
         end
@@ -119,7 +136,7 @@ AddComponentPostInit("stewer", function(self)
         if harvester and harvester:IsValid() and harvester:HasTag("player") then
             local userid = harvester.userid
             if userid then
-                _ldg_do_inc(harvester, userid, "cook")
+                _ldg_do_inc(harvester, "cook")
             end
         end
         return _old_Harvest(self, harvester, ...)
