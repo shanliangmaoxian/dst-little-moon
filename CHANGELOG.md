@@ -1,5 +1,12 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.14.4 - 2026-06-22
+
+### 修复
+- **劳动最光荣** (`laodong.lua`)：修复采摘时 `picksomething` 事件中 `data.loot` 为 Lua 表时调用 `IsValid()` 导致的崩溃
+  - `data.loot` 可能是多个战利品的列表（Lua 表）而非实体 userdata，表没有 `IsValid` 方法
+  - 修复：先检查 `type(loot)`，只有 userdata 才调用 `IsValid()`
+
 ## 1.14.3 - 2026-06-22
 
 ### 修改
