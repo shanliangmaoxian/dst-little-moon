@@ -55,14 +55,7 @@ AddPrefabPostInit("world", function(inst)
                             end
                         end
 
-                        -- 魔音贯耳特效 (大范围爆炸或崩溃特效)
-                        if _G.SpawnPrefab then
-                            local fx = _G.SpawnPrefab("sonicresonate_fx") or _G.SpawnPrefab("collapse_small")
-                            if fx then
-                                fx.Transform:SetPosition(x, y, z)
-                                fx.Transform:SetScale(2, 2, 2)
-                            end
-                        end
+                        -- 魔音贯耳特效已移除 (烟雾特效在连击时严重影响性能)
 
                         if owner.components.talker then
                             owner.components.talker:Say("【魔音贯耳】我是胖虎，我是孩子王！🎵~")
