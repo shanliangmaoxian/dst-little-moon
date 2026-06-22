@@ -17,12 +17,15 @@ local CFG = GLOBAL.MOON_CFG
 -- 多维劳动保底计数（独立于 HH 框架，无条件注册）
 -- 挖矿/砍树/采集作物/烹饪/制作各300 + 采集巨大作物50
 -- =========================================================
-local _LDG_TARGETS = { mine = 300, chop = 300, harvest = 300, cook = 300, build = 300, giant = 50 }
-local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪", build = "制作", giant = "巨大作物" }
+local _LDG_TARGETS = { mine = 300, chop = 300, harvest = 300, cook = 15, build = 300, giant = 50 }
+local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪种类", build = "制作", giant = "巨大作物" }
 
 local function _ldg_init(inst)
     if not inst._ldg_counter then
-        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
+        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = {}, build = 0, giant = 0 }
+    elseif type(inst._ldg_counter.cook) ~= "table" then
+        -- 兼容旧存档（cook 之前是数字，现在改为表）
+        inst._ldg_counter.cook = {}
     end
     return inst._ldg_counter
 end
@@ -30,8 +33,10 @@ end
 local function _ldg_check_all(inst)
     local c = inst._ldg_counter
     if not c then return end
+    local cook_count = 0
+    if type(c.cook) == "table" then for _ in pairs(c.cook) do cook_count = cook_count + 1 end end
     if (c.mine or 0) >= 300 and (c.chop or 0) >= 300
-            and (c.harvest or 0) >= 300 and (c.cook or 0) >= 300
+            and (c.harvest or 0) >= 300 and cook_count >= 15
             and (c.build or 0) >= 300 and (c.giant or 0) >= 50 then
         local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_LDG")
         if success and stone and inst.components.inventory then
@@ -41,7 +46,31 @@ local function _ldg_check_all(inst)
             end
         end
         -- 重置所有进度
-        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
+        inst._ldg_counter = { mine = 0, chop = 0, harvest = 0, cook = {}, build = 0, giant = 0 }
+    end
+end
+
+local function _ldg_do_cook(inst, recipe)
+    local c = _ldg_init(inst)
+    if not c.cook then c.cook = {} end
+    c.cook[recipe] = true
+    _ldg_check_all(inst)
+    -- 烹饪种类每新增5种播报一次
+    local count = 0
+    for _ in pairs(c.cook) do count = count + 1 end
+    if count > 0 and count < _LDG_TARGETS.cook and count % 5 == 0 and inst.components.talker then
+        local parts = {}
+        for _, k in ipairs({ "mine", "chop", "harvest", "cook", "build", "giant" }) do
+            local val
+            if k == "cook" then
+                val = 0
+                if type(c.cook) == "table" then for _ in pairs(c.cook) do val = val + 1 end end
+            else
+                val = c[k] or 0
+            end
+            table.insert(parts, _LDG_NAMES[k] .. val .. "/" .. _LDG_TARGETS[k])
+        end
+        inst.components.talker:Say("劳动进度：\n" .. table.concat(parts, "\n"))
     end
 end
 
@@ -57,7 +86,14 @@ local function _ldg_do_inc(inst, key)
         if count % interval == 0 and inst.components.talker then
             local parts = {}
             for _, k in ipairs({ "mine", "chop", "harvest", "cook", "build", "giant" }) do
-                table.insert(parts, _LDG_NAMES[k] .. (c[k] or 0) .. "/" .. _LDG_TARGETS[k])
+                local val
+                if k == "cook" then
+                    val = 0
+                    if type(c.cook) == "table" then for _ in pairs(c.cook) do val = val + 1 end end
+                else
+                    val = c[k] or 0
+                end
+                table.insert(parts, _LDG_NAMES[k] .. val .. "/" .. _LDG_TARGETS[k])
             end
             inst.components.talker:Say("劳动进度：\n" .. table.concat(parts, "\n"))
         end
@@ -85,6 +121,10 @@ AddPrefabPostInitAny(function(inst2)
         if data and data._ldg_counter then
             inst._ldg_counter = {}
             for k, v in pairs(data._ldg_counter) do inst._ldg_counter[k] = v end
+            -- 兼容旧存档（cook 之前是数字，现在改为表）
+            if type(inst._ldg_counter.cook) ~= "table" then
+                inst._ldg_counter.cook = {}
+            end
         end
     end
 
@@ -134,10 +174,8 @@ AddComponentPostInit("stewer", function(self)
     local _old_Harvest = self.Harvest
     self.Harvest = function(self, harvester, ...)
         if harvester and harvester:IsValid() and harvester:HasTag("player") then
-            local userid = harvester.userid
-            if userid then
-                _ldg_do_inc(harvester, "cook")
-            end
+            local recipe = self.product or "unknown"
+            _ldg_do_cook(harvester, recipe)
         end
         return _old_Harvest(self, harvester, ...)
     end
@@ -186,8 +224,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/烹饪/制作各300 + 巨大作物50",
-        check_desc = "挖矿/砍树/采集/烹饪/制作各300 + 巨大作物50，劳动最光荣！",
+        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 巨大作物50",
+        check_desc = "挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 巨大作物50，劳动最光荣！",
         can_add = false,
         only_one = true,
         is_special = false,

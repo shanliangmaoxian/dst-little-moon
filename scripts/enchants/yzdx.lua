@@ -28,31 +28,29 @@ AddPrefabPostInit("world", function(inst)
                 owner._yzdx_inited = true
                 owner._yzdx_effect_applied = false
 
-                -- 检测托托莉是否存在
-                owner._yzdx_hasTutuoli = function()
-                    for _, v in ipairs(GLOBAL.AllPlayers) do
-                        local prefab = v.prefab or ""
-                        if prefab:find("tutuoli") or prefab:find("totori") or prefab:find("torori") then
-                            return true
-                        end
-                    end
-                    return false
-                end
-
-                -- 检测周围队友数量 (15码)
-                owner._yzdx_isSolo = function()
+                -- 缓存：一次遍历 AllPlayers，同时检测托托莉和周围队友
+                owner._yzdx_refreshCache = function()
                     local x, y, z = owner.Transform:GetWorldPosition()
+                    local has_tutu = false
+                    local is_solo = true
                     for _, v in ipairs(GLOBAL.AllPlayers) do
-                        if v ~= owner and v:IsValid() and v:GetDistanceSqToPoint(x, y, z) < 225 then
-                            return false
+                        if v:IsValid() then
+                            -- 检测托托莉
+                            if not has_tutu then
+                                local prefab = v.prefab or ""
+                                if prefab:find("tutuoli") or prefab:find("totori") or prefab:find("torori") then
+                                    has_tutu = true
+                                end
+                            end
+                            -- 检测附近队友
+                            if is_solo and v ~= owner and v:GetDistanceSqToPoint(x, y, z) < 225 then
+                                is_solo = false
+                            end
                         end
                     end
-                    return true
-                end
-
-                -- 获取当前倍率
-                owner._yzdx_getMultiplier = function()
-                    return owner._yzdx_isSolo() and 2 or 1
+                    owner._yzdx_cache_tutu = has_tutu
+                    owner._yzdx_cache_solo = is_solo
+                    owner._yzdx_cache_mult = is_solo and 2 or 1
                 end
 
                 -- 应用静态buff (吸血 + 增强)
@@ -60,7 +58,8 @@ AddPrefabPostInit("world", function(inst)
                     if owner._yzdx_effect_applied then return end
                     local hh = owner.components.hh_player
                     if not hh then return end
-                    local mult = owner._yzdx_getMultiplier()
+                    _G.pcall(owner._yzdx_refreshCache, owner)
+                    local mult = owner._yzdx_cache_mult or 1
                     hh:AddEffectValueByKey("bloodSuck", 8 * mult)
                     hh:AddEffectValueByKey("criticalHitEffect", 50 * mult)
                     owner._yzdx_effect_applied = true
@@ -84,15 +83,15 @@ AddPrefabPostInit("world", function(inst)
                     owner._yzdx_applyBuffs()
                 end
 
-                -- 攻击时触发撕裂/噩梦伤害
+                -- 攻击时触发撕裂/噩梦伤害（使用缓存，不遍历 AllPlayers）
                 owner._yzdx_attack_handler = function(attacker, data)
                     if not _G.Moon_HasEffect(owner, "yzdx") then return end
                     local target = data and data.target
                     if not target or not target:IsValid() then return end
                     if not target.components.health or target.components.health:IsDead() then return end
 
-                    local mult = owner._yzdx_getMultiplier()
-                    local tutu = owner._yzdx_hasTutuoli()
+                    local mult = owner._yzdx_cache_mult or 1
+                    local tutu = owner._yzdx_cache_tutu
 
                     if not tutu then
                         -- 没有托托莉：1%血量伤害（撕裂）
@@ -107,14 +106,15 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner:ListenForEvent("onattackother", owner._yzdx_attack_handler)
 
-                -- 周期性更新
+                -- 周期性更新缓存与buff（每3秒）
                 owner._yzdx_periodicUpdate = function()
                     if not _G.Moon_HasEffect(owner, "yzdx") then return end
                     local hh = owner.components.hh_player
                     if not hh then return end
 
-                    local tutu = owner._yzdx_hasTutuoli()
-                    local mult = owner._yzdx_getMultiplier()
+                    _G.pcall(owner._yzdx_refreshCache, owner)
+                    local tutu = owner._yzdx_cache_tutu
+                    local mult = owner._yzdx_cache_mult or 1
 
                     -- 更新 trueDamageNum (托托莉)
                     if tutu then

@@ -29,8 +29,8 @@ AddPrefabPostInit("world", function(inst)
                 owner._genzhe_near_teammate = false
                 owner._genzhe_applied = false
 
-                -- 检测附近是否有队友
-                local function hasNearbyTeammate()
+                -- 检测附近是否有队友（单次扫描，缓存结果）
+                local function refreshTeammateStatus()
                     local x, y, z = owner.Transform:GetWorldPosition()
                     for _, v in ipairs(GLOBAL.AllPlayers) do
                         if v ~= owner and v:IsValid() and v:GetDistanceSqToPoint(x, y, z) < 225 then
@@ -64,46 +64,45 @@ AddPrefabPostInit("world", function(inst)
                     end
                 end
 
-                -- 每3秒检测队友距离
-                owner._genzhe_check_task = owner:DoPeriodicTask(3, function()
+                -- 队友检测（5秒间隔 + 玩家加入/离开时立即刷新）
+                owner._genzhe_check = function()
                     if not _G.Moon_HasEffect(owner, "genzhe") then return end
-                    if hasNearbyTeammate() then
+                    if refreshTeammateStatus() then
                         applyTeammateBuffs()
                     else
                         owner._genzhe_removeBuffs()
                     end
-                end)
+                end
+                owner._genzhe_check_task = owner:DoPeriodicTask(5, owner._genzhe_check)
 
-                -- 队友击杀掉落：监听周围实体的死亡
-                owner._genzhe_kill_task = owner:DoPeriodicTask(2, function()
+                -- 玩家加入/离开时立即刷新
+                owner:ListenForEvent("ms_playerjoined", function() owner._genzhe_check() end)
+                owner:ListenForEvent("ms_playerleft", function() owner._genzhe_check() end)
+
+                -- 队友击杀掉落：监听死亡事件（事件驱动，不轮询）
+                owner._genzhe_death_handler = function(_, data)
                     if not _G.Moon_HasEffect(owner, "genzhe") then return end
                     if not owner._genzhe_applied then return end
                     if math.random() > 0.3 then return end
-
-                    -- 扫描周围刚死的实体
+                    local victim = data and data.inst
+                    if not victim or not victim:IsValid() then return end
                     local x, y, z = owner.Transform:GetWorldPosition()
-                    local ents = GLOBAL.TheSim:FindEntities(x, y, z, 20)
-                    for _, ent in ipairs(ents) do
-                        if ent:IsValid() and ent ~= owner
-                            and ent.components.health and ent.components.health:IsDead() then
-                            -- 检查击杀者是否是附近队友
-                            local killer = nil
-                            if ent.components.combat and ent.components.combat.lastattacker then
-                                killer = ent.components.combat.lastattacker
-                            end
-                            if killer and killer:IsValid() and killer:HasTag("player")
-                                and killer ~= owner and killer:GetDistanceSqToPoint(x, y, z) < 225 then
-                                -- 队友击杀，掉落一件物品
-                                if ent.components.lootdropper and not ent._genzhe_looted then
-                                    local ex, ey, ez = ent.Transform:GetWorldPosition()
-                                    _G.pcall(ent.components.lootdropper.DropLoot, ent.components.lootdropper, _G.Vector3(ex, ey, ez))
-                                    ent._genzhe_looted = true
-                                    break
-                                end
-                            end
+                    if victim:GetDistanceSqToPoint(x, y, z) > 400 then return end -- 20码
+
+                    local killer = nil
+                    if victim.components.combat and victim.components.combat.lastattacker then
+                        killer = victim.components.combat.lastattacker
+                    end
+                    if killer and killer:IsValid() and killer:HasTag("player")
+                        and killer ~= owner and killer:GetDistanceSqToPoint(x, y, z) < 225 then
+                        if victim.components.lootdropper and not victim._genzhe_looted then
+                            local ex, ey, ez = victim.Transform:GetWorldPosition()
+                            _G.pcall(victim.components.lootdropper.DropLoot, victim.components.lootdropper, _G.Vector3(ex, ey, ez))
+                            victim._genzhe_looted = true
                         end
                     end
-                end)
+                end
+                owner:ListenForEvent("entity_death", owner._genzhe_death_handler)
             end
         end,
         un_equip_fn = function(inst, owner, value)
@@ -113,9 +112,9 @@ AddPrefabPostInit("world", function(inst)
                     owner._genzhe_check_task:Cancel()
                     owner._genzhe_check_task = nil
                 end
-                if owner._genzhe_kill_task then
-                    owner._genzhe_kill_task:Cancel()
-                    owner._genzhe_kill_task = nil
+                if owner._genzhe_death_handler then
+                    owner:RemoveEventCallback("entity_death", owner._genzhe_death_handler)
+                    owner._genzhe_death_handler = nil
                 end
                 if owner._genzhe_removeBuffs then
                     owner._genzhe_removeBuffs()

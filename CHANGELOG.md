@@ -12,6 +12,21 @@
 ### 优化
 - **胖虎** (`panghu.lua`)：移除魔音贯耳的烟雾/爆炸特效（`sonicresonate_fx` / `collapse_small`），连击时频繁生成粒子特效导致严重掉帧
 - **良弓藏** (`lianggongcang.lua`)：自身伤害从 -100% 改为 -1000%，彻底无法平A
+- **一枝独秀** (`yzdx.lua`)：性能优化，攻击时不再遍历 `AllPlayers`，改为每3秒缓存一次，高频攻击不再卡顿
+- **烷基八氮** (`wjbd.lua`)：移除 0.5s `FindEntities` 轮询，改 `onthaw` 事件驱动冰爆
+- **我就跟着混** (`genzhe.lua`)：队友检测改 5s 间隔 + 玩家加入/离开事件刷新；掉落监听改 `entity_death` 事件
+- **草莓奶昔** (`strawberry.lua`)：粒子特效加 3 秒冷却
+- **咕咕咕** (`gugugu.lua`)：鸽子反击改用粒子特效代替乌鸦实体
+- **蝴蝶的小阿飞** (`hufei.lua`)：蝶翼特效加 2 秒冷却
+- **萝的守护** (`luo.lua`)：闪避特效加 2 秒冷却
+- **是萌新喵** (`mxm.lua`)：卸载时恢复原始 `PushEvent`
+- **酸酸草** (`suansuancao.lua`)：酸性伤害改用持久定时器，不再每次攻击取消重建
+- **打工人** (`dagongren.lua`)：日夜检测改 `WatchWorldState` 事件驱动
+- **妖精庇护** (`fay.lua`)：夜间检测改 `WatchWorldState` 事件驱动
+- **无欲无求** (`wywq.lua`)：空闲检测间隔 0.5s → 1s
+- **心平气和** (`xping.lua`)：动物检测间隔 2s → 5s
+- **千月野** (`qianyue.lua`)：夜间特效间隔 2s → 10s，动物检测 3s → 5s，萤火虫不再重复生成
+- **九月** (`jiuyue.lua`)：树木扫描间隔 3s → 10s
 
 ## 1.14.2 - 2026-06-21
 

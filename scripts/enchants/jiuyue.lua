@@ -95,8 +95,8 @@ AddPrefabPostInit("world", function(inst)
                     end
                 end)
 
-                -- 靠近树木时飘落树叶
-                owner._jiuyue_tree_task = owner:DoPeriodicTask(3, function()
+                -- 靠近树木时飘落树叶（10秒间隔）
+                owner._jiuyue_tree_task = owner:DoPeriodicTask(10, function()
                     if not _G.Moon_HasEffect(owner, "jiuyue") then return end
                     local x, y, z = owner.Transform:GetWorldPosition()
                     local trees = GLOBAL.TheSim:FindEntities(x, y, z, 4, { "tree", "leif" })

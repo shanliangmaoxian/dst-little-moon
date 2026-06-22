@@ -55,7 +55,7 @@ AddPrefabPostInit("world", function(inst)
                 end)
 
                 -- 小动物不逃跑 + 主动靠近
-                owner._xping_animal_task = owner:DoPeriodicTask(2, function()
+                owner._xping_animal_task = owner:DoPeriodicTask(5, function()
                     if not _G.Moon_HasEffect(owner, "xping") then return end
                     local x, y, z = owner.Transform:GetWorldPosition()
                     local critters = GLOBAL.TheSim:FindEntities(x, y, z, 6,

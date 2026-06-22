@@ -32,7 +32,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._mxm_first_hit = {} -- 记录已首次攻击的敌人
 
                 -- 致命伤害保护 (类似紫蝶，但保留1血+隐身)
-                local oldPushEvent = owner.PushEvent
+                owner._mxm_old_push = owner.PushEvent
                 owner.PushEvent = function(self, event, ...)
                     if _G.Moon_HasEffect(self, "mxm") and not self._mxm_death_cooldown then
                         if event == "death" then
@@ -70,7 +70,7 @@ AddPrefabPostInit("world", function(inst)
                             return
                         end
                     end
-                    return oldPushEvent(self, event, ...)
+                    return self._mxm_old_push(self, event, ...)
                 end
 
                 -- 死亡不掉落物品
@@ -126,8 +126,11 @@ AddPrefabPostInit("world", function(inst)
         un_equip_fn = function(inst, owner, value)
             _G.Moon_ReduceEffect(owner, "mxm", "Legend_MXM", 1)
             if not _G.Moon_HasEffect(owner, "mxm") then
-                -- 恢复 PushEvent (由于使用了自定义hook，无法直接恢复)
-                -- 所以保留hook但检查 Moon_HasEffect 返回false后走原逻辑
+                -- 恢复原始 PushEvent
+                if owner._mxm_old_push then
+                    owner.PushEvent = owner._mxm_old_push
+                    owner._mxm_old_push = nil
+                end
                 if owner._mxm_death_cooldown_task then
                     owner._mxm_death_cooldown_task:Cancel()
                     owner._mxm_death_cooldown_task = nil

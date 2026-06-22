@@ -62,27 +62,21 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner:ListenForEvent("finishedwork", owner._dgr_work_handler)
 
-                -- 黄昏/夜晚伤害加成检测
-                owner._dgr_time_task = owner:DoPeriodicTask(1, function()
+                -- 黄昏/夜晚伤害加成（事件驱动，不轮询）
+                local function _dgr_update_dark()
                     if not _G.Moon_HasEffect(owner, "dagongren") then return end
                     local is_dark = _G.TheWorld.state.isdusk or _G.TheWorld.state.isnight
-                    local hh_player = owner.components.hh_player
-
+                    local hh = owner.components.hh_player
                     if is_dark and not owner._dgr_dark_active then
                         owner._dgr_dark_active = true
-                        if hh_player then
-                            hh_player:AddEffectValueByKey("addComDamagePercent", 30)
-                        end
-                        if owner.components.talker then
-                            owner.components.talker:Say("夜班时间到，充满干劲！")
-                        end
+                        if hh then hh:AddEffectValueByKey("addComDamagePercent", 30) end
                     elseif not is_dark and owner._dgr_dark_active then
                         owner._dgr_dark_active = false
-                        if hh_player then
-                            hh_player:ReduceEffectValueByKey("addComDamagePercent", 30)
-                        end
+                        if hh then hh:ReduceEffectValueByKey("addComDamagePercent", 30) end
                     end
-                end)
+                end
+                owner:WatchWorldState("isnight", _dgr_update_dark)
+                owner:WatchWorldState("isdusk", _dgr_update_dark)
             end
         end,
         un_equip_fn = function(inst, owner, value)
@@ -103,10 +97,6 @@ AddPrefabPostInit("world", function(inst)
                 if owner._dgr_work_handler then
                     owner:RemoveEventCallback("finishedwork", owner._dgr_work_handler)
                     owner._dgr_work_handler = nil
-                end
-                if owner._dgr_time_task then
-                    owner._dgr_time_task:Cancel()
-                    owner._dgr_time_task = nil
                 end
                 owner._dgr_dark_active = nil
                 owner._dgr_hooked = nil
