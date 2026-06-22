@@ -1,6 +1,6 @@
 -- 小月亮 附魔：劳动最光荣
--- 吃烤土豆获得（135保底）
--- 效果：快采、快速制作、烹饪秒出锅、劳动中20%概率获得藏宝图
+-- 挖矿/砍树/采集作物/烹饪/制作各300 + 采集巨大作物50 获得
+-- 效果：快采、快速制作、烹饪秒出锅、劳动中5%概率获得藏宝图
 --
 -- 实现原理：
 --   秒采/秒交互 → HH框架 fast_act 效果（stategraph钩子）
@@ -8,44 +8,122 @@
 --   秒制作 → builder.buildingtime = 0.001
 --   秒出锅 → stewer.StartCooking 前 cooktimemult = 0.001
 --   快敲击 → WorkedBy_Internal 100x 工作量
---   藏宝图 → finishedwork / picksomething 事件 20% 概率
+--   藏宝图 → finishedwork / picksomething 事件 5% 概率
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
 
 -- =========================================================
--- 135烤土豆保底计数（独立于 HH 框架，无条件注册）
+-- 多维劳动保底计数（独立于 HH 框架，无条件注册）
+-- 挖矿/砍树/采集作物/烹饪/制作各300 + 采集巨大作物50
 -- =========================================================
-local _ldg_potato_counter = {}
+local _ldg_counter = {}
+local _LDG_TARGETS = { mine = 300, chop = 300, harvest = 300, cook = 300, build = 300, giant = 50 }
+local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪", build = "制作", giant = "巨大作物" }
+
+local function _ldg_check_all(inst, c, userid)
+    if (c.mine or 0) >= 300 and (c.chop or 0) >= 300
+            and (c.harvest or 0) >= 300 and (c.cook or 0) >= 300
+            and (c.build or 0) >= 300 and (c.giant or 0) >= 50 then
+        local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_LDG")
+        if success and stone and inst.components.inventory then
+            inst.components.inventory:GiveItem(stone, nil, inst:GetPosition())
+            if inst.components.talker then
+                inst.components.talker:Say("劳动最光荣！六项劳动目标全部达成，获得劳动附魔石！")
+            end
+        end
+        _ldg_counter[userid] = nil
+    end
+end
+
+local function _ldg_inc(userid, key)
+    if not _ldg_counter[userid] then
+        _ldg_counter[userid] = { mine = 0, chop = 0, harvest = 0, cook = 0, build = 0, giant = 0 }
+    end
+    local c = _ldg_counter[userid]
+    local target = _LDG_TARGETS[key]
+    c[key] = math.min((c[key] or 0) + 1, target)
+    return c
+end
+
+local function _ldg_do_inc(inst, userid, key)
+    local c = _ldg_inc(userid, key)
+    _ldg_check_all(inst, c, userid)
+    -- 全维度进度播报（每50/巨大作物10的倍数时触发）
+    local count = c[key] or 0
+    local target = _LDG_TARGETS[key]
+    if count > 0 and count < target then
+        local interval = (key == "giant") and 10 or 50
+        if count % interval == 0 and inst.components.talker then
+            local parts = {}
+            for _, k in ipairs({ "mine", "chop", "harvest", "cook", "build", "giant" }) do
+                table.insert(parts, _LDG_NAMES[k] .. (c[k] or 0) .. "/" .. _LDG_TARGETS[k])
+            end
+            inst.components.talker:Say("劳动进度：\n" .. table.concat(parts, "\n"))
+        end
+    end
+end
 
 AddPrefabPostInitAny(function(inst2)
     if not _G.TheWorld.ismastersim then return end
     if not inst2:HasTag("player") then return end
 
-    inst2:ListenForEvent("oneat", function(_, data)
-        local food = data and data.food
-        if not food or not food:IsValid() then return end
-        if food.prefab ~= "potato_cooked" then return end
+    local userid = inst2.userid
+    if not userid then return end
 
-        local userid = inst2.userid
-        if not userid then return end
+    -- 挖矿 / 砍树 / 制作
+    inst2:ListenForEvent("finishedwork", function(_, data)
+        if not data or not data.target then return end
+        local action = data.action
+        if not action then return end
 
-        _ldg_potato_counter[userid] = (_ldg_potato_counter[userid] or 0) + 1
-        local count = _ldg_potato_counter[userid]
+        local key = nil
+        if action == _G.ACTIONS.MINE then
+            key = "mine"
+        elseif action == _G.ACTIONS.CHOP then
+            key = "chop"
+        elseif action == _G.ACTIONS.BUILD then
+            key = "build"
+        end
 
-        if count >= 135 then
-            local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_LDG")
-            if success and stone and inst2.components.inventory then
-                inst2.components.inventory:GiveItem(stone, nil, inst2:GetPosition())
-                if inst2.components.talker then
-                    inst2.components.talker:Say("劳动最光荣！吃了135个烤土豆，获得劳动附魔石！")
-                end
-            end
-            _ldg_potato_counter[userid] = 0
-        elseif count % 15 == 0 and inst2.components.talker then
-            inst2.components.talker:Say("吃了" .. count .. "个烤土豆，再吃" .. (135 - count) .. "个保底劳动附魔石！")
+        if key then
+            _ldg_do_inc(inst2, userid, key)
         end
     end)
+
+    -- 采集作物 / 巨大作物
+    inst2:ListenForEvent("picksomething", function(_, data)
+        if not data or not data.loot then return end
+        local loot = data.loot
+        if not loot:IsValid() then return end
+
+        -- 判断是否为农场作物（通过 pickable 所在实体的 prefab）
+        local pickable = data.pickable
+        if pickable and pickable.inst and pickable.inst:IsValid() then
+            local prefab = pickable.inst.prefab or ""
+            if string.find(prefab, "farm_plant") then
+                if string.find(prefab, "giant") then
+                    _ldg_do_inc(inst2, userid, "giant")
+                else
+                    _ldg_do_inc(inst2, userid, "harvest")
+                end
+            end
+        end
+    end)
+end)
+
+-- 烹饪计数（stewer 收获钩子，独立于 HH）
+AddComponentPostInit("stewer", function(self)
+    local _old_Harvest = self.Harvest
+    self.Harvest = function(self, harvester, ...)
+        if harvester and harvester:IsValid() and harvester:HasTag("player") then
+            local userid = harvester.userid
+            if userid then
+                _ldg_do_inc(harvester, userid, "cook")
+            end
+        end
+        return _old_Harvest(self, harvester, ...)
+    end
 end)
 
 -- =========================================================
@@ -91,8 +169,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图",
-        check_desc = "吃烤土豆获得（135保底），劳动最光荣！",
+        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/烹饪/制作各300 + 巨大作物50",
+        check_desc = "挖矿/砍树/采集/烹饪/制作各300 + 巨大作物50，劳动最光荣！",
         can_add = false,
         only_one = true,
         is_special = false,

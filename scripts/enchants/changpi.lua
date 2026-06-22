@@ -1,5 +1,5 @@
 -- 小月亮 附魔：长臂猿
--- 增加攻击距离 2~4
+-- 增加攻击距离 2~4（生成附魔石时确定具体数值，4为满级）
 -- 获取：受到100+伤害时1%概率获得附魔石
 
 local _G = GLOBAL
@@ -53,12 +53,13 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_CHANGPI", {
         name = "长臂猿",
         client_text = "长\n臂",
-        desc = "受到100+伤害时有1%概率获得\n增加攻击距离2~4",
+        desc = "受到100+伤害时有1%%概率获得\n增加攻击距离%s",
         check_desc = "长臂猿，摸得到！",
         can_add = false,
         only_one = true,
         is_special = false,
         client_color = { 0.8, 0, 0.8, 1 },
+        value_range = { min = 2, max = 4 },
         check_equip_can_add = function(inst)
             return true, "满足条件"
         end,
