@@ -152,7 +152,8 @@ AddPrefabPostInitAny(function(inst2)
     inst2:ListenForEvent("picksomething", function(_, data)
         if not data or not data.loot then return end
         local loot = data.loot
-        if not loot:IsValid() then return end
+        if loot == nil then return end
+        if type(loot) == "userdata" and not loot:IsValid() then return end
 
         -- 判断是否为农场作物（通过 pickable 所在实体的 prefab）
         local pickable = data.pickable
