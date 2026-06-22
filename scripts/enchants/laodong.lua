@@ -18,7 +18,7 @@ local CFG = GLOBAL.MOON_CFG
 -- 挖矿/砍树/采集作物/烹饪/制作各300 + 采集巨大作物50
 -- =========================================================
 local _LDG_TARGETS = { mine = 300, chop = 300, harvest = 300, cook = 15, build = 300, giant = 50 }
-local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪种类", build = "制作", giant = "巨大作物" }
+local _LDG_NAMES = { mine = "挖矿", chop = "砍树", harvest = "采集作物", cook = "烹饪种类", build = "制作", giant = "敲碎巨大作物" }
 
 local function _ldg_init(inst)
     if not inst._ldg_counter then
@@ -233,8 +233,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 巨大作物50",
-        check_desc = "挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 巨大作物50，劳动最光荣！",
+        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 敲碎巨大作物50",
+        check_desc = "挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 敲碎巨大作物50，劳动最光荣！",
         can_add = false,
         only_one = true,
         is_special = false,
