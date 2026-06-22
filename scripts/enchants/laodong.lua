@@ -128,7 +128,7 @@ AddPrefabPostInitAny(function(inst2)
         end
     end
 
-    -- 挖矿 / 砍树 / 制作
+    -- 挖矿 / 砍树 / 制作 / 敲击巨大作物
     inst2:ListenForEvent("finishedwork", function(_, data)
         if not data or not data.target then return end
         local action = data.action
@@ -141,6 +141,9 @@ AddPrefabPostInitAny(function(inst2)
             key = "chop"
         elseif action == _G.ACTIONS.BUILD then
             key = "build"
+        elseif action == _G.ACTIONS.HAMMER and data.target.prefab
+                and string.find(data.target.prefab, "farm_plant") then
+            key = "giant"
         end
 
         if key then
@@ -148,37 +151,56 @@ AddPrefabPostInitAny(function(inst2)
         end
     end)
 
-    -- 采集作物 / 巨大作物
+    -- 采集作物 / 普通采集（草/树枝/浆果/农场作物）
     inst2:ListenForEvent("picksomething", function(_, data)
         if not data or not data.loot then return end
         local loot = data.loot
         if loot == nil then return end
         if type(loot) == "userdata" and not loot:IsValid() then return end
 
-        -- 判断是否为农场作物（通过 pickable 所在实体的 prefab）
         local pickable = data.pickable
         if pickable and pickable.inst and pickable.inst:IsValid() then
             local prefab = pickable.inst.prefab or ""
             if string.find(prefab, "farm_plant") then
-                if string.find(prefab, "giant") then
-                    _ldg_do_inc(inst2, "giant")
-                else
+                if not string.find(prefab, "giant") then
                     _ldg_do_inc(inst2, "harvest")
                 end
+                -- 巨大化走得是 finishedwork(HAMMER)，这里跳过
+            else
+                -- 普通采集（草/树枝/浆果/花朵等）
+                _ldg_do_inc(inst2, "harvest")
             end
+        else
+            -- 没有 pickable 字段或无效时，也视为普通采集
+            _ldg_do_inc(inst2, "harvest")
         end
     end)
 end)
 
--- 烹饪计数（stewer 收获钩子，独立于 HH）
+-- =========================================================
+-- stewer 组件钩子：烹饪计数 + 秒出锅（合并，避免HH检测顺序问题）
+-- =========================================================
 AddComponentPostInit("stewer", function(self)
+    -- 1. Harvest 计数（无条件注册）
     local _old_Harvest = self.Harvest
     self.Harvest = function(self, harvester, ...)
         if harvester and harvester:IsValid() and harvester:HasTag("player") then
-            local recipe = self.product or "unknown"
+            local recipe = tostring(self.product or "unknown")
             _ldg_do_cook(harvester, recipe)
         end
         return _old_Harvest(self, harvester, ...)
+    end
+
+    -- 2. StartCooking 秒出锅（需要 HH 附魔框架）
+    if CFG.ENABLE_MORE_ENCHANTS then
+        local _old_StartCooking = self.StartCooking
+        self.StartCooking = function(self, doer)
+            if doer and doer:IsValid() and doer:HasTag("player")
+                    and _G.Moon_HasEffect(doer, "laodong") then
+                self.cooktimemult = 0.001
+            end
+            return _old_StartCooking(self, doer)
+        end
     end
 end)
 
@@ -203,21 +225,7 @@ AddComponentPostInit("workable", function(self)
 end)
 
 -- =========================================================
--- 3. stewer 组件钩子 — 烹饪秒出锅
--- =========================================================
-AddComponentPostInit("stewer", function(self)
-    local _old_StartCooking = self.StartCooking
-    self.StartCooking = function(self, doer)
-        if doer and doer:IsValid() and doer:HasTag("player")
-                and _G.Moon_HasEffect(doer, "laodong") then
-            self.cooktimemult = 0.001
-        end
-        return _old_StartCooking(self, doer)
-    end
-end)
-
--- =========================================================
--- 4. 附魔注册（world 初始化后）
+-- 2. 附魔注册（world 初始化后）
 -- =========================================================
 AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
