@@ -37,12 +37,37 @@ AddPrefabPostInit("world", function(inst)
                     if math.random() <= 0.2 then
                         if target.components.freezable then
                             target.components.freezable:AddColdness(2)
-                            -- 记录冰冻来源，用于冰爆检测
                             target._wjbd_frozen_by = owner
 
-                            -- 生成冰霜特效
-                            if GLOBAL.SpawnPrefab then
-                                local fx = GLOBAL.SpawnPrefab("deerclops_icespike_fx")
+                            -- 监听解冻 → 触发冰爆
+                            target:ListenForEvent("onthaw", function(t)
+                                if t._wjbd_frozen_by and t._wjbd_frozen_by:IsValid() then
+                                    local by = t._wjbd_frozen_by
+                                    -- 冰爆AoE 300%伤害
+                                    local fx_x, fx_y, fx_z = t.Transform:GetWorldPosition()
+                                    if _G.SpawnPrefab then
+                                        local boom = _G.SpawnPrefab("deerclops_icespike_fx")
+                                        if boom then
+                                            boom.Transform:SetPosition(fx_x, fx_y, fx_z)
+                                            boom.Transform:SetScale(2, 2, 2)
+                                        end
+                                    end
+                                    local nearby = _G.TheSim:FindEntities(fx_x, fx_y, fx_z, 4, { "_combat" })
+                                    for _, victim in ipairs(nearby) do
+                                        if victim ~= by and victim.components.health and not victim.components.health:IsDead() then
+                                            if by.components.combat then
+                                                local dmg = by.components.combat.defaultdamage or 34
+                                                victim.components.health:DoDelta(-dmg * 3, false, nil)
+                                            end
+                                        end
+                                    end
+                                end
+                                t._wjbd_frozen_by = nil
+                            end)
+
+                            -- 冰霜特效
+                            if _G.SpawnPrefab then
+                                local fx = _G.SpawnPrefab("deerclops_icespike_fx")
                                 if fx then
                                     local x, y, z = target.Transform:GetWorldPosition()
                                     fx.Transform:SetPosition(x, y, z)
@@ -71,52 +96,7 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner:ListenForEvent("onattackother", owner._wjbd_attack_handler)
 
-                -- 监听冰冻破碎 (目标解冻时触发冰爆)
-                owner._wjbd_freeze_handler = function(inst)
-                    -- 在玩家身上挂一个周期性检测
-                end
-
-                -- 用周期性检测来实现冰冻破碎冰爆
-                owner._wjbd_monitor_task = owner:DoPeriodicTask(0.5, function()
-                    if not _G.Moon_HasEffect(owner, "wjbd") then return end
-                    -- 扫描附近被自己冰冻的敌人
-                    local x, y, z = owner.Transform:GetWorldPosition()
-                    local ents = GLOBAL.TheSim:FindEntities(x, y, z, 15, { "_combat" })
-                    for _, ent in ipairs(ents) do
-                        if ent._wjbd_frozen_by == owner and ent.components.freezable then
-                            if not ent.components.freezable:IsFrozen() then
-                                -- 冰冻刚破碎，触发冰爆
-                                if ent._wjbd_was_frozen then
-                                    ent._wjbd_was_frozen = nil
-                                    ent._wjbd_frozen_by = nil
-
-                                    -- 冰爆AoE 300%伤害
-                                    local fx_x, fx_y, fx_z = ent.Transform:GetWorldPosition()
-                                    if GLOBAL.SpawnPrefab then
-                                        local boom = GLOBAL.SpawnPrefab("deerclops_icespike_fx")
-                                        if boom then
-                                            boom.Transform:SetPosition(fx_x, fx_y, fx_z)
-                                            boom.Transform:SetScale(2, 2, 2)
-                                        end
-                                    end
-
-                                    -- 范围伤害
-                                    local nearby = GLOBAL.TheSim:FindEntities(fx_x, fx_y, fx_z, 4, { "_combat" })
-                                    for _, victim in ipairs(nearby) do
-                                        if victim ~= owner and victim.components.health and not victim.components.health:IsDead() then
-                                            if owner.components.combat then
-                                                local dmg = owner.components.combat.defaultdamage or 34
-                                                victim.components.health:DoDelta(-dmg * 3, false, nil)
-                                            end
-                                        end
-                                    end
-                                end
-                            else
-                                ent._wjbd_was_frozen = true
-                            end
-                        end
-                    end
-                end)
+                -- 冰爆已通过 onthaw 事件驱动，无需轮询
             end
         end,
         un_equip_fn = function(inst, owner, value)
@@ -125,10 +105,6 @@ AddPrefabPostInit("world", function(inst)
                 if owner._wjbd_attack_handler then
                     owner:RemoveEventCallback("onattackother", owner._wjbd_attack_handler)
                     owner._wjbd_attack_handler = nil
-                end
-                if owner._wjbd_monitor_task then
-                    owner._wjbd_monitor_task:Cancel()
-                    owner._wjbd_monitor_task = nil
                 end
                 owner._wjbd_hooked = nil
             end

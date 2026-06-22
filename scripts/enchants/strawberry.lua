@@ -48,12 +48,16 @@ AddPrefabPostInit("world", function(inst)
                     if not attacker or not attacker:IsValid() then return end
                     if attacker == owner then return end
 
-                    -- 特效
-                    if GLOBAL.SpawnPrefab then
-                        local x, y, z = attacker.Transform:GetWorldPosition()
-                        local fx = GLOBAL.SpawnPrefab("statue_transition_2")
-                        if fx then
-                            fx.Transform:SetPosition(x, y, z)
+                    -- 特效（3秒冷却）
+                    local now = _G.GetTime and _G.GetTime() or 0
+                    if not owner._strawberry_fx_cd or now - owner._strawberry_fx_cd >= 3 then
+                        owner._strawberry_fx_cd = now
+                        if GLOBAL.SpawnPrefab then
+                            local x, y, z = attacker.Transform:GetWorldPosition()
+                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                            if fx then
+                                fx.Transform:SetPosition(x, y, z)
+                            end
                         end
                     end
                 end

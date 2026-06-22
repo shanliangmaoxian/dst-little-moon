@@ -27,36 +27,16 @@ AddPrefabPostInit("world", function(inst)
                 owner._qianyue_hooked = true
                 owner._qianyue_transformed = false
 
-                -- 夜间粒子特效 + 微弱照明
-                owner._qianyue_night_task = owner:DoPeriodicTask(2, function()
+                -- 夜间粒子特效 + 微弱照明（10秒间隔，只维护1个光源萤火虫）
+                owner._qianyue_night_task = owner:DoPeriodicTask(10, function()
                     if not _G.Moon_HasEffect(owner, "qianyue") then return end
                     local is_night = GLOBAL.TheWorld.state.isnight
 
                     if is_night then
-                        -- 星光粒子
-                        if GLOBAL.SpawnPrefab then
-                            local x, y, z = owner.Transform:GetWorldPosition()
-                            for _ = 1, 2 do
-                                local fx = GLOBAL.SpawnPrefab("fireflies")
-                                if fx then
-                                    fx.Transform:SetPosition(
-                                        x + math.random() * 4 - 2,
-                                        y + math.random() * 2,
-                                        z + math.random() * 4 - 2
-                                    )
-                                    fx:DoTaskInTime(3, function()
-                                        if fx:IsValid() then fx:Remove() end
-                                    end)
-                                end
-                            end
-                        end
-
-                        -- 微弱照明
+                        -- 微弱照明（只创建一次，不重复生成）
                         if not owner._qianyue_light then
                             if owner.components.playervision then
-                                -- 给玩家一个小光晕
                                 owner._qianyue_light = true
-                                -- 通过添加一个光源来实现
                                 local light = GLOBAL.SpawnPrefab("fireflies")
                                 if light then
                                     light.Transform:SetPosition(0, 0, 0)
@@ -79,8 +59,8 @@ AddPrefabPostInit("world", function(inst)
                     end
                 end)
 
-                -- 小动物跟随
-                owner._qianyue_animal_task = owner:DoPeriodicTask(3, function()
+                -- 小动物跟随（5秒间隔）
+                owner._qianyue_animal_task = owner:DoPeriodicTask(5, function()
                     if not _G.Moon_HasEffect(owner, "qianyue") then return end
                     local x, y, z = owner.Transform:GetWorldPosition()
                     local small_animals = GLOBAL.TheSim:FindEntities(x, y, z, 8,

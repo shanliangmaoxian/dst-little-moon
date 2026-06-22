@@ -70,43 +70,26 @@ AddPrefabPostInit("world", function(inst)
                         owner._suansuancao_stacks = 0
                         owner._suansuancao_last_target = nil
                         owner._suansuancao_next_double = false
-                        -- 停止酸性伤害
-                        if owner._suansuancao_acid_task then
-                            owner._suansuancao_acid_task:Cancel()
-                            owner._suansuancao_acid_task = nil
-                        end
                     end)
                 end
 
-                -- 更新酸性伤害（3层时每1秒触发）
-                local function refreshAcidTick()
-                    if owner._suansuancao_acid_task then
-                        owner._suansuancao_acid_task:Cancel()
-                        owner._suansuancao_acid_task = nil
-                    end
-                    if owner._suansuancao_stacks >= 3 and owner._suansuancao_last_target
-                        and owner._suansuancao_last_target:IsValid() then
-                        owner._suansuancao_acid_task = owner:DoPeriodicTask(1, function()
-                            if not owner:IsValid() then return end
-                            if not _G.Moon_HasEffect(owner, "suansuancao") then return end
-                            local target = owner._suansuancao_last_target
-                            if not target or not target:IsValid() or not target.components.health
-                                or target.components.health:IsDead() then
-                                if owner._suansuancao_acid_task then
-                                    owner._suansuancao_acid_task:Cancel()
-                                    owner._suansuancao_acid_task = nil
-                                end
-                                return
-                            end
-                            local dmg = (owner.components.combat and owner.components.combat.defaultdamage) or 34
-                            local acid_dmg = dmg * 0.1
-                            if target.components.health.DoHHDelta then
-                                target.components.health:DoHHDelta(-acid_dmg, owner, "suansuancao_acid")
-                            else
-                                target.components.health:DoDelta(-acid_dmg, false, "suansuancao_acid")
-                            end
-                        end)
-                    end
+                -- 酸性伤害（持久定时器，内部判断是否3层，避免反复取消重建）
+                if not owner._suansuancao_acid_task then
+                    owner._suansuancao_acid_task = owner:DoPeriodicTask(1, function()
+                        if not owner:IsValid() then return end
+                        if not _G.Moon_HasEffect(owner, "suansuancao") then return end
+                        if (owner._suansuancao_stacks or 0) < 3 then return end
+                        local target = owner._suansuancao_last_target
+                        if not target or not target:IsValid() or not target.components.health
+                            or target.components.health:IsDead() then return end
+                        local dmg = (owner.components.combat and owner.components.combat.defaultdamage) or 34
+                        local acid_dmg = dmg * 0.1
+                        if target.components.health.DoHHDelta then
+                            target.components.health:DoHHDelta(-acid_dmg, owner, "suansuancao_acid")
+                        else
+                            target.components.health:DoDelta(-acid_dmg, false, "suansuancao_acid")
+                        end
+                    end)
                 end
 
                 -- 攻击处理
@@ -121,10 +104,6 @@ AddPrefabPostInit("world", function(inst)
                         applyDefReduction(owner._suansuancao_last_target, 0)
                         owner._suansuancao_stacks = 0
                         owner._suansuancao_next_double = false
-                        if owner._suansuancao_acid_task then
-                            owner._suansuancao_acid_task:Cancel()
-                            owner._suansuancao_acid_task = nil
-                        end
                     end
 
                     owner._suansuancao_last_target = target
@@ -139,9 +118,6 @@ AddPrefabPostInit("world", function(inst)
 
                     -- 重置衰减计时
                     resetDecayTimer()
-
-                    -- 刷新酸性伤害
-                    refreshAcidTick()
 
                     -- 飘字
                     if owner._suansuancao_stacks >= 3 and owner.components.talker then

@@ -97,8 +97,8 @@ AddPrefabPostInit("world", function(inst)
                     end
                 end
 
-                -- 每0.5秒检测是否处于空闲状态
-                owner._wywq_idle_task = owner:DoPeriodicTask(0.5, function()
+                -- 每1秒检测是否处于空闲状态
+                owner._wywq_idle_task = owner:DoPeriodicTask(1, function()
                     if not _G.Moon_HasEffect(owner, "wywq") then return end
 
                     local x, y, z = owner.Transform:GetWorldPosition()
@@ -128,7 +128,7 @@ AddPrefabPostInit("world", function(inst)
                     if moving or busy then
                         stopMeditation()
                     else
-                        owner._wywq_idle_time = (owner._wywq_idle_time or 0) + 0.5
+                        owner._wywq_idle_time = (owner._wywq_idle_time or 0) + 1
                         if owner._wywq_idle_time >= 2 and not owner._wywq_meditating then
                             startMeditation()
                         end

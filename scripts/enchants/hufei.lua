@@ -46,12 +46,16 @@ AddPrefabPostInit("world", function(inst)
                                 local butterflies = owner._hufei_butterflies or 0
                                 if butterflies > 0 then
                                     owner._hufei_butterflies = butterflies - 1
-                                    -- 蝶翼抗伤特效
+                                    -- 蝶翼抗伤特效（2秒冷却）
                                     if GLOBAL.SpawnPrefab then
-                                        local x, y, z = owner.Transform:GetWorldPosition()
-                                        local fx = GLOBAL.SpawnPrefab("statue_transition_2")
-                                        if fx then
-                                            fx.Transform:SetPosition(x, y, z)
+                                        local now = _G.GetTime and _G.GetTime() or 0
+                                        if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
+                                            owner._hufei_fx_cd = now
+                                            local x, y, z = owner.Transform:GetWorldPosition()
+                                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                            if fx then
+                                                fx.Transform:SetPosition(x, y, z)
+                                            end
                                         end
                                     end
                                     -- 抵消伤害，不调用原始 DoDelta
@@ -82,12 +86,16 @@ AddPrefabPostInit("world", function(inst)
                     local current = owner._hufei_butterflies or 0
                     if current < 3 then
                         owner._hufei_butterflies = current + 1
-                        -- 蝶翼恢复光效
+                        -- 蝶翼恢复光效（2秒冷却，共用CD）
                         if GLOBAL.SpawnPrefab then
-                            local x, y, z = owner.Transform:GetWorldPosition()
-                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
-                            if fx then
-                                fx.Transform:SetPosition(x, y, z)
+                            local now = _G.GetTime and _G.GetTime() or 0
+                            if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
+                                owner._hufei_fx_cd = now
+                                local x, y, z = owner.Transform:GetWorldPosition()
+                                local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                if fx then
+                                    fx.Transform:SetPosition(x, y, z)
+                                end
                             end
                         end
                     end

@@ -72,33 +72,28 @@ AddPrefabPostInit("world", function(inst)
                 end
                 owner:ListenForEvent("killed", owner._fay_kill_handler)
 
-                -- 周期性检测夜间buff
-                owner._fay_night_task = owner:DoPeriodicTask(1, function()
+                -- 夜间buff（事件驱动，不轮询）
+                local function _fay_update_night()
                     if not _G.Moon_HasEffect(owner, "fay") then return end
-                    local is_night = GLOBAL.TheWorld.state.isnight
+                    local is_night = _G.TheWorld.state.isnight
                     local hh = owner.components.hh_player
-
                     if is_night and not owner._fay_night_active then
                         owner._fay_night_active = true
-                        if hh then
-                            hh:AddEffectValueByKey("addSpeedPercent", 20)
-                        end
-                        -- 夜视：设置灯光组件
+                        if hh then hh:AddEffectValueByKey("addSpeedPercent", 20) end
                         if owner.components.playervision then
                             owner.components.playervision:ForceNightVision(true)
                             owner._fay_nightvision = true
                         end
                     elseif not is_night and owner._fay_night_active then
                         owner._fay_night_active = false
-                        if hh then
-                            hh:ReduceEffectValueByKey("addSpeedPercent", 20)
-                        end
+                        if hh then hh:ReduceEffectValueByKey("addSpeedPercent", 20) end
                         if owner._fay_nightvision and owner.components.playervision then
                             owner.components.playervision:ForceNightVision(false)
                             owner._fay_nightvision = false
                         end
                     end
-                end)
+                end
+                owner:WatchWorldState("isnight", _fay_update_night)
             end
         end,
         un_equip_fn = function(inst, owner, value)
@@ -111,10 +106,6 @@ AddPrefabPostInit("world", function(inst)
                 if owner._fay_kill_handler then
                     owner:RemoveEventCallback("killed", owner._fay_kill_handler)
                     owner._fay_kill_handler = nil
-                end
-                if owner._fay_night_task then
-                    owner._fay_night_task:Cancel()
-                    owner._fay_night_task = nil
                 end
                 -- 清理夜间效果
                 if owner._fay_night_active then

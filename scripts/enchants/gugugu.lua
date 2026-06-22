@@ -93,28 +93,12 @@ AddPrefabPostInit("world", function(inst)
                                     attacker.components.health:DoDelta(-dmg * 2, false, nil)
                                 end
 
-                                -- 鸽子视觉特效（生成乌鸦飞向攻击者）
+                                -- 粒子特效代替乌鸦（避免生成物理实体）
                                 if GLOBAL.SpawnPrefab then
-                                    local bird = GLOBAL.SpawnPrefab("crow")
-                                    if bird then
+                                    local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                    if fx then
                                         local bx, by, bz = owner.Transform:GetWorldPosition()
-                                        bird.Transform:SetPosition(bx + math.random() * 2 - 1, by + 1.5, bz + math.random() * 2 - 1)
-
-                                        -- 给鸟一个朝向攻击者的速度
-                                        if bird.Physics and attacker:IsValid() then
-                                            local ax, ay, az = attacker.Transform:GetWorldPosition()
-                                            local dx, dz = ax - bx, az - bz
-                                            local dist = math.sqrt(dx * dx + dz * dz) or 1
-                                            local speed = 20
-                                            bird.Physics:SetVel(dx / dist * speed, 3, dz / dist * speed)
-                                        end
-
-                                        -- 0.8秒后移除
-                                        bird:DoTaskInTime(0.8, function()
-                                            if bird:IsValid() then
-                                                bird:Remove()
-                                            end
-                                        end)
+                                        fx.Transform:SetPosition(bx, by + 1.5, bz)
                                     end
                                 end
                             end)
