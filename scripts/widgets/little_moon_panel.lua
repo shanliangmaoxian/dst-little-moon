@@ -23,7 +23,7 @@ local function ScreenYToTopOffset(y)
     return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat, enable_dice_roll)
     Widget._ctor(self, "LittleMoonPanel")
 
     self.owner = owner
@@ -34,6 +34,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     self.enable_suicide = enable_suicide ~= false
     self.dig_treasure_mode = dig_treasure_mode or 0
     self.enable_quick_chat = enable_quick_chat ~= false
+    self.enable_dice_roll = enable_dice_roll ~= false
 
     self.drag_move_handler = nil
     self.drag_button_handler = nil
@@ -52,6 +53,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
     if self.enable_auto_pickup then panel_height = panel_height + 45 end
     if self.enable_suicide then panel_height = panel_height + 45 end
     if self.enable_quick_chat then panel_height = panel_height + 85 end
+    if self.enable_dice_roll then panel_height = panel_height + 105 end
     self.panel_height = panel_height
 
     self:SetScale(scale or 1.0)
@@ -333,6 +335,73 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         self.chat_send_btn:SetTextSize(18)
 
         current_y = current_y - 50
+    end
+
+    -------------------------------------------------------
+    -- 幸运骰子
+    -------------------------------------------------------
+    if self.enable_dice_roll then
+        -- 分割线
+        if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup or self.enable_quick_chat then
+            AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
+        end
+
+        self.dice_title = self:AddChild(Text(CHATFONT, 24, "幸运骰子"))
+        self.dice_title:SetPosition(0, current_y, 0)
+        self.dice_title:SetColour(unpack(GOLD))
+        if self.dice_title.EnableOutline then self.dice_title:EnableOutline(true) end
+
+        local dice_y = current_y - 38
+
+        -- 投掷结果显示
+        self.dice_result_text = self:AddChild(Text(CHATFONT, 20, "上次: --  本次: --"))
+        self.dice_result_text:SetPosition(0, dice_y, 0)
+        self.dice_result_text:SetColour(unpack(WHITE))
+
+        -- 掷骰子按钮
+        self.dice_roll_btn = self:AddChild(TEMPLATES.StandardButton(function()
+            if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["RollDice"] then
+                SendModRPCToServer(MOD_RPC["LittleMoon"]["RollDice"])
+            end
+        end, "掷骰子", { 120, 36 }))
+        self.dice_roll_btn:SetPosition(0, dice_y - 28, 0)
+        self.dice_roll_btn:SetTextSize(20)
+
+        current_y = current_y - 105
+
+        -- 监听骰子数据更新
+        local real_owner = self.owner or ThePlayer
+        if real_owner then
+            self.inst:ListenForEvent("xyczdicedirty", function()
+                if not self.dice_result_text then return end
+                local last = 0
+                local cur = 0
+                if real_owner._xycz_dice_last then
+                    last = real_owner._xycz_dice_last:value() or 0
+                end
+                if real_owner._xycz_dice_current then
+                    cur = real_owner._xycz_dice_current:value() or 0
+                end
+
+                local last_str = last > 0 and tostring(last) or "--"
+                local cur_str = cur > 0 and tostring(cur) or "--"
+
+                -- 80以上高亮
+                if last >= 80 and cur >= 80 then
+                    self.dice_result_text:SetString("恭喜获得幸运橙汁！")
+                    self.dice_result_text:SetColour(1, 0.84, 0, 1)  -- 金色
+                elseif cur >= 80 then
+                    self.dice_result_text:SetString("上次: " .. last_str .. "  本次: [" .. cur_str .. "]  ≥80!")
+                    self.dice_result_text:SetColour(1, 0.65, 0, 1)  -- 橙色
+                elseif last >= 80 then
+                    self.dice_result_text:SetString("上次: [" .. last_str .. "]  本次: " .. cur_str .. "  (需80+)")
+                    self.dice_result_text:SetColour(1, 0.75, 0.3, 1)  -- 淡橙
+                else
+                    self.dice_result_text:SetString("上次: " .. last_str .. "  本次: " .. cur_str)
+                    self.dice_result_text:SetColour(unpack(WHITE))
+                end
+            end, real_owner)
+        end
     end
 
     self:LoadPosition()

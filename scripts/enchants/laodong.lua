@@ -100,6 +100,11 @@ local function _ldg_do_inc(inst, key)
     end
 end
 
+-- =========================================================
+-- 以下内容需要 ENABLE_MORE_ENCHANTS 开启
+-- =========================================================
+if not CFG.ENABLE_MORE_ENCHANTS then return end
+
 AddPrefabPostInitAny(function(inst2)
     if not _G.TheWorld.ismastersim then return end
     if not inst2:HasTag("player") then return end
@@ -203,11 +208,6 @@ AddComponentPostInit("stewer", function(self)
         end
     end
 end)
-
--- =========================================================
--- 以下内容需要 HH 附魔框架
--- =========================================================
-if not CFG.ENABLE_MORE_ENCHANTS then return end
 
 -- =========================================================
 -- 1. workable 组件钩子 — 敲击 100x（保持原版砍树/挖矿动画）
