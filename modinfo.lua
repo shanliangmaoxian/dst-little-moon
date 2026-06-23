@@ -134,7 +134,7 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
+        default = false,
     },
 
     AddTitle("欧皇模拟器清理组件"),
