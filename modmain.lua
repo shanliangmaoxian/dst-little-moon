@@ -62,12 +62,13 @@ modimport("scripts/enchants/huaimin")
 modimport("scripts/enchants/laodong")
 modimport("scripts/enchants/changpi")
 modimport("scripts/enchants/shanzhu")
+modimport("scripts/enchants/xingyunchengzhi")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
 -- ------------------------------------------------------------------
 local CFG = GLOBAL.MOON_CFG
-if CFG.ENABLE_TREASURE or CFG.ENABLE_QL_HELPER or CFG.ENABLE_AUTO_PICKUP or CFG.ENABLE_SUICIDE then
+if CFG.ENABLE_TREASURE or CFG.ENABLE_QL_HELPER or CFG.ENABLE_AUTO_PICKUP or CFG.ENABLE_SUICIDE or CFG.ENABLE_MORE_ENCHANTS then
     modimport("scripts/ui/moon_button")
     modimport("scripts/ui/moon_panel")
 end
