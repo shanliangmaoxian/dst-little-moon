@@ -1,8 +1,6 @@
--- 小月亮 附魔：幸运橙汁
--- 获取方式：面板掷骰子，连续两次80点以上获得
--- 效果：掉落物概率增加20%、采集概率双倍15%、收锅概率双倍20%
---        幸运值+10、制作物品15%概率不消耗材料
---        击杀敌人20%额外掉落
+-- 小月亮 附魔：幸运橙汁 (#31)
+-- 获取：#roll 掷骰子，连续两次90+获得（冷却15秒，期望~87次）
+-- 效果：掉落/采集/收锅/制作30%，击杀额外掉落30%，幸运值+10
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -18,7 +16,7 @@ AddComponentPostInit("stewer", function(self)
         local product = _old_Harvest(self, harvester, ...)
         if harvester and harvester:IsValid() and harvester:HasTag("player")
                 and _G.Moon_HasEffect and _G.Moon_HasEffect(harvester, "xingyunchengzhi") then
-            if math.random() <= 0.20 then
+            if math.random() <= 0.30 then
                 local product_prefab = self.product
                 if product_prefab then
                     local extra = _G.SpawnPrefab(product_prefab)
@@ -41,7 +39,7 @@ AddComponentPostInit("builder", function(self)
     self.RemoveIngredients = function(self, ingredients, recname, discounted)
         if self.inst:HasTag("player")
                 and _G.Moon_HasEffect and _G.Moon_HasEffect(self.inst, "xingyunchengzhi") then
-            if math.random() <= 0.15 then
+            if math.random() <= 0.30 then
                 if self.inst.components.talker then
                     self.inst.components.talker:Say("幸运橙汁！没消耗材料！")
                 end
@@ -82,8 +80,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_XYCZ", {
         name = "幸运橙汁",
         client_text = "幸运\n橙汁",
-        desc = "幸运女神的眷顾！\n● 击杀敌人20%额外掉落\n● 采集15%概率双倍产出\n● 收锅20%概率多一份\n● 幸运值+10\n● 制作15%概率不消耗材料\n获取：掷骰子连续两次80+",
-        check_desc = "掷骰子连续两次80+即可获得，好运常伴！",
+        desc = "幸运女神的眷顾！\n● 击杀敌人30%额外掉落\n● 采集30%概率双倍产出\n● 收锅30%概率多一份\n● 幸运值+10\n● 制作30%概率不消耗材料\n获取：聊天输入 #roll 掷骰子，连续两次90+",
+        check_desc = "聊天输入 #roll 掷骰子，连续两次90+即可获得",
         can_add = false,
         only_one = true,
         is_special = false,
@@ -104,7 +102,7 @@ AddPrefabPostInit("world", function(inst)
                     if not _G.Moon_HasEffect(owner, "xingyunchengzhi") then return end
                     local victim = data and data.victim
                     if not victim or not victim:IsValid() then return end
-                    if math.random() <= 0.20 then
+                    if math.random() <= 0.30 then
                         if victim.components.lootdropper then
                             local x, y, z = victim.Transform:GetWorldPosition()
                             _G.pcall(victim.components.lootdropper.DropLoot, victim.components.lootdropper, _G.Vector3(x, y, z))
@@ -119,7 +117,7 @@ AddPrefabPostInit("world", function(inst)
                 -- 采集15%概率双倍产出（采摘/收获）
                 owner._xycz_pick_handler = function(inst, data)
                     if not _G.Moon_HasEffect(owner, "xingyunchengzhi") then return end
-                    if data and data.loot and math.random() <= 0.15 then
+                    if data and data.loot and math.random() <= 0.30 then
                         if data.loot.prefab and owner.components.inventory then
                             local extra = _G.SpawnPrefab(data.loot.prefab)
                             if extra then
@@ -134,7 +132,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._xycz_work_handler = function(inst, data)
                     if not _G.Moon_HasEffect(owner, "xingyunchengzhi") then return end
                     local target = data and data.target
-                    if target and target:IsValid() and target.components.lootdropper and math.random() <= 0.15 then
+                    if target and target:IsValid() and target.components.lootdropper and math.random() <= 0.30 then
                         _G.pcall(target.components.lootdropper.DropLoot, target.components.lootdropper)
                     end
                 end
@@ -172,15 +170,17 @@ end)
 -- 2b. 骰子系统：Player PostInit（网络变量 + 持久化）
 -- =========================================================
 AddPlayerPostInit(function(inst)
-    -- 网络变量：客户端 UI 读取
-    inst._xycz_dice_last = _G.net_ushort(inst.GUID, "little_moon.xycz_dice_last", "xyczdicedirty")
-    inst._xycz_dice_current = _G.net_ushort(inst.GUID, "little_moon.xycz_dice_cur", "xyczdicedirty")
+    -- 网络变量：客户端 UI 读取（net_byte 存值，net_bool 做触发器）
+    inst._xycz_dice_last = _G.net_byte(inst.GUID, "little_moon.xycz_dice_last", "xyczdicedirty")
+    inst._xycz_dice_current = _G.net_byte(inst.GUID, "little_moon.xycz_dice_cur", "xyczdicedirty")
+    inst._xycz_dice_updated = _G.net_bool(inst.GUID, "little_moon.xycz_dice_updated", "xyczdicedirty")
 
     if not _G.TheWorld.ismastersim then return end
 
     -- 服务端：初始化
     inst._xycz_dice_last:set(0)
     inst._xycz_dice_current:set(0)
+    inst._xycz_dice_updated:set(false)
     inst._xycz_last_roll_value = 0       -- 服务端上一次有效投掷值
     inst._xycz_next_roll_time = 0         -- 冷却时间戳
 
@@ -205,11 +205,10 @@ end)
 -- =========================================================
 -- 2c. 骰子 RPC 处理（服务端）
 -- =========================================================
-AddModRPCHandler("LittleMoon", "RollDice", function(player)
+function _G.Moon_DoDiceRoll(player)
     if not player or not player:IsValid() then return end
     if player:HasTag("playerghost") then return end
 
-    -- 冷却检查（5秒）
     local now = _G.GetTime()
     if player._xycz_next_roll_time and now < player._xycz_next_roll_time then
         if player.components.talker then
@@ -218,42 +217,56 @@ AddModRPCHandler("LittleMoon", "RollDice", function(player)
         end
         return
     end
-    player._xycz_next_roll_time = now + 5
+    player._xycz_next_roll_time = now + 15
 
-    -- 掷骰子！(1-100)
     local roll = math.random(1, 100)
     local last_roll = player._xycz_last_roll_value or 0
 
-    -- 更新客户端显示
     if player._xycz_dice_last then
         player._xycz_dice_last:set(last_roll)
     end
     if player._xycz_dice_current then
         player._xycz_dice_current:set(roll)
     end
+    if player._xycz_dice_updated then
+        player._xycz_dice_updated:set(not player._xycz_dice_updated:value())
+    end
 
-    -- 判断是否连续两次 >= 80
-    if last_roll >= 80 and roll >= 80 then
-        -- 连续两次80+！获得附魔石！
+    if last_roll >= 90 and roll >= 90 then
         local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_XYCZ")
         if success and stone and player.components.inventory then
             player.components.inventory:GiveItem(stone, nil, player:GetPosition())
             if player.components.talker then
-                player.components.talker:Say("恭喜！连续两次80+！获得幸运橙汁附魔石！")
+                player.components.talker:Say("恭喜！连续两次90+！获得幸运橙汁附魔石！")
             end
         end
-        -- 重置连击
         player._xycz_last_roll_value = 0
         if player._xycz_dice_last then
             player._xycz_dice_last:set(0)
         end
     else
-        -- 更新"上次记录"
         player._xycz_last_roll_value = roll
-        if roll >= 80 then
-            if player.components.talker then
-                player.components.talker:Say("掷出" .. roll .. "点！80以上！再掷一次80+就能获得幸运橙汁！")
+        if player.components.talker then
+            if roll >= 90 then
+                player.components.talker:Say("掷出" .. roll .. "点！90以上！再掷一次90+就能获得幸运橙汁！")
+            else
+                player.components.talker:Say("掷出" .. roll .. "点")
             end
         end
     end
-end)
+end
+
+-- =========================================================
+-- 2d. 聊天指令 #roll 备用触发（调试用）
+-- =========================================================
+local _Old_Networking_Say_XYCZ = _G.Networking_Say
+_G.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
+    -- 拦截 #roll 指令：执行骰子但不显示消息
+    if _G.TheWorld and _G.TheWorld.ismastersim and message == "#roll" then
+        _G.Moon_DoDiceRoll(_G.UserToPlayer(userid))
+        return
+    end
+    if _Old_Networking_Say_XYCZ then
+        _Old_Networking_Say_XYCZ(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
+    end
+end
