@@ -1,5 +1,5 @@
 -- 小月亮 附魔：幸运橙汁 (#31)
--- 获取：#roll 掷骰子，连续两次90+获得（冷却15秒，期望~87次）
+-- 获取：#roll 掷骰子，连续两次80+获得（冷却15秒，期望~25次）
 -- 效果：掉落/采集/收锅/制作30%，击杀额外掉落30%，幸运值+10
 
 local _G = GLOBAL
@@ -80,8 +80,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_XYCZ", {
         name = "幸运橙汁",
         client_text = "幸运\n橙汁",
-        desc = "幸运女神的眷顾！\n● 击杀敌人30%额外掉落\n● 采集30%概率双倍产出\n● 收锅30%概率多一份\n● 幸运值+10\n● 制作30%概率不消耗材料\n获取：聊天输入 #roll 掷骰子，连续两次90+",
-        check_desc = "聊天输入 #roll 掷骰子，连续两次90+即可获得",
+        desc = "幸运女神的眷顾！\n● 击杀敌人30%额外掉落\n● 采集30%概率双倍产出\n● 收锅30%概率多一份\n● 幸运值+10\n● 制作30%概率不消耗材料\n获取：聊天输入 #roll 掷骰子，连续两次80+",
+        check_desc = "聊天输入 #roll 掷骰子，连续两次80+即可获得",
         can_add = false,
         only_one = true,
         is_special = false,
@@ -232,12 +232,12 @@ function _G.Moon_DoDiceRoll(player)
         player._xycz_dice_updated:set(not player._xycz_dice_updated:value())
     end
 
-    if last_roll >= 90 and roll >= 90 then
+    if last_roll >= 80 and roll >= 80 then
         local success, stone = _G.pcall(_G.HHSpawnStoneById, "Legend_XYCZ")
         if success and stone and player.components.inventory then
             player.components.inventory:GiveItem(stone, nil, player:GetPosition())
             if player.components.talker then
-                player.components.talker:Say("恭喜！连续两次90+！获得幸运橙汁附魔石！")
+                player.components.talker:Say("恭喜！连续两次80+！获得幸运橙汁附魔石！")
             end
         end
         player._xycz_last_roll_value = 0
@@ -247,8 +247,8 @@ function _G.Moon_DoDiceRoll(player)
     else
         player._xycz_last_roll_value = roll
         if player.components.talker then
-            if roll >= 90 then
-                player.components.talker:Say("掷出" .. roll .. "点！90以上！再掷一次90+就能获得幸运橙汁！")
+            if roll >= 80 then
+                player.components.talker:Say("掷出" .. roll .. "点！80以上！再掷一次80+就能获得幸运橙汁！")
             else
                 player.components.talker:Say("掷出" .. roll .. "点")
             end

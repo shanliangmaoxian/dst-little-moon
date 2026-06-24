@@ -15,8 +15,7 @@ AddClassPostConstruct("screens/playerhud", function(self)
         CFG.ENABLE_AUTO_PICKUP,
         CFG.ENABLE_SUICIDE,
         CFG.DIG_TREASURE_MODE,
-        CFG.ENABLE_QUICK_CHAT,
-        CFG.ENABLE_MORE_ENCHANTS
+        CFG.ENABLE_QUICK_CHAT
     ))
     self.little_moon_panel:MoveToFront()
 end)
