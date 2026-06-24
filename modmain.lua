@@ -5,6 +5,11 @@
 
 local _G = GLOBAL
 
+-- 骰子 RPC 在最顶部注册（确保客户端 MOD_RPC 表正确填充）
+AddModRPCHandler("LittleMoon", "RollDice", function(player)
+    if _G.Moon_DoDiceRoll then _G.Moon_DoDiceRoll(player) end
+end)
+
 -- ------------------------------------------------------------------
 -- 1. 核心工具层 (无依赖，最先加载)
 -- ------------------------------------------------------------------
@@ -35,7 +40,7 @@ modimport("scripts/enchants/fqcd_sanity")
 modimport("scripts/enchants/myxl_level")
 modimport("scripts/enchants/yzdx")
 modimport("scripts/enchants/wywq")
-modimport("scripts/enchants/wjbd")
+-- modimport("scripts/enchants/wjbd")   烷基八氮去掉
 modimport("scripts/enchants/lanqiu")
 modimport("scripts/enchants/aiyo")
 modimport("scripts/enchants/fay")
