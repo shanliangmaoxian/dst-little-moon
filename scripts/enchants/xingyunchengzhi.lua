@@ -1,5 +1,5 @@
 -- 小月亮 附魔：幸运橙汁 (#31)
--- 获取：#roll 掷骰子，连续两次80+获得（冷却15秒，期望~25次）
+-- 获取：#roll 掷骰子，连续两次80+获得（冷却10秒，期望~25次）
 -- 效果：掉落/采集/收锅/制作30%，击杀额外掉落30%，幸运值+10
 
 local _G = GLOBAL
@@ -217,7 +217,7 @@ function _G.Moon_DoDiceRoll(player)
         end
         return
     end
-    player._xycz_next_roll_time = now + 15
+    player._xycz_next_roll_time = now + 10
 
     local roll = math.random(1, 100)
     local last_roll = player._xycz_last_roll_value or 0
