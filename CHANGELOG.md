@@ -19,6 +19,9 @@
   - 根因：`AddPrefabPostInitAny` 和 `stewer` 计数部分在CFG守卫之前注册
   - 修复：将 `if not CFG.ENABLE_MORE_ENCHANTS then return end` 提前到所有钩子之前
 
+### 修改
+- **附魔描述精简**：精简 15 个附魔的 `desc` 字段，解决帮助面板"词条属性"中长描述相互覆盖的问题
+
 ## 1.14.5 - 2026-06-22
 
 ### 新增
