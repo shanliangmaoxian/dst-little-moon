@@ -29,6 +29,7 @@ modimport("scripts/features/auto_pickup")
 modimport("scripts/features/suicide")
 modimport("scripts/features/demon_altar")
 modimport("scripts/features/disable_reselect")
+modimport("scripts/features/enchant_remover")
 
 -- ------------------------------------------------------------------
 -- 3. 附魔模块

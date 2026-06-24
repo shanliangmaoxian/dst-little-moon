@@ -136,6 +136,13 @@ configuration_options = {
         },
         default = false,
     },
+    {
+        name = "remove_enchant",
+        label = "禁用指定附魔石,在remove_enchant表中添加",
+        hover = "在此表中添加要禁用的附魔石ID或名称。\n格式: {'id1','id2','id3'}\n支持所有HH框架附魔石，留空表则不禁用任何附魔石",
+        options = { {description = "在服务器mod配置中添加", data = {}} },
+        default = {},
+    },
 
     AddTitle("欧皇模拟器清理组件"),
     {
