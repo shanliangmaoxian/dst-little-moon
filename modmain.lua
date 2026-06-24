@@ -67,6 +67,7 @@ modimport("scripts/enchants/lianggongcang")
 modimport("scripts/enchants/huaimin")
 modimport("scripts/enchants/laodong")
 modimport("scripts/enchants/changpi")
+modimport("scripts/enchants/xiaoguai")
 modimport("scripts/enchants/shanzhu")
 modimport("scripts/enchants/xingyunchengzhi")
 

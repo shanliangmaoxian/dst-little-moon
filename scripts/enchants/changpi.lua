@@ -1,4 +1,4 @@
--- 小月亮 附魔：长臂猿
+-- 小月亮 附魔：七步之外
 -- 增加攻击距离 2~4（生成附魔石时确定具体数值，4为满级）
 -- 获取：受到100+伤害时1%概率获得附魔石
 
@@ -34,7 +34,7 @@ AddPrefabPostInit("world", function(inst)
                 if success and stone and inst2.components.inventory then
                     inst2.components.inventory:GiveItem(stone, nil, inst2:GetPosition())
                     if inst2.components.talker then
-                        inst2.components.talker:Say("长臂猿附魔石到手！攻击距离增加啦～")
+                        inst2.components.talker:Say("七步之外附魔石到手！攻击距离增加啦～")
                     end
                 end
             end
@@ -51,10 +51,10 @@ AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
 
     GLOBAL.AddSpecialEquipEffect("Legend_CHANGPI", {
-        name = "长臂猿",
-        client_text = "长\n臂",
+        name = "七步之外",
+        client_text = "七步\n之外",
         desc = "受到100+伤害时有1%%概率获得\n增加攻击距离%s",
-        check_desc = "长臂猿，摸得到！",
+        check_desc = "七步之外，摸得到！",
         can_add = false,
         only_one = true,
         is_special = false,
