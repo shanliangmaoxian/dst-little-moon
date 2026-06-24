@@ -14,7 +14,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_AIYO", {
         name = "哎哟",
         client_text = "哎\n哟",
-        desc = "受到伤害时瞬回所受伤害60%的生命值\n反弹100%伤害给攻击者\n「记仇」：标记攻击者，对其伤害+20%(10秒)\n「报仇」：击杀标记敌人时回15%最大生命+冲击波",
+        desc = "受伤回血60%+反弹100%伤害\n记仇增伤20%，报仇回血15%+冲击波",
         check_desc = "哎哟，打我你也疼！",
         can_add = false,
         only_one = true,

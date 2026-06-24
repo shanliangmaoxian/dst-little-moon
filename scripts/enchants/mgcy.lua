@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_MGCY", {
         name = "摸瓜吃鱼",
         client_text = "摸瓜\n吃鱼",
-        desc = "击杀敌人50%几率额外掉落一件物品\n食用鱼类食物回复量翻倍+10秒50%伤害\n采集速度+100%\n靠近小动物不会惊动它们",
+        desc = "击杀50%额外掉落，吃鱼回复翻倍+50%伤害\n采集+100%，小动物不惊动",
         check_desc = "摸鱼圣手，顺手牵羊！",
         can_add = false,
         only_one = true,

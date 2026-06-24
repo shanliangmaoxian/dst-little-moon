@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_SHANZHU", {
         name = "山竹的捏",
         client_text = "山竹\n的捏",
-        desc = "战斗护盾25%血量，移速+15%攻击+20%\n破盾回血+AoE，8秒再生\n每60秒「果中皇后」5秒：护盾翻倍+50%真伤\n打怪15%双倍掉落",
+        desc = "战斗护盾25%血量，移速+15%攻击+20%\n破盾回血+AoE，每60s果中皇后强化\n打怪15%双倍掉落",
         check_desc = "厚皮甜心，永不认输！",
         can_add = false,
         only_one = true,

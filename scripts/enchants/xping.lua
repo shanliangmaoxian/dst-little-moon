@@ -12,7 +12,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_XPING", {
         name = "心平气和",
         client_text = "心平\n气和",
-        desc = "每15秒飘落花瓣和羽毛特效\n小动物不会逃跑 主动靠近你\n被攻击时5%让敌人发呆2秒\n被攻击时随机说佛系台词～",
+        desc = "花瓣羽毛特效，小动物主动靠近\n被攻击5%让敌人发呆，随机佛系台词",
         check_desc = "佛了佛了～",
         can_add = false,
         only_one = true,

@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_GUGUGU", {
         name = "咕咕咕",
         client_text = "咕咕\n咕",
-        desc = "闪避率+42%\n成功闪避后「鸽了！」：下一次攻击必暴击+400%暴伤(6秒)\n闪避失败时召唤鸽子反击(200%伤害)\n内置冷却0.5秒",
+        desc = "闪避+42%，成功闪避必暴+400%暴伤\n失败召唤鸽子反击200%，冷却0.5秒",
         check_desc = "鸽之意志！打不过就鸽！",
         can_add = false,
         only_one = true,

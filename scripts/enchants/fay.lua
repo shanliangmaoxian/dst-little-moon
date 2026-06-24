@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_FAY", {
         name = "妖精庇护",
         client_text = "妖精\n庇护",
-        desc = "fay的祝福\n攻击附带目标已损失生命值8%的真实伤害\n击杀敌人回复30精神值\n夜间+20%移速和夜视\n15%几率释放妖精之尘(伤害+特效)",
+        desc = "fay的祝福\n攻击附带8%已损失生命真伤，击杀回30精神\n夜间+20%移速+夜视，15%妖精之尘",
         check_desc = "妖精之力的庇护",
         can_add = false,
         only_one = true,

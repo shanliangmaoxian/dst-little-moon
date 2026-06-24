@@ -80,7 +80,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_XYCZ", {
         name = "幸运橙汁",
         client_text = "幸运\n橙汁",
-        desc = "幸运女神的眷顾！\n● 击杀敌人30%额外掉落\n● 采集30%概率双倍产出\n● 收锅30%概率多一份\n● 幸运值+10\n● 制作30%概率不消耗材料\n获取：聊天输入 #roll 掷骰子，连续两次80+",
+        desc = "幸运女神的眷顾！\n击杀/采集/收锅/制作30%额外奖励，幸运值+10",
         check_desc = "聊天输入 #roll 掷骰子，连续两次80+即可获得",
         can_add = false,
         only_one = true,

@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_HUAIMIN", {
         name = "怀民",
         client_text = "怀\n民",
-        desc = "每到夜晚获得随机buff(一种持续整夜)：\n+50%伤害 / +50%移速 / 每5秒回5%血 / +30%减伤",
+        desc = "夜晚随机buff：+50%伤害/移速或+30%减伤",
         check_desc = "你睡没睡，起来重睡！",
         can_add = false,
         only_one = true,
