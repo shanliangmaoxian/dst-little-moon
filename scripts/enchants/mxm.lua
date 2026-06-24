@@ -15,7 +15,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_MXM", {
         name = "是萌新喵",
         client_text = "萌新\n喵",
-        desc = "致命伤害时留1血+隐身3秒(冷却90秒)\n对血量高于你的敌人+60%伤害\n首次攻击必暴击(300%伤害)\n死亡不掉落物品",
+        desc = "致命伤留1血+隐身3秒(冷却90秒)\n对高血量敌人+60%伤害，首击必暴300%",
         check_desc = "萌新保护条例！喵～",
         can_add = false,
         only_one = true,

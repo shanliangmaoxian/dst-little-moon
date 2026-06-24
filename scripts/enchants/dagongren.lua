@@ -12,7 +12,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_DGR", {
         name = "打工人",
         client_text = "打工\n人",
-        desc = "劳模典范：工作速度+100%\n采集/完成工作时有25%几率获得双倍物品产出\n加班加点：黄昏或夜晚时攻击伤害额外+30%",
+        desc = "工作速度+100%，25%双倍产出\n黄昏/夜晚伤害+30%",
         check_desc = "早安，打工人！工作使我快乐！",
         can_add = false,
         only_one = true,

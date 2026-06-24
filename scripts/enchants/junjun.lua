@@ -14,7 +14,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_JUNJUN", {
         name = "君可知",
         client_text = "君可\n知",
-        desc = "受击限伤不超过最大生命15%\n触发限伤后获0.5秒无敌帧\n叠「铁壁」层：+5%减伤/层，持续15秒(最多6层)\n无敌结束时对周围6码敌人造成200%范围伤害(冷却5秒)",
+        desc = "受击限伤最大生命15%+无敌0.5秒\n叠铁壁减伤最多30%\n无敌结束200%范围伤害(冷却5秒)",
         check_desc = "坚如磐石，君临天下！",
         can_add = false,
         only_one = true,

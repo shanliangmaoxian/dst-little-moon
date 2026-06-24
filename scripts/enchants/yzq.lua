@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_YZQ", {
         name = "云中雀",
         client_text = "云中\n雀",
-        desc = "如雀翔空，云中翱翔\n移速+35%\n每8秒获得「翱翔」buff\n下一次攻击350%范围伤害+击退\n翱翔期间免疫伤害",
+        desc = "移速+35%，每8秒获翱翔buff\n下次攻击350%范围伤害+击退，翱翔期间免疫",
         check_desc = "云中雀，自由翱翔！",
         can_add = false,
         only_one = true,

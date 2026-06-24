@@ -17,7 +17,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_SUANSUANCAO", {
         name = "酸酸草",
         client_text = "酸酸\n草",
-        desc = "酸蚀叠层：防御降低30%→35%→40% (持续8秒)\n满3层额外每秒10%攻击力的酸性伤害\n吃酸味食物回复量×3+加速25%(12秒)\n加速期间攻击附带2%最大生命酸性伤害",
+        desc = "攻击叠酸蚀减防，3层额外酸性伤害\n吃酸味食物回复×3+加速25%\n攻击附带2%真伤",
         check_desc = "越打越酸，越酸越疼！",
         can_add = false,
         only_one = true,

@@ -233,7 +233,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LDG", {
         name = "劳动最光荣",
         client_text = "劳动\n光荣",
-        desc = "劳动最光荣！\n● 秒采：采集/收获/交易瞬间完成\n● 秒砍挖：砍树/挖矿瞬间完成\n● 秒制作：建筑/制作瞬间完成\n● 秒出锅：放入食材即出锅\n● 劳动有喜：劳动中5%概率获得藏宝图\n获得：挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 敲碎巨大作物50",
+        desc = "劳动最光荣！\n秒采/秒砍挖/秒制作/秒出锅全加速\n劳动中5%概率获得藏宝图",
         check_desc = "挖矿/砍树/采集/制作各300 + 烹饪15种不同料理 + 敲碎巨大作物50，劳动最光荣！",
         can_add = false,
         only_one = true,

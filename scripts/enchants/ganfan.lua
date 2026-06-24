@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_GANFAN", {
         name = "干饭人",
         client_text = "干\n饭",
-        desc = "进食速度+200%（秒吃）\n每吃一个食物叠「干劲」+8%伤害+5%移速\n最多8层 持续30秒\n满层吃食物触发冲击波250%AoE",
+        desc = "进食速度+200%，吃食物叠干劲+8%伤害+5%移速(最多8层)\n满层触发冲击波250%AoE",
         check_desc = "干饭不积极，思想有问题！",
         can_add = false,
         only_one = true,
