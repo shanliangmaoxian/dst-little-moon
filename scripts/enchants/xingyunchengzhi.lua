@@ -85,7 +85,7 @@ AddPrefabPostInit("world", function(inst)
         can_add = false,
         only_one = true,
         is_special = false,
-        client_color = { 1.0, 0.6, 0.1, 1 },  -- 橙色
+        client_color = { 0.8, 0, 0.8, 1 },
         check_equip_can_add = function(inst)
             return true, "满足条件"
         end,
