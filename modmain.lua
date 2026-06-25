@@ -30,7 +30,7 @@ modimport("scripts/features/suicide")
 modimport("scripts/features/demon_altar")
 modimport("scripts/features/disable_reselect")
 modimport("scripts/features/enchant_remover")
-modimport("scripts/features/skin_ownership")
+-- modimport("scripts/features/skin_ownership")
 modimport("scripts/features/wardrobe_anywhere")
 
 -- ------------------------------------------------------------------
