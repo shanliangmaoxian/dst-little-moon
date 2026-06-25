@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.14.6"
+version = "1.14.7"
 api_version = 10
 priority = 1000
 dst_compatible = true
@@ -277,5 +277,28 @@ configuration_options = {
             { description = "不限制", data = 9999 },
         },
         default = 5,
+    },
+
+    AddTitle("便捷功能"),
+
+    {
+        name = "ENABLE_WARDROBE_ANYWHERE",
+        label = "随身换装",
+        hover = "物品栏上方显示\"换装\"按钮，随时随地打开更衣室",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_SKIN_SHARING",
+        label = "皮肤通用化",
+        hover = "允许玩家跨角色套用皮肤，更衣室显示全部在场角色的皮肤选项",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = false,
     },
 }
