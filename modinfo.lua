@@ -289,16 +289,16 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
-    },
-    {
-        name = "ENABLE_SKIN_SHARING",
-        label = "皮肤通用化",
-        hover = "允许玩家跨角色套用皮肤，更衣室显示全部在场角色的皮肤选项",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
         default = false,
     },
+    -- {
+    --     name = "ENABLE_SKIN_SHARING",
+    --     label = "皮肤通用化",
+    --     hover = "允许玩家跨角色套用皮肤，更衣室显示全部在场角色的皮肤选项",
+    --     options = {
+    --         { description = "开启", data = true },
+    --         { description = "关闭", data = false },
+    --     },
+    --     default = false,
+    -- },
 }
