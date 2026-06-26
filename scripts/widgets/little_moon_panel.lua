@@ -307,7 +307,11 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
         self.chat_title:SetColour(unpack(GOLD))
         if self.chat_title.EnableOutline then self.chat_title:EnableOutline(true) end
 
-        local chat_y = current_y - 38
+        self.chat_hint = self:AddChild(Text(CHATFONT, 16, "点此编辑，再点退出,不退出可能导致部分快捷键失效"))
+        self.chat_hint:SetPosition(-50, current_y - 20, 0)
+        self.chat_hint:SetColour(0.6, 0.6, 0.6, 1)
+
+        local chat_y = current_y - 42
 
         self.chat_input_bg = self:AddChild(Image("images/ui.xml", "white.tex"))
         self.chat_input_bg:SetSize(175, 30)
