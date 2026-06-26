@@ -38,7 +38,7 @@ modimport("scripts/features/wardrobe_anywhere")
 -- ------------------------------------------------------------------
 modimport("scripts/enchants/drop_utils")
 modimport("scripts/enchants/mx_health")
-modimport("scripts/enchants/zd_butterfly")
+-- modimport("scripts/enchants/zd_butterfly") 紫蝶去掉
 modimport("scripts/enchants/fqcd_sanity")
 modimport("scripts/enchants/myxl_level")
 modimport("scripts/enchants/yzdx")
