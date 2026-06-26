@@ -11,7 +11,7 @@ local function DoSuicide(player)
         if player.components.talker then
             player.components.talker:Say("我杀死了我", 2)
         end
-        player.components.health:Kill()
+        player:PushEvent("death")
     elseif player and player:HasTag("playerghost") then
         if player.components.talker then
             player.components.talker:Say("死的不能再死了", 2)
