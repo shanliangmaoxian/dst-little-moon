@@ -40,7 +40,7 @@ AddPrefabPostInit("world", function(inst)
                         for _, victim in ipairs(nearby) do
                             if victim ~= owner and victim.components.health and not victim.components.health:IsDead() then
                                 -- 造成200点物理伤害
-                                victim.components.health:DoDelta(-200, false, owner)
+                                victim.components.health:DoDelta(-200, false, "panghu")
                                 if victim.components.talker then
                                     _G.pcall(function() victim.components.talker:Say("好难听啊！") end)
                                 end
