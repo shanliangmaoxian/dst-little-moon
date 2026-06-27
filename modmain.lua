@@ -73,6 +73,7 @@ modimport("scripts/enchants/xiaoguai")
 modimport("scripts/enchants/shanzhu")
 modimport("scripts/enchants/xingyunchengzhi")
 modimport("scripts/enchants/zidie")
+modimport("scripts/enchants/ccs_blessing")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
