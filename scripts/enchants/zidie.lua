@@ -1,6 +1,6 @@
 -- 小月亮 附魔：紫蝶
 -- 身化蝶影，以假乱真！
--- 攻击20%几率召唤蝶影分身（继承50%属性，持续8秒，最多2个）
+-- 攻击5%几率召唤蝶影分身（继承50%属性，持续8秒，最多2个）
 -- 分身自动攻击附近敌人。分身存在时本体伤害+30%
 -- 移速永久+20%，分身移速+40%
 
@@ -173,7 +173,7 @@ AddPrefabPostInit("world", function(inst)
     _G.AddSpecialEquipEffect("Legend_ZIDIE", {
         name = "紫蝶",
         client_text = "紫\n蝶",
-        desc = "攻击20%几率召唤蝶影(随机生物,8秒,最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
+        desc = "攻击5%几率召唤蝶影(随机生物,8秒,最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
         check_desc = "身化蝶影，以假乱真！",
         can_add = false,
         only_one = true,
@@ -201,7 +201,7 @@ AddPrefabPostInit("world", function(inst)
                     local target = data and data.target
                     if not target or not target:IsValid() then return end
                     if target == owner then return end
-                    if math.random() > 0.2 then return end
+                    if math.random() > 0.05 then return end
 
                     local had_clones = has_alive_clones(owner)
                     if #owner._zidie_clones >= 2 then return end
