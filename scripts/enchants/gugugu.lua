@@ -131,8 +131,10 @@ AddPrefabPostInit("world", function(inst)
                 local hh = owner.components.hh_player
                 if hh then
                     hh:ReduceEffectValueByKey("absorbDamage", 42)
-                    hh:ReduceEffectValueByKey("criticalHitRate", 100)
-                    hh:ReduceEffectValueByKey("criticalHitEffect", 400)
+                    if owner._gugugu_dodged then
+                        hh:ReduceEffectValueByKey("criticalHitRate", 100)
+                        hh:ReduceEffectValueByKey("criticalHitEffect", 400)
+                    end
                 end
                 if owner._gugugu_attacked_handler then
                     owner:RemoveEventCallback("attacked", owner._gugugu_attacked_handler)
