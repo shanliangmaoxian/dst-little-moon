@@ -247,7 +247,17 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
+        default = false,
+    },
+    {
+        name = "ENABLE_DEATH_ANNOUNCE",
+        label = "死亡公告",
+        hover = "当玩家死亡时在聊天框公告死亡信息",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = false,
     },
 
     AddTitle("快捷发言"),
