@@ -68,11 +68,9 @@ local DeathStatsPanel = Class(Widget, function(self)
 	self.title_text:SetColour(unpack(GOLD))
 	self.title_text:SetPosition(0, -1, 0)
 
-	self.refresh_btn = self:AddChild(TEMPLATES.StandardButton(function()
-		self:RequestStats()
-	end, "刷新", { 80, 30 }))
-	self.refresh_btn:SetPosition(70, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 25, 0)
-	self.refresh_btn:SetTextSize(18)
+	self.auto_refresh_text = self:AddChild(Text(CHATFONT, 20, "每15秒自动刷新"))
+	self.auto_refresh_text:SetPosition(0, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 25, 0)
+	self.auto_refresh_text:SetColour(unpack(WHITE))
 
 	self.close_btn = self:AddChild(TEMPLATES.StandardButton(function()
 		self:Hide()
@@ -83,7 +81,7 @@ local DeathStatsPanel = Class(Widget, function(self)
 	self.list_root = self:AddChild(Widget("death_list_root"))
 	self.list_root:SetPosition(5, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 70)
 
-	self.hint_text = self.list_root:AddChild(Text(CHATFONT, 20, "点击刷新获取数据"))
+	self.hint_text = self.list_root:AddChild(Text(CHATFONT, 20, "等待数据中..."))
 	self.hint_text:SetPosition(0, -10, 0)
 	self.hint_text:SetColour(unpack(WHITE))
 

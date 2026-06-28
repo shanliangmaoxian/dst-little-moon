@@ -23,10 +23,10 @@ AddClassPostConstruct("screens/playerhud", function(self)
         end
     end)
 
-    -- 面板可见时每 5 秒自动刷新
-    self.inst:DoPeriodicTask(5, function()
-        if panel:IsVisible() then
-            panel:RequestStats()
-        end
-    end)
+	-- 面板可见时每 15 秒自动刷新
+	self.inst:DoPeriodicTask(15, function()
+		if panel:IsVisible() then
+			panel:RequestStats()
+		end
+	end)
 end)

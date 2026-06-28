@@ -42,6 +42,12 @@ AddPlayerPostInit(function(inst)
             death_stats[userid].name = src.name
         end
         SaveStats()
+
+        -- 死亡公告
+        if CFG.ENABLE_DEATH_ANNOUNCE then
+            local msg = "玩家 " .. (src.name or userid) .. " 死了，当前已累计死亡 " .. death_stats[userid].count .. " 次"
+            _G.TheNet:Announce(msg)
+        end
     end)
 end)
 
