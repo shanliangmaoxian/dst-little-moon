@@ -16,7 +16,7 @@ local GOLD = { 0.89, 0.76, 0.47, 1 }
 local WHITE = { 1, 1, 1, 1 }
 
 local CHAT_MSG_SAVE_ID = "dst_little_moon_chat_msgs"
-local DEFAULT_CHAT_MSGS = { "大佬救我", "#roll", "鼠标右键改消息", "鼠标右键改消息" }
+local DEFAULT_CHAT_MSGS = { "嘤嘤嘤", "#roll", "鼠标右键改消息", "鼠标右键改消息" }
 
 local function LoadChatMsgs()
 	if json == nil then return DEFAULT_CHAT_MSGS end
