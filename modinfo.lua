@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.14.8"
+version = "1.14.9"
 api_version = 10
 priority = 1000
 dst_compatible = true
@@ -231,6 +231,18 @@ configuration_options = {
         name = "ENABLE_SUICIDE",
         label = "开启快捷自杀",
         hover = "是否开启聊天指令（#zs, #kill, #自杀）及面板按钮",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+
+    AddTitle("死亡统计"),
+    {
+        name = "ENABLE_DEATH_STATS",
+        label = "开启死亡统计",
+        hover = "统计所有玩家的死亡次数，在助手面板中显示排行榜",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },

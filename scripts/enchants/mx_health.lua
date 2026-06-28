@@ -22,30 +22,22 @@ AddPrefabPostInit("world", function(inst)
             return true, "满足条件"
         end,
         on_equip_fn = function(inst, owner, value)
-            if not owner._mx_health_base then
-                owner._mx_health_base = owner.components.health.maxhealth
-            end
             _G.Moon_AddEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
-            local total_bonus = _G.Moon_GetTotalEffectValue(owner, "mx_health")
-            local new_max = owner._mx_health_base + total_bonus
-            owner.components.health:SetMaxHealth(new_max)
-            if owner._mx_health_saved_hp ~= nil then
-                owner.components.health:SetCurrentHealth(math.min(owner._mx_health_saved_hp, new_max))
-                owner._mx_health_saved_hp = nil
-            else
-                owner.components.health:DoDelta(200)
+            if owner:IsValid() and owner.components.health then
+                local old_percent = owner.components.health:GetPercent()
+                owner.components.health.maxhealth = math.min(owner.components.health.maxhealth + 200, 60000)
+                owner.components.health:SetPercent(old_percent)
             end
         end,
         un_equip_fn = function(inst, owner, value)
-            owner._mx_health_saved_hp = owner.components.health.currenthealth
             _G.Moon_ReduceEffect(owner, "mx_health", "Legend_MX_HEALTH", 200)
-            local total_bonus = _G.Moon_GetTotalEffectValue(owner, "mx_health")
-            if owner._mx_health_base then
-                owner.components.health:SetMaxHealth(owner._mx_health_base + total_bonus)
+            if owner:IsValid() and owner.components.health then
+                local old_percent = owner.components.health:GetPercent()
+                owner.components.health.maxhealth = math.max(owner.components.health.maxhealth - 200, 1)
+                owner.components.health:SetPercent(old_percent)
             end
         end,
     })
 
-    -- 精英/Boss 掉落 (3%)
     _G.Moon_RegisterEnchantDrop("Legend_MX_HEALTH", 0.01)
 end)
