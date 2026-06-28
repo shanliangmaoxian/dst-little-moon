@@ -16,7 +16,7 @@ local GOLD = { 0.89, 0.76, 0.47, 1 }
 local WHITE = { 1, 1, 1, 1 }
 
 local CHAT_MSG_SAVE_ID = "dst_little_moon_chat_msgs"
-local DEFAULT_CHAT_MSGS = { "大佬救我", "#roll", "干饭", "666" }
+local DEFAULT_CHAT_MSGS = { "大佬救我", "#roll", "鼠标右键改消息", "鼠标右键改消息" }
 
 local function LoadChatMsgs()
 	if json == nil then return DEFAULT_CHAT_MSGS end
@@ -45,7 +45,7 @@ local function ScreenYToTopOffset(y)
 	return y - screen_h
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat, enable_death_stats)
 	Widget._ctor(self, "LittleMoonPanel")
 
 	self.owner = owner
@@ -56,6 +56,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.enable_suicide = enable_suicide ~= false
 	self.dig_treasure_mode = dig_treasure_mode or 0
 	self.enable_quick_chat = enable_quick_chat ~= false
+	self.enable_death_stats = enable_death_stats ~= false
 
 	self.drag_move_handler = nil
 	self.drag_button_handler = nil
@@ -63,7 +64,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_offset_y = 0
 
 	-- 1. 动态计算面板总高度
-	local panel_height = HANDLE_HEIGHT + 10 -- 基础高度 (页眉 + 边距)
+	local panel_height = HANDLE_HEIGHT + 10
 	if self.enable_ql_helper then panel_height = panel_height + 80 end
 	if self.enable_treasure then
 		panel_height = panel_height + 85
@@ -74,6 +75,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	if self.enable_auto_pickup then panel_height = panel_height + 45 end
 	if self.enable_suicide then panel_height = panel_height + 45 end
 	if self.enable_quick_chat then panel_height = panel_height + 120 end
+	if self.enable_death_stats then panel_height = panel_height + 50 end
 	self.panel_height = panel_height
 
 	self:SetScale(scale or 1.0)
@@ -93,7 +95,6 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.header:SetTint(0.15, 0.08, 0.05, 0.98)
 	self.header:SetPosition(0, panel_height / 2 - HANDLE_HEIGHT / 2, 0)
 
-	-- 边框绘制函数
 	local function AddBorder(w, h, x, y, tint)
 		local b = self:AddChild(Image("images/ui.xml", "white.tex"))
 		b:SetSize(w, h)
@@ -102,12 +103,12 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 		b:SetClickable(false)
 		return b
 	end
-	AddBorder(PANEL_WIDTH, 2, 0, panel_height / 2 - 1, GOLD) -- Top
-	AddBorder(PANEL_WIDTH, 2, 0, -panel_height / 2 + 1, {0.25, 0.20, 0.14, 0.85}) -- Bottom
-	AddBorder(2, panel_height, -PANEL_WIDTH / 2 + 1, 0, {0.25, 0.20, 0.14, 0.85}) -- Left
-	AddBorder(2, panel_height, PANEL_WIDTH / 2 - 1, 0, {0.25, 0.20, 0.14, 0.85}) -- Right
+	AddBorder(PANEL_WIDTH, 2, 0, panel_height / 2 - 1, GOLD)
+	AddBorder(PANEL_WIDTH, 2, 0, -panel_height / 2 + 1, {0.25, 0.20, 0.14, 0.85})
+	AddBorder(2, panel_height, -PANEL_WIDTH / 2 + 1, 0, {0.25, 0.20, 0.14, 0.85})
+	AddBorder(2, panel_height, PANEL_WIDTH / 2 - 1, 0, {0.25, 0.20, 0.14, 0.85})
 
-	-- 拖动手柄 - 顶部
+	-- 拖动手柄
 	self.handle = self:AddChild(Image("images/ui.xml", "white.tex"))
 	self.handle:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
 	self.handle:SetTint(1, 1, 1, 0)
@@ -120,7 +121,6 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_dots:SetColour(unpack(GOLD))
 	self.drag_dots:SetPosition(0, -1, 0)
 
-	-- 拖动手柄 - 底部
 	self.handle_bottom = self:AddChild(Image("images/ui.xml", "white.tex"))
 	self.handle_bottom:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
 	self.handle_bottom:SetTint(1, 1, 1, 0)
@@ -133,11 +133,10 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_dots_bottom:SetColour(unpack(GOLD))
 	self.drag_dots_bottom:SetPosition(0, -1, 0)
 
-	-- 2. 堆叠式布局：计算每个部分的起始 Y 坐标
 	local current_y = panel_height / 2 - HANDLE_HEIGHT - 20
 
 	-------------------------------------------------------
-	-- 第一部分：快捷指令
+	-- 快捷指令
 	-------------------------------------------------------
 	if self.enable_ql_helper then
 		self.section1_title = self:AddChild(Text(CHATFONT, 24, "快捷指令"))
@@ -181,7 +180,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	end
 
 	-------------------------------------------------------
-	-- 第二部分：宝藏召唤
+	-- 宝藏召唤
 	-------------------------------------------------------
 	if self.enable_treasure then
 		self.section2_title = self:AddChild(Text(CHATFONT, 24, "宝藏点召唤"))
@@ -221,10 +220,8 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 
 		current_y = current_y - 85
 
-		-- 一键挖宝子区域
 		if self.dig_treasure_mode > 0 then
 			local dig_y = current_y + 5
-
 			self.dig_count = self.dig_treasure_mode
 			local dig_spinner_data = {}
 			for _, dcount in ipairs({0, 1, 3, 5, 10}) do
@@ -274,7 +271,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	end
 
 	-------------------------------------------------------
-	-- 第三部分：助手功能 (自动吸入)
+	-- 自动吸入
 	-------------------------------------------------------
 	if self.enable_auto_pickup then
 		local assistant_y = current_y - 5
@@ -314,7 +311,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	end
 
 	-------------------------------------------------------
-	-- 快捷发送（预设消息按钮，左键发送，右键编辑）
+	-- 快捷发送
 	-------------------------------------------------------
 	if self.enable_quick_chat then
 		if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup then
@@ -342,7 +339,6 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			btn:SetPosition(pos_x, btn_y, 0)
 			btn:SetTextSize(16)
 
-			-- 右键编辑该条消息
 			btn.OnMouseButton = function(_, button, down)
 				if button == MOUSEBUTTON_RIGHT and not down then
 					local function OnSave(new_text)
@@ -353,7 +349,6 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 						end
 					end
 
-					-- 用Screen推栈，自动拦截所有下层事件，WASD/技能都不会穿透
 					local edit_screen = Screen("chat_edit_screen")
 					edit_screen:SetVAnchor(ANCHOR_MIDDLE)
 					edit_screen:SetHAnchor(ANCHOR_MIDDLE)
@@ -387,7 +382,6 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 					cancel_btn:SetTextSize(18)
 
 					TheFrontEnd:PushScreen(edit_screen)
-
 					return true
 				end
 				return false
@@ -395,6 +389,30 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 		end
 
 		current_y = current_y - (math.ceil(#self.chat_msgs / 2) * 40 + 10)
+	end
+
+	-------------------------------------------------------
+	-- 死亡统计
+	-------------------------------------------------------
+	if self.enable_death_stats then
+		if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup or self.enable_quick_chat then
+			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
+		end
+
+		self.death_title = self:AddChild(Text(CHATFONT, 24, "死亡统计"))
+		self.death_title:SetPosition(0, current_y, 0)
+		self.death_title:SetColour(unpack(GOLD))
+		if self.death_title.EnableOutline then self.death_title:EnableOutline(true) end
+
+		self.death_btn = self:AddChild(TEMPLATES.StandardButton(function()
+			if ThePlayer and ThePlayer.HUD and ThePlayer.HUD.death_stats_panel then
+				ThePlayer.HUD.death_stats_panel:Toggle()
+			end
+		end, "打开死亡统计", { 120, 36 }))
+		self.death_btn:SetPosition(0, current_y - 38, 0)
+		self.death_btn:SetTextSize(20)
+
+		current_y = current_y - 50
 	end
 
 	self:LoadPosition()

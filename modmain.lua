@@ -32,6 +32,7 @@ modimport("scripts/features/disable_reselect")
 modimport("scripts/features/enchant_remover")
 -- modimport("scripts/features/skin_ownership")
 modimport("scripts/features/wardrobe_anywhere")
+modimport("scripts/features/death_stats")
 
 -- ------------------------------------------------------------------
 -- 3. 附魔模块
@@ -82,6 +83,11 @@ local CFG = GLOBAL.MOON_CFG
 if CFG.ENABLE_TREASURE or CFG.ENABLE_QL_HELPER or CFG.ENABLE_AUTO_PICKUP or CFG.ENABLE_SUICIDE or CFG.ENABLE_MORE_ENCHANTS then
     modimport("scripts/ui/moon_button")
     modimport("scripts/ui/moon_panel")
+end
+
+-- 死亡统计独立面板 (需要自己的UI注入)
+if CFG.ENABLE_DEATH_STATS then
+    modimport("scripts/ui/death_stats_inject")
 end
 
 -- ------------------------------------------------------------------

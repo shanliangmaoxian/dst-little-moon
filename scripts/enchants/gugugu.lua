@@ -45,16 +45,16 @@ AddPrefabPostInit("world", function(inst)
 
                     if math.random() <= 0.42 then
                         -- 闪避成功 → 「鸽了！」暴击buff
-                        if owner._gugugu_dodge_cooldown then return end
-                        owner._gugugu_dodged = true
-
-                        local hh_player = owner.components.hh_player
-                        if hh_player then
-                            hh_player:AddEffectValueByKey("criticalHitRate", 100)
-                            hh_player:AddEffectValueByKey("criticalHitEffect", 400)
+                        if not owner._gugugu_dodged then
+                            owner._gugugu_dodged = true
+                            local hh_player = owner.components.hh_player
+                            if hh_player then
+                                hh_player:AddEffectValueByKey("criticalHitRate", 100)
+                                hh_player:AddEffectValueByKey("criticalHitEffect", 400)
+                            end
                         end
 
-                        -- 6秒后过期
+                        -- 刷新6秒过期计时（无论是否已有buff都刷新）
                         if owner._gugugu_dodged_task then
                             owner._gugugu_dodged_task:Cancel()
                         end
@@ -131,10 +131,8 @@ AddPrefabPostInit("world", function(inst)
                 local hh = owner.components.hh_player
                 if hh then
                     hh:ReduceEffectValueByKey("absorbDamage", 42)
-                    if owner._gugugu_dodged then
-                        hh:ReduceEffectValueByKey("criticalHitRate", 100)
-                        hh:ReduceEffectValueByKey("criticalHitEffect", 400)
-                    end
+                    hh:ReduceEffectValueByKey("criticalHitRate", 100)
+                    hh:ReduceEffectValueByKey("criticalHitEffect", 400)
                 end
                 if owner._gugugu_attacked_handler then
                     owner:RemoveEventCallback("attacked", owner._gugugu_attacked_handler)
