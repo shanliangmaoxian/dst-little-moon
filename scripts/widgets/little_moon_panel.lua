@@ -75,7 +75,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	if self.enable_auto_pickup then panel_height = panel_height + 45 end
 	if self.enable_suicide then panel_height = panel_height + 45 end
 	if self.enable_quick_chat then panel_height = panel_height + 120 end
-	if self.enable_death_stats then panel_height = panel_height + 50 end
+	if self.enable_death_stats then panel_height = panel_height + 80 end
 	self.panel_height = panel_height
 
 	self:SetScale(scale or 1.0)
@@ -388,7 +388,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			end
 		end
 
-		current_y = current_y - (math.ceil(#self.chat_msgs / 2) * 40 + 10)
+		current_y = current_y - (math.ceil(#self.chat_msgs / 2) * 40 + 25)
 	end
 
 	-------------------------------------------------------

@@ -10,9 +10,8 @@ AddClassPostConstruct("screens/playerhud", function(self)
     if not _G.MOON_CFG.ENABLE_DEATH_STATS then return end
 
     local DeathStatsPanel = _G.require("widgets/death_stats_panel")
-    local panel = DeathStatsPanel()
+    local panel = self:AddChild(DeathStatsPanel())
     self.death_stats_panel = panel
-    panel:MoveToFront()
 
     -- 轮询检测 _moon_death_data
     self.inst:DoPeriodicTask(0.1, function()
