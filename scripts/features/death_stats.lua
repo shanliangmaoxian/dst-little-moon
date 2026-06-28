@@ -21,7 +21,6 @@ end
 AddPlayerPostInit(function(inst)
     if not _G.TheWorld.ismastersim then return end
     if not stats_loaded then
-        stats_loaded = true
         _G.TheSim:GetPersistentString(DEATH_SAVE_ID, function(success, data)
             if success and data and data ~= "" then
                 local ok, stats = _G.pcall(_G.json.decode, data)
@@ -29,6 +28,7 @@ AddPlayerPostInit(function(inst)
                     death_stats = stats
                 end
             end
+            stats_loaded = true
         end)
     end
     inst:ListenForEvent("death", function(src)
