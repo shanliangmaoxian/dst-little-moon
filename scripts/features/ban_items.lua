@@ -3,6 +3,7 @@
 
 local _G = GLOBAL
 local ban_items = GetModConfigData("BAN_ITEMS")
+-- local ban_items = {"bigpeach", "krampus", "spear", "raincoat", "moonrockseed"}
 
 -- 空表则跳过
 if not ban_items or type(ban_items) ~= "table" or #ban_items == 0 then
@@ -16,7 +17,6 @@ for _, v in ipairs(ban_items) do
         ban_set[v] = true
     end
 end
-if not next(ban_set) then return end
 
 local function SpawnLootPrefab(owner, name, sum, pos)
     local sp = GLOBAL.SpawnPrefab(name)
@@ -97,17 +97,20 @@ local banned_recipe_names = {}
 
 if GLOBAL.TheNet:GetIsServer() then
     -- 物品生成即移除
+    -- ponytail: DoPeriodicTask(0.05) 而非 DoTaskInTime(0)，给调用方留足时间操作
     for prefab in pairs(ban_set) do
         AddPrefabPostInit(prefab, function(inst)
-            if inst.components and inst.components.container then
-                if inst.components.container:IsEmpty() then
-                    RemoveAndRefund(inst)
+            inst:DoPeriodicTask(0.05, function(inst)
+                if inst.components and inst.components.container then
+                    if inst.components.container:IsEmpty() then
+                        RemoveAndRefund(inst)
+                    else
+                        inst.components.container:DropEverything()
+                    end
                 else
-                    inst.components.container:DropEverything()
+                    RemoveAndRefund(inst)
                 end
-            else
-                RemoveAndRefund(inst)
-            end
+            end)
         end)
     end
 
