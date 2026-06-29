@@ -64,7 +64,7 @@ local DeathStatsPanel = Class(Widget, function(self)
 	self.handle:SetHoverText("拖动面板")
 	self.handle.OnMouseButton = function(_, button, down) return self:OnHandleMouseButton(button, down) end
 
-	self.title_text = self.handle:AddChild(Text(CHATFONT, 24, "死亡统计(每15秒自动刷新)"))
+	self.title_text = self.handle:AddChild(Text(CHATFONT, 24, "冒险记录"))
 	self.title_text:SetColour(unpack(GOLD))
 	self.title_text:SetPosition(0, -1, 0)
 
@@ -107,7 +107,7 @@ function DeathStatsPanel:OnReceiveData(data)
 	self.entries = {}
 
 	if not data or #data == 0 then
-		self.hint_text = self.list_root:AddChild(Text(CHATFONT, 20, "暂无数据"))
+		self.hint_text = self.list_root:AddChild(Text(CHATFONT, 20, "大家都好好的~"))
 		self.hint_text:SetPosition(0, -10, 0)
 		self.hint_text:SetColour(unpack(WHITE))
 		return
