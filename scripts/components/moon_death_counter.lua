@@ -16,7 +16,7 @@ local MoonDeathCounter = Class(function(self, inst)
         self.count = self.count + 1
 
         if MOON_CFG and MOON_CFG.ENABLE_DEATH_ANNOUNCE then
-            TheNet:Announce("玩家 " .. (self.inst.name or self.inst.userid or "?") .. " 死了，当前已累计死亡 " .. self.count .. " 次")
+            TheNet:Announce("玩家 " .. (self.inst.name or self.inst.userid or "?") .. " 倒下了 (第 " .. self.count .. " 次)")
         end
     end)
 end)

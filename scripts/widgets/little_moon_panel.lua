@@ -399,7 +399,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
 		end
 
-		self.death_title = self:AddChild(Text(CHATFONT, 24, "死亡统计"))
+		self.death_title = self:AddChild(Text(CHATFONT, 24, "冒险记录"))
 		self.death_title:SetPosition(0, current_y, 0)
 		self.death_title:SetColour(unpack(GOLD))
 		if self.death_title.EnableOutline then self.death_title:EnableOutline(true) end
@@ -408,7 +408,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			if ThePlayer and ThePlayer.HUD and ThePlayer.HUD.death_stats_panel then
 				ThePlayer.HUD.death_stats_panel:Toggle()
 			end
-		end, "打开死亡统计", { 120, 36 }))
+		end, "冒险记录", { 120, 36 }))
 		self.death_btn:SetPosition(0, current_y - 38, 0)
 		self.death_btn:SetTextSize(20)
 
