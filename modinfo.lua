@@ -272,34 +272,34 @@ configuration_options = {
         default = true,
     },
 
-    AddTitle("掉落优化 (防卡顿)"),
-    {
-        name = "ENABLE_LOOT_LIMITER",
-        label = "开启掉落限流",
-        hover = "合并可堆叠物品，限制不可堆叠物品数量",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = false,
-    },
-    {
-        name = "MAX_NON_STACKABLE",
-        label = "不可堆叠上限",
-        hover = "同种不可堆叠物品单次掉落的最大数量",
-        options = {
-            { description = "3个", data = 3 },
-            { description = "5个", data = 5 },
-            { description = "10个", data = 10 },
-            { description = "20个", data = 20 },
-            { description = "50个", data = 50 },
-            { description = "100个", data = 100 },
-            { description = "200个", data = 200 },
-            { description = "500个", data = 500 },
-            { description = "不限制", data = 9999 },
-        },
-        default = 5,
-    },
+    -- AddTitle("掉落优化 (防卡顿)"),
+    -- {
+    --     name = "ENABLE_LOOT_LIMITER",
+    --     label = "开启掉落限流",
+    --     hover = "合并可堆叠物品，限制不可堆叠物品数量",
+    --     options = {
+    --         { description = "开启", data = true },
+    --         { description = "关闭", data = false },
+    --     },
+    --     default = false,
+    -- },
+    -- {
+    --     name = "MAX_NON_STACKABLE",
+    --     label = "不可堆叠上限",
+    --     hover = "同种不可堆叠物品单次掉落的最大数量",
+    --     options = {
+    --         { description = "3个", data = 3 },
+    --         { description = "5个", data = 5 },
+    --         { description = "10个", data = 10 },
+    --         { description = "20个", data = 20 },
+    --         { description = "50个", data = 50 },
+    --         { description = "100个", data = 100 },
+    --         { description = "200个", data = 200 },
+    --         { description = "500个", data = 500 },
+    --         { description = "不限制", data = 9999 },
+    --     },
+    --     default = 5,
+    -- },
 
     AddTitle("物品禁用"),
     {
