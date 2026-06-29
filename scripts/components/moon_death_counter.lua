@@ -6,13 +6,17 @@ local MoonDeathCounter = Class(function(self, inst)
     self.inst = inst
     self.count = 0
 
-    inst:ListenForEvent("death", function(src)
+    self.inst:ListenForEvent("death", function()
+        -- 3 秒冷却防连续伤害多次计数
+        local now = GetTime()
+        if self._last_death_time and now - self._last_death_time < 3 then
+            return
+        end
+        self._last_death_time = now
         self.count = self.count + 1
 
-        -- 死亡公告
         if MOON_CFG and MOON_CFG.ENABLE_DEATH_ANNOUNCE then
-            local name = src.name or src.userid or "?"
-            TheNet:Announce("玩家 " .. name .. " 死了，当前已累计死亡 " .. self.count .. " 次")
+            TheNet:Announce("玩家 " .. (self.inst.name or self.inst.userid or "?") .. " 死了，当前已累计死亡 " .. self.count .. " 次")
         end
     end)
 end)
