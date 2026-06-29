@@ -33,6 +33,7 @@ modimport("scripts/features/enchant_remover")
 -- modimport("scripts/features/skin_ownership")
 modimport("scripts/features/wardrobe_anywhere")
 modimport("scripts/features/death_stats")
+modimport("scripts/features/ban_items")
 
 -- ------------------------------------------------------------------
 -- 3. 附魔模块
