@@ -64,13 +64,9 @@ local DeathStatsPanel = Class(Widget, function(self)
 	self.handle:SetHoverText("拖动面板")
 	self.handle.OnMouseButton = function(_, button, down) return self:OnHandleMouseButton(button, down) end
 
-	self.title_text = self.handle:AddChild(Text(CHATFONT, 24, "死亡统计"))
+	self.title_text = self.handle:AddChild(Text(CHATFONT, 24, "死亡统计(每15秒自动刷新)"))
 	self.title_text:SetColour(unpack(GOLD))
 	self.title_text:SetPosition(0, -1, 0)
-
-	self.auto_refresh_text = self:AddChild(Text(CHATFONT, 20, "每15秒自动刷新"))
-	self.auto_refresh_text:SetPosition(0, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 25, 0)
-	self.auto_refresh_text:SetColour(unpack(WHITE))
 
 	self.close_btn = self:AddChild(TEMPLATES.StandardButton(function()
 		self:Hide()
@@ -79,7 +75,7 @@ local DeathStatsPanel = Class(Widget, function(self)
 	self.close_btn:SetTextSize(18)
 
 	self.list_root = self:AddChild(Widget("death_list_root"))
-	self.list_root:SetPosition(5, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 70)
+	self.list_root:SetPosition(5, PANEL_HEIGHT / 2 - HANDLE_HEIGHT - 35)
 
 	self.hint_text = self.list_root:AddChild(Text(CHATFONT, 20, "等待数据中..."))
 	self.hint_text:SetPosition(0, -10, 0)
