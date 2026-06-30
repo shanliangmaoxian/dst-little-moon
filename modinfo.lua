@@ -202,7 +202,7 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
+        default = false,
     },
     {
         name = "STACK_SIZE_MULTIPLIER",
@@ -229,7 +229,7 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "开启+丢出自动分离", data = 2, hover = "小动物等丢地上会自动分离开" },
         },
-        default = true,
+        default = false,
     },
 
     AddTitle("虚空异界(泰拉)"),
@@ -382,6 +382,6 @@ configuration_options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
         },
-        default = true,
+        default = false,
     },
 }
