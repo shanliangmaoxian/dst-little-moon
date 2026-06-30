@@ -48,7 +48,7 @@ local function InitMoonShop()
             AddRecipe2(
                 recipe_id,
                 ingredients,
-                TECH.NONE,
+                TECH.SCIENCE_ONE,
                 { product = item[1], nounlock = false, numtogive = 10 },
                 filter_list
             )
@@ -56,6 +56,29 @@ local function InitMoonShop()
         end
     end
     print("[小月亮商店] 注册完成，共 " .. count .. " 件批量精炼配方")
+
+    -- HH附魔强化 Boss 兑换 (100 水晶小人)
+    if _G.Moon_IsModEnabled("workshop-3096210166") then
+        local boss_items = {
+            { "alterguardian_phase4_lunarrift", "天体后裔" },
+            { "stalker_atrium",       "织影者" },
+        }
+        local boss_count = 0
+        for _, item in ipairs(boss_items) do
+            local recipe_id = "MoonShop_" .. item[1]
+            if not (AllRecipes and AllRecipes[recipe_id]) then
+                AddRecipe2(
+                    recipe_id,
+                    { Ingredient("hh_essence", 100) },
+                    TECH.NONE,
+                    { product = item[1], nounlock = true, numtogive = 1 },
+                    filter_list
+                )
+                boss_count = boss_count + 1
+            end
+        end
+        print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
+    end
 end
 
 AddPrefabPostInit("world", function(inst)
