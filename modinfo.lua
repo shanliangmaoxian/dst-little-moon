@@ -270,7 +270,7 @@ configuration_options = {
     {
         name = "ENABLE_SUICIDE",
         label = "开启快捷自杀",
-        hover = "是否开启聊天指令（#zs, #kill, #自杀）及面板按钮",
+        hover = "是否开启自杀面板按钮",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
@@ -377,7 +377,7 @@ configuration_options = {
     {
         name = "ENABLE_MOON_SHOP",
         label = "开启小月亮商店",
-        hover = "在制作栏中添加小月亮商店标签，用原版材料 x10 批量兑换精炼物品",
+        hover = "在制作栏中添加小月亮商店标签，可购买部分物品",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
