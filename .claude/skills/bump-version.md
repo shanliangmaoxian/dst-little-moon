@@ -1,6 +1,6 @@
 ---
 name: bump-version
-description: 递增 modinfo.lua 版本号并将修改内容写入 CHANGELOG.md
+description: 递增 modinfo.lua 版本号并将修改内容写入 docs/CHANGELOG.md
 ---
 
 # 版本号递增 & CHANGELOG 更新
@@ -55,7 +55,7 @@ description: 递增 modinfo.lua 版本号并将修改内容写入 CHANGELOG.md
 
 ### 第 6 步：更新 CHANGELOG.md
 
-在 `CHANGELOG.md` 中找到 `# 小月亮 (Little Moon) 修改记录` 标题后的第一个 `##` 条目之前，插入新的版本记录条目：
+在 `docs/CHANGELOG.md` 中找到 `# 小月亮 (Little Moon) 修改记录` 标题后的第一个 `##` 条目之前，插入新的版本记录条目：
 
 ```markdown
 ## 新版本 - YYYY-MM-DD
