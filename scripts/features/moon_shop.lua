@@ -1,4 +1,4 @@
--- 小月亮商店 — 原版精炼材料 x10 批量兑换
+-- 小月亮商店 — 原版精炼材料 x10 批量兑换 + Boss 兑换
 
 GLOBAL.setmetatable(env, { __index = function(t, k) return GLOBAL.rawget(GLOBAL, k) end })
 
@@ -27,6 +27,19 @@ if AddRecipeFilter ~= nil then
 end
 
 local filter_list = has_filter and { "MOON_SHOP" } or nil
+
+local hh_enabled = _G.Moon_IsModEnabled("workshop-3096210166")
+
+-- 织影者地上防自毁（模块加载时注册，确保在第一个实例出生前生效）
+if hh_enabled then
+    AddPrefabPostInit("stalker_atrium", function(inst)
+        local _IsNearAtrium = inst.IsNearAtrium
+        inst.IsNearAtrium = function() return true end
+        local _OnEntitySleep = inst.OnEntitySleep
+        inst.OnEntitySleep = function() return true end
+    end)
+    print("[小月亮商店] 织影者防自毁补丁已注册")
+end
 
 -- 精炼材料批量兑换: { product, { {原料, 数量}, ... } }
 local shop_items = {
@@ -57,8 +70,28 @@ local function InitMoonShop()
     end
     print("[小月亮商店] 注册完成，共 " .. count .. " 件批量精炼配方")
 
+    -- 彩虹宝石批量兑换: 各色宝石 xN → 彩虹宝石 xN
+    local gem_colors = { "redgem", "bluegem", "purplegem", "orangegem", "yellowgem", "greengem" }
+    for _, batch in ipairs({ 10, 100 }) do
+        local recipe_id = "MoonShop_opalpreciousgem_" .. batch
+        if not (AllRecipes and AllRecipes[recipe_id]) then
+            local ingredients = {}
+            for _, gem in ipairs(gem_colors) do
+                table.insert(ingredients, Ingredient(gem, batch))
+            end
+            AddRecipe2(
+                recipe_id,
+                ingredients,
+                TECH.NONE,
+                { product = "opalpreciousgem", nounlock = true, numtogive = batch },
+                filter_list
+            )
+            count = count + 1
+        end
+    end
+
     -- HH附魔强化 Boss 兑换 (100 水晶小人)
-    if _G.Moon_IsModEnabled("workshop-3096210166") then
+    if hh_enabled then
         local boss_items = {
             { "alterguardian_phase4_lunarrift", "天体后裔" },
             { "stalker_atrium",       "织影者" },
