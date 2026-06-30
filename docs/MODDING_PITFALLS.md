@@ -93,7 +93,44 @@ player.components.wardrobe:BeginChanging(player)
 | 解除攻速限制 | HH 框架无视 `TUNING.WILSON_ATTACK_PERIOD`，有独立的 2x 攻速上限 |
 | 包裹内容预览 | 用户自行移除 |
 
-## 8. 检查清单（加新功能前过一遍）
+## 8. stackable_replica 递归陷阱
+
+**症状：** 修改 `stackable_replica.SetMaxSize` 后启动游戏，C stack overflow 无限递归崩溃。
+
+**根因：** `stackable_replica.SetMaxSize` 在 server 端被 `Stackable:SetMaxSize` 调用：
+
+```
+Stackable:SetMaxSize(maxsize)
+  → self.inst.replica.stackable:SetMaxSize(maxsize)   -- 调用 replica
+    → core_stack.maxsize = new_size                   -- 我们的 patch 回写 server
+      → stackable 组件 metatable __newindex
+        → SetMaxSize                                  -- 无限递归！
+```
+
+关键事实：
+- 非 `server_only_mod` 的 mod 代码在 server 和 client **两边都执行**
+- server 端 `self.inst.components.stackable` **存在**（不是 nil）
+- `core_stack.maxsize = xxx` 被 stackable 组件的 metatable 拦截，重定向到 `SetMaxSize`
+
+**修复：** replica 的 `SetMaxSize` 只操作 `self._maxsize:set(value)`（客户端显示），**绝不**回写 `core_stack.maxsize`。server 端上限由 `TUNING` 修改覆盖，不需要 replica 反向干预。
+
+```lua
+-- ❌ 崩溃：回写 core_stack 触发递归
+stackable_replica.SetMaxSize = function(self, maxsize)
+    local core_stack = self.inst and self.inst.components.stackable
+    if core_stack then
+        core_stack.maxsize = new_size  -- 触发 metatable → SetMaxSize → 递归
+    end
+    self._maxsize:set(new_size)
+end
+
+-- ✅ 安全：只处理客户端显示
+stackable_replica.SetMaxSize = function(self, maxsize)
+    self._maxsize:set(new_size)
+end
+```
+
+## 9. 检查清单（加新功能前过一遍）
 
 1. 用了哪些 DST API 函数？查上表确认归属
 2. 如果用 setfenv → 沙箱函数必须先捕获为 local
