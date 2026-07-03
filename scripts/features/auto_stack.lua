@@ -6,6 +6,9 @@ local CFG = GLOBAL.MOON_CFG
 
 if not CFG.ENABLE_AUTO_STACK and not CFG.STACK_SIZE_MULTIPLIER then return end
 
+-- 冲突检测：如果下划线(3253273657)或其他堆叠模组已加载，跳过避免双重生效
+if GLOBAL.KnownModIndex and GLOBAL.KnownModIndex:IsModEnabled("workshop-3253273657") then return end
+
 -- ============================================================
 -- 1. 堆叠上限修改 (TUNING)
 -- ============================================================
