@@ -1,1 +1,1 @@
-../dst-little-star/.claude/MODDING_PITFALLS.md
+../../dst-little-star/.claude/MODDING_PITFALLS.md
