@@ -205,6 +205,17 @@ configuration_options = {
         default = false,
     },
     {
+        name = "ENABLE_MORE_STACKING",
+        label = "更多堆叠",
+        hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠，请勿同时开启多个堆叠上限模组",
+        options = {
+            { description = "关闭", data = false },
+            { description = "开启", data = true },
+            { description = "开启+丢出自动分离", data = 2, hover = "小动物等丢地上会自动分离开" },
+        },
+        default = false,
+    },
+    {
         name = "STACK_SIZE_MULTIPLIER",
         label = "堆叠上限",
         hover = "修改物品堆叠上限，请勿同时开启多个堆叠上限模组",
@@ -219,17 +230,6 @@ configuration_options = {
             { description = "9999", data = 9999 },
         },
         default = 200,
-    },
-    {
-        name = "ENABLE_MORE_STACKING",
-        label = "更多堆叠",
-        hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠，请勿同时开启多个堆叠上限模组",
-        options = {
-            { description = "关闭", data = false },
-            { description = "开启", data = true },
-            { description = "开启+丢出自动分离", data = 2, hover = "小动物等丢地上会自动分离开" },
-        },
-        default = false,
     },
 
     AddTitle("虚空异界(泰拉)"),
