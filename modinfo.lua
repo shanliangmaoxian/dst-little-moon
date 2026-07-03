@@ -197,7 +197,7 @@ configuration_options = {
     {
         name = "ENABLE_AUTO_STACK",
         label = "开启掉落自动堆叠",
-        hover = "物品掉落时自动与周围同类物品合并堆叠",
+        hover = "物品掉落时自动与周围同类物品合并堆叠，请勿同时开启多个堆叠上限模组",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
@@ -223,7 +223,7 @@ configuration_options = {
     {
         name = "ENABLE_MORE_STACKING",
         label = "更多堆叠",
-        hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠",
+        hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠，请勿同时开启多个堆叠上限模组",
         options = {
             { description = "关闭", data = false },
             { description = "开启", data = true },
