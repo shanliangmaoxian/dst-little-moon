@@ -8,6 +8,7 @@ local CFG = GLOBAL.MOON_CFG
 if not CFG.ENABLE_DEATH_STATS then return end
 
 _G._moon_death_data = nil
+_G._moon_death_counts = {}
 
 AddPlayerPostInit(function(inst)
     if not _G.TheWorld.ismastersim then return end

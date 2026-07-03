@@ -299,6 +299,16 @@ configuration_options = {
         },
         default = false,
     },
+    {
+        name = "DEATH_STATS_RESET_ON_SWITCH",
+        label = "换人重置计数",
+        hover = "换人（切换角色）后是否将死亡次数清零",
+        options = {
+            { description = "清零", data = true },
+            { description = "不清零", data = false },
+        },
+        default = false,
+    },
 
     AddTitle("快捷发言"),
     {
