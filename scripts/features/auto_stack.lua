@@ -39,6 +39,14 @@ if CFG.STACK_SIZE_MULTIPLIER and type(CFG.STACK_SIZE_MULTIPLIER) == "number" the
     stackable_replica.SetMaxSize = function(self, maxsize)
         self._maxsize:set(new_size)
     end
+
+    -- ponytail: guard nil net_var during LIMBO state
+    local _old_IsOverStacked = stackable_replica.IsOverStacked
+    stackable_replica.IsOverStacked = function(self)
+        local stacksize = self._stacksize:value()
+        if stacksize == nil then return false end
+        return stacksize > self:MaxSize()
+    end
 end
 
 -- ============================================================
