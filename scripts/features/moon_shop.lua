@@ -116,21 +116,31 @@ local function InitMoonShop()
 
     -- 灵魂兑换 (需要模组 2526778484)
     if soul_exchange_enabled then
+        local soul_atlas = {
+            white_soul = { atlas = "images/inventoryimages/white_soul.xml", image = "white_soul.tex" },
+            black_soul = { atlas = "images/inventoryimages/black_soul.xml", image = "black_soul.tex" },
+        }
         local soul_exchanges = {
-            { "white_soul", "black_soul", "images/inventoryimages/white_soul.xml", "white_soul.tex" },
-            { "black_soul", "white_soul", "images/inventoryimages/black_soul.xml", "black_soul.tex" },
+            { "white_soul", "black_soul" },
+            { "black_soul", "white_soul" },
         }
         local soul_count = 0
         for _, ex in ipairs(soul_exchanges) do
             local recipe_id = "MoonShop_" .. ex[1] .. "_from_" .. ex[2]
             if not (AllRecipes and AllRecipes[recipe_id]) then
-                AddRecipe2(
+                local ing = soul_atlas[ex[2]]
+                local prod = soul_atlas[ex[1]]
+                local recipe = AddRecipe2(
                     recipe_id,
-                    { Ingredient(ex[2], 3) },
+                    { Ingredient(ex[2], 3, ing.atlas, ing.image) },
                     TECH.NONE,
-                    { product = ex[1], nounlock = true, numtogive = 1, atlas = ex[3], image = ex[4] },
+                    { product = ex[1], nounlock = true, numtogive = 1 },
                     filter_list
                 )
+                if recipe then
+                    recipe.atlas = prod.atlas
+                    recipe.image = prod.image
+                end
                 soul_count = soul_count + 1
             end
         end
