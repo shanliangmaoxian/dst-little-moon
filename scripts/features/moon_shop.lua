@@ -29,6 +29,7 @@ end
 local filter_list = has_filter and { "MOON_SHOP" } or nil
 
 local hh_enabled = _G.Moon_IsModEnabled("workshop-3096210166")
+local soul_exchange_enabled = _G.Moon_IsModEnabled("workshop-2526778484")
 
 -- 织影者地上防自毁（模块加载时注册，确保在第一个实例出生前生效）
 if hh_enabled then
@@ -111,6 +112,29 @@ local function InitMoonShop()
             end
         end
         print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
+    end
+
+    -- 灵魂兑换 (需要模组 2526778484)
+    if soul_exchange_enabled then
+        local soul_exchanges = {
+            { "white_soul", "black_soul", "光明之魂", "暗影之魂" },
+            { "black_soul", "white_soul", "暗影之魂", "光明之魂" },
+        }
+        local soul_count = 0
+        for _, ex in ipairs(soul_exchanges) do
+            local recipe_id = "MoonShop_" .. ex[1] .. "_from_" .. ex[2]
+            if not (AllRecipes and AllRecipes[recipe_id]) then
+                AddRecipe2(
+                    recipe_id,
+                    { Ingredient(ex[2], 3) },
+                    TECH.NONE,
+                    { product = ex[1], nounlock = true, numtogive = 1 },
+                    filter_list
+                )
+                soul_count = soul_count + 1
+            end
+        end
+        print("[小月亮商店] 灵魂兑换注册完成，共 " .. soul_count .. " 件")
     end
 end
 
