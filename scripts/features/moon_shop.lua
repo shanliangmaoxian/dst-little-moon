@@ -103,25 +103,17 @@ local function InitMoonShop()
             { "alterguardian_phase4_lunarrift", "天体后裔" },
             { "stalker_atrium",       "织影者" },
         }
-        local boss_atlas = {
-            alterguardian_phase4_lunarrift = { atlas = "images/inventoryimages/alterguardian_phase4_lunarrift.xml", image = "alterguardian_phase4_lunarrift.tex" },
-            stalker_atrium = { atlas = "images/inventoryimages/stalker_atrium.xml", image = "stalker_atrium.tex" },
-        }
         local boss_count = 0
         for _, item in ipairs(boss_items) do
             local recipe_id = "MoonShop_" .. item[1]
             if not (AllRecipes and AllRecipes[recipe_id]) then
-                local recipe = AddRecipe2(
+                AddRecipe2(
                     recipe_id,
                     { Ingredient("hh_essence", 100) },
                     TECH.NONE,
                     { product = item[1], nounlock = true, numtogive = 1 },
                     filter_list
                 )
-                if recipe and boss_atlas[item[1]] then
-                    recipe.atlas = boss_atlas[item[1]].atlas
-                    recipe.image = boss_atlas[item[1]].image
-                end
                 boss_count = boss_count + 1
             end
         end
@@ -182,10 +174,6 @@ local function InitMoonShop()
                 { product = "emojitan", nounlock = true, placer = "emojitan_placer", min_spacing = 2, numtogive = 1 },
                 filter_list
             )
-            if recipe then
-                recipe.atlas = "images/inventoryimages/emojitan.xml"
-                recipe.image = "emojitan.tex"
-            end
             print("[小月亮商店] emojitan 配方注册成功")
         end
 
@@ -196,7 +184,7 @@ local function InitMoonShop()
 
             local bulb_recipe_id = "MoonShop_shijizhihua_bulb"
             if not (AllRecipes and AllRecipes[bulb_recipe_id]) then
-                local recipe = AddRecipe2(
+                AddRecipe2(
                     bulb_recipe_id,
                     {
                         Ingredient("jixiemoyan", 3),
@@ -207,10 +195,6 @@ local function InitMoonShop()
                     { product = "shijizhihua_bulb", nounlock = true, numtogive = 1 },
                     filter_list
                 )
-                if recipe then
-                    recipe.atlas = "images/inventoryimages/shijizhihua.xml"
-                    recipe.image = "shijizhihua.tex"
-                end
                 print("[小月亮商店] shijizhihua_bulb 配方注册成功")
             end
         end
