@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.15.3"
+version = "1.15.4"
 api_version = 10
 priority = 1000
 dst_compatible = true
@@ -232,28 +232,6 @@ configuration_options = {
         default = 200,
     },
 
-    AddTitle("虚空异界(泰拉)"),
-    {
-        name = "ENABLE_DEMON_ALTAR",
-        label = "恶魔祭坛可制作",
-        hover = "是否允许在暗影操控器（魔法二本）制作 emojitan",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = true,
-    },
-    {
-        name = "ENABLE_SHIJIZHIHUA_BULB",
-        label = "世纪之花球茎可制作",
-        hover = "是否允许在恶魔祭坛制作世纪之花球茎",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = true,
-    },
-
     AddTitle("客户端换人控制"),
     {
         name = "ENABLE_DISABLE_RESELECT",
@@ -393,5 +371,55 @@ configuration_options = {
             { description = "关闭", data = false },
         },
         default = false,
+    },
+    {
+        name = "ENABLE_MOON_SHOP_BATCH",
+        label = "精炼材料批量兑换",
+        hover = "小月亮商店中显示原版精炼材料 x10 批量兑换配方和彩虹宝石兑换",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_MOON_SHOP_BOSS",
+        label = "BOSS兑换",
+        hover = "小月亮商店中显示用 100 水晶小人兑换 BOSS 掉落物（需 HH 附魔模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_MOON_SHOP_SOUL",
+        label = "灵魂互换",
+        hover = "小月亮商店中显示 3:1 暗影/光明之魂互换配方（需泰拉模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_DEMON_ALTAR",
+        label = "恶魔祭坛可制作",
+        hover = "小月亮商店中显示恶魔祭坛购买配方",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_SHIJIZHIHUA_BULB",
+        label = "世纪之花球茎可制作",
+        hover = "小月亮商店中显示世纪之花球茎购买配方",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
     },
 }
