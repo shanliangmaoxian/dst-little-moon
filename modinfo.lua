@@ -232,7 +232,17 @@ configuration_options = {
         default = 200,
     },
 
-    AddTitle("客户端换人控制"),
+    AddTitle("客户端反作弊"),
+    {
+        name = "LOCK_RUN_SPEED",
+        label = "锁定跑速",
+        hover = "禁止客户端通过 mod 修改跑速（如 Fast moving 等加速 mod）",
+        options = {
+            { description = "锁定 (默认6)", data = true },
+            { description = "不锁定", data = false },
+        },
+        default = true,
+    },
     {
         name = "ENABLE_DISABLE_RESELECT",
         label = "禁用客户端换人",
