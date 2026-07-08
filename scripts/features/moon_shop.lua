@@ -30,6 +30,7 @@ local filter_list = has_filter and { "MOON_SHOP" } or nil
 
 local hh_enabled = _G.Moon_IsModEnabled("workshop-3096210166")
 local soul_exchange_enabled = _G.Moon_IsModEnabled("workshop-2526778484")
+local hoshino_enabled = _G.Moon_IsModEnabled("workshop-3398290914")
 
 -- 织影者地上防自毁（模块加载时注册，确保在第一个实例出生前生效）
 if hh_enabled then
@@ -118,6 +119,21 @@ local function InitMoonShop()
             end
         end
         print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
+    end
+
+    -- 遍历之迹兑换 (需要 HH 附魔 3096210166 + 小鸟 3398290914)
+    if CFG.ENABLE_MOON_SHOP_TRAVEL_TRACES and hh_enabled and hoshino_enabled then
+        local travel_traces_id = "MoonShop_hoshino_item_travel_traces"
+        if not (AllRecipes and AllRecipes[travel_traces_id]) then
+            AddRecipe2(
+                travel_traces_id,
+                { Ingredient("hh_essence", 500) },
+                TECH.NONE,
+                { product = "hoshino_item_travel_traces", nounlock = true, numtogive = 1 },
+                filter_list
+            )
+            print("[小月亮商店] 遍历之迹兑换注册成功")
+        end
     end
 
     -- 灵魂兑换 (需要模组 2526778484)

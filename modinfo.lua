@@ -403,6 +403,16 @@ configuration_options = {
         default = true,
     },
     {
+        name = "ENABLE_MOON_SHOP_TRAVEL_TRACES",
+        label = "遍历之迹兑换",
+        hover = "小月亮商店中显示用 500 水晶小人兑换遍历之迹（需 HH 附魔 + 小鸟模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
         name = "ENABLE_DEMON_ALTAR",
         label = "恶魔祭坛可制作",
         hover = "小月亮商店中显示恶魔祭坛购买配方",
