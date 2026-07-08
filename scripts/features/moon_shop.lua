@@ -102,17 +102,24 @@ local function InitMoonShop()
     if CFG.ENABLE_MOON_SHOP_BOSS and hh_enabled then
         local boss_items = {
             { "alterguardian_phase4_lunarrift", "天体后裔" },
-            { "stalker_atrium",       "织影者" },
+            { "stalker_atrium",                  "织影者" },
         }
         local boss_count = 0
         for _, item in ipairs(boss_items) do
             local recipe_id = "MoonShop_" .. item[1]
+            local prefab = item[1]
             if not (AllRecipes and AllRecipes[recipe_id]) then
                 AddRecipe2(
                     recipe_id,
                     { Ingredient("hh_essence", 100) },
                     TECH.NONE,
-                    { product = item[1], nounlock = true, numtogive = 1 },
+                    {
+                        product = prefab,
+                        nounlock = true,
+                        numtogive = 1,
+                        atlas = "images/inventoryimages/" .. prefab .. ".xml",
+                        image = prefab .. ".tex",
+                    },
                     filter_list
                 )
                 boss_count = boss_count + 1
@@ -169,15 +176,15 @@ local function InitMoonShop()
         print("[小月亮商店] 灵魂兑换注册完成，共 " .. soul_count .. " 件")
     end
 
-    -- 虚空异界(泰拉): emojitan + 世纪之花球茎
-    if CFG.ENABLE_DEMON_ALTAR then
+    -- 恶魔祭坛 (需要泰拉模组 2526778484)
+    if CFG.ENABLE_DEMON_ALTAR and soul_exchange_enabled then
         if not _G.STRINGS.NAMES.EMOJITAN then _G.STRINGS.NAMES.EMOJITAN = "恶魔祭坛" end
         if not _G.STRINGS.RECIPE_DESC.EMOJITAN then _G.STRINGS.RECIPE_DESC.EMOJITAN = "虚空异界的远古祭坛" end
         if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.EMOJITAN = "散发着不详的气息。" end
 
         local altar_recipe_id = "MoonShop_emojitan"
         if not (AllRecipes and AllRecipes[altar_recipe_id]) then
-            local recipe = AddRecipe2(
+            AddRecipe2(
                 altar_recipe_id,
                 {
                     Ingredient("thulecite", 6),
@@ -187,32 +194,33 @@ local function InitMoonShop()
                     Ingredient("nightmarefuel", 20),
                 },
                 TECH.NONE,
-                { product = "emojitan", nounlock = true, placer = "emojitan_placer", min_spacing = 2, numtogive = 1 },
+                { product = "emojitan", nounlock = true, placer = "emojitan_placer", min_spacing = 2, numtogive = 1, atlas = "images/inventoryimages/emojitan.xml", image = "emojitan.tex" },
                 filter_list
             )
             print("[小月亮商店] emojitan 配方注册成功")
         end
+    end
 
-        if CFG.ENABLE_SHIJIZHIHUA_BULB then
-            if not _G.STRINGS.NAMES.SHIJIZHIHUA_BULB then _G.STRINGS.NAMES.SHIJIZHIHUA_BULB = "世纪之花球茎" end
-            if not _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB then _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB = "原地放置，召唤世纪之花" end
-            if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB = "一颗散发着自然与机械气息的球茎。" end
+    -- 世纪之花球茎 (需要泰拉模组 2526778484)
+    if CFG.ENABLE_SHIJIZHIHUA_BULB and soul_exchange_enabled then
+        if not _G.STRINGS.NAMES.SHIJIZHIHUA_BULB then _G.STRINGS.NAMES.SHIJIZHIHUA_BULB = "世纪之花球茎" end
+        if not _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB then _G.STRINGS.RECIPE_DESC.SHIJIZHIHUA_BULB = "原地放置，召唤世纪之花" end
+        if not _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB then _G.STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHIJIZHIHUA_BULB = "一颗散发着自然与机械气息的球茎。" end
 
-            local bulb_recipe_id = "MoonShop_shijizhihua_bulb"
-            if not (AllRecipes and AllRecipes[bulb_recipe_id]) then
-                AddRecipe2(
-                    bulb_recipe_id,
-                    {
-                        Ingredient("jixiemoyan", 3),
-                        Ingredient("jixiexinbiao", 3),
-                        Ingredient("laohuaxinhaofasheqi", 3),
-                    },
-                    TECH.NONE,
-                    { product = "shijizhihua_bulb", nounlock = true, numtogive = 1 },
-                    filter_list
-                )
-                print("[小月亮商店] shijizhihua_bulb 配方注册成功")
-            end
+        local bulb_recipe_id = "MoonShop_shijizhihua_bulb"
+        if not (AllRecipes and AllRecipes[bulb_recipe_id]) then
+            AddRecipe2(
+                bulb_recipe_id,
+                {
+                    Ingredient("jixiemoyan", 3),
+                    Ingredient("jixiexinbiao", 3),
+                    Ingredient("laohuaxinhaofasheqi", 3),
+                },
+                TECH.NONE,
+                { product = "shijizhihua_bulb", nounlock = true, numtogive = 1, atlas = "images/inventoryimages/shijizhihua_bulb.xml", image = "shijizhihua_bulb.tex" },
+                filter_list
+            )
+            print("[小月亮商店] shijizhihua_bulb 配方注册成功")
         end
     end
 end

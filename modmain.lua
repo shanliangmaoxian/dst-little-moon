@@ -5,6 +5,18 @@
 
 local _G = GLOBAL
 
+-- 全局贴图资产（配方图标等独立于 prefab 的贴图）
+Assets = {
+    Asset("IMAGE", "images/inventoryimages/stalker_atrium.tex"),
+    Asset("ATLAS", "images/inventoryimages/stalker_atrium.xml"),
+    Asset("IMAGE", "images/inventoryimages/alterguardian_phase4_lunarrift.tex"),
+    Asset("ATLAS", "images/inventoryimages/alterguardian_phase4_lunarrift.xml"),
+    Asset("IMAGE", "images/inventoryimages/emojitan.tex"),
+    Asset("ATLAS", "images/inventoryimages/emojitan.xml"),
+    Asset("IMAGE", "images/inventoryimages/shijizhihua_bulb.tex"),
+    Asset("ATLAS", "images/inventoryimages/shijizhihua_bulb.xml"),
+}
+
 -- 骰子 RPC 在最顶部注册（确保客户端 MOD_RPC 表正确填充）
 AddModRPCHandler("LittleMoon", "RollDice", function(player)
     if _G.Moon_DoDiceRoll then _G.Moon_DoDiceRoll(player) end
