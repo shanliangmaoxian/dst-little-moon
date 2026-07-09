@@ -241,7 +241,7 @@ configuration_options = {
             { description = "锁定 (默认6)", data = true },
             { description = "不锁定", data = false },
         },
-        default = true,
+        default = false,
     },
     {
         name = "ENABLE_DISABLE_RESELECT",
