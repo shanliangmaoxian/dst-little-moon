@@ -94,8 +94,11 @@ AddPrefabPostInit("world", function(inst)
             if not owner._xycz_hooked then
                 owner._xycz_hooked = true
 
-                -- 幸运值+10
-                _G.Moon_AddEffect(owner, "luck", "Legend_XYCZ", 10)
+                -- 幸运值+10（走原版 luckuser 组件）
+                if not owner.components.luckuser then
+                    owner:AddComponent("luckuser")
+                end
+                owner.components.luckuser:SetLuckSource(10, "Legend_XYCZ")
 
                 -- 击杀敌人20%概率额外掉落
                 owner._xycz_kill_handler = function(attacker, data)
@@ -142,8 +145,10 @@ AddPrefabPostInit("world", function(inst)
         un_equip_fn = function(inst, owner, value)
             _G.Moon_ReduceEffect(owner, "xingyunchengzhi", "Legend_XYCZ", 1)
             if not _G.Moon_HasEffect(owner, "xingyunchengzhi") then
-                -- 移除幸运值
-                _G.Moon_ReduceEffect(owner, "luck", "Legend_XYCZ", 10)
+                -- 移除幸运值（原版 luckuser 组件）
+                if owner.components.luckuser then
+                    owner.components.luckuser:RemoveLuckSource("Legend_XYCZ")
+                end
 
                 if owner._xycz_kill_handler then
                     owner:RemoveEventCallback("killed", owner._xycz_kill_handler)
@@ -261,10 +266,25 @@ end
 -- =========================================================
 local _Old_Networking_Say_XYCZ = _G.Networking_Say
 _G.Networking_Say = function(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
-    -- 拦截 #roll 指令：执行骰子但不显示消息
-    if _G.TheWorld and _G.TheWorld.ismastersim and message == "#roll" then
-        _G.Moon_DoDiceRoll(_G.UserToPlayer(userid))
-        return
+    if _G.TheWorld and _G.TheWorld.ismastersim then
+        -- 拦截 #roll 指令：执行骰子但不显示消息
+        if message == "#roll" then
+            _G.Moon_DoDiceRoll(_G.UserToPlayer(userid))
+            return
+        end
+        -- -- 调试：查看当前幸运值
+        -- if message == "#luck" then
+        --     local player = _G.UserToPlayer(userid)
+        --     if player and player.components.talker then
+        --         if player.components.luckuser then
+        --             local luck = player.components.luckuser:GetLuck()
+        --             player.components.talker:Say("[调试] 当前幸运值: " .. tostring(luck))
+        --         else
+        --             player.components.talker:Say("[调试] luckuser 组件不存在")
+        --         end
+        --     end
+        --     return
+        -- end
     end
     if _Old_Networking_Say_XYCZ then
         _Old_Networking_Say_XYCZ(guid, userid, name, prefab, message, colour, whisper, is_repeat, ...)
