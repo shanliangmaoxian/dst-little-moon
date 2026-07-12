@@ -143,6 +143,29 @@ local function InitMoonShop()
         end
     end
 
+    -- 寻宝卷轴兑换: 金子 → 寻宝卷轴 (需要 HH 附魔 3096210166)
+    if CFG.ENABLE_MOON_SHOP_TREASURE_TALLY and hh_enabled then
+        local tally_recipes = {
+            { "hh_treasure_tally", 1,  50 },
+            { "hh_treasure_tally", 10, 500 },
+        }
+        local tally_count = 0
+        for _, r in ipairs(tally_recipes) do
+            local recipe_id = "MoonShop_treasure_" .. r[1] .. "_x" .. r[2]
+            if not (AllRecipes and AllRecipes[recipe_id]) then
+                AddRecipe2(
+                    recipe_id,
+                    { Ingredient("goldnugget", r[3]) },
+                    TECH.NONE,
+                    { product = r[1], nounlock = true, numtogive = r[2] },
+                    filter_list
+                )
+                tally_count = tally_count + 1
+            end
+        end
+        print("[小月亮商店] 寻宝卷轴兑换注册完成，共 " .. tally_count .. " 件")
+    end
+
     -- 灵魂兑换 (需要模组 2526778484)
     if CFG.ENABLE_MOON_SHOP_SOUL and soul_exchange_enabled then
         local soul_atlas = {

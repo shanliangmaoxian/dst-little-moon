@@ -81,10 +81,7 @@ AddPrefabPostInit("world", function(inst)
                     if owner.components.inventory then
                         local carrot = _G.SpawnPrefab("carrot")
                         if carrot then
-                            local leftover = owner.components.inventory:GiveItem(carrot, nil, owner:GetPosition())
-                            if leftover then
-                                leftover:Remove()
-                            end
+                            owner.components.inventory:GiveItem(carrot, nil, owner:GetPosition())
                         end
                     end
                 end)

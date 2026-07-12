@@ -442,4 +442,14 @@ configuration_options = {
         },
         default = true,
     },
+    {
+        name = "ENABLE_MOON_SHOP_TREASURE_TALLY",
+        label = "寻宝卷轴兑换",
+        hover = "小月亮商店中显示用金子兑换寻宝卷轴（需 HH 附魔模组）\n50金子=1卷轴 / 500金子=10卷轴礼包 / 5000金子=100卷轴礼包\n礼包可堆叠，右键打开逐帧吐卷轴不卡顿",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
 }
