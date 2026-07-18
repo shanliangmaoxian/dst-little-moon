@@ -2,8 +2,8 @@
 -- 被禁用的物品无法制作，已存在的会被移除并退还制作材料
 
 local _G = GLOBAL
--- local ban_items = GetModConfigData("BAN_ITEMS")
-local ban_items = {"bigpeach", "krampus", "spear", "raincoat", "moonrockseed"}
+local ban_items = GetModConfigData("BAN_ITEMS")
+-- local ban_items = {"bigpeach", "krampus", "spear", "raincoat", "moonrockseed"}
 
 -- 空表则跳过
 if not ban_items or type(ban_items) ~= "table" or #ban_items == 0 then
