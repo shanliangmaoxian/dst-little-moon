@@ -24,12 +24,15 @@ AddPrefabPostInit("world", function(inst)
             return true, "满足条件"
         end,
         on_equip_fn = function(inst, owner, value)
+            -- 仅在服务端执行，避免客/双端重复跑回血Task与生成特效（导致卡顿/数值抖动）
+            if not _G.TheWorld or not _G.TheWorld.ismastersim then return end
             _G.Moon_AddEffect(owner, "strawberry", "Legend_STRAWBERRY", 1)
             if not owner._strawberry_hooked then
                 owner._strawberry_hooked = true
 
                 -- 每3秒回复5%最大生命 + 3%精神
                 owner._strawberry_regen_task = owner:DoPeriodicTask(3, function()
+                    if not owner:IsValid() then return end
                     if not _G.Moon_HasEffect(owner, "strawberry") then return end
                     if owner.components.health then
                         local max_hp = owner.components.health.maxhealth or 150
@@ -37,7 +40,7 @@ AddPrefabPostInit("world", function(inst)
                     end
                     if owner.components.sanity then
                         local max_san = owner.components.sanity.max or 200
-                        owner.components.sanity:DoDelta(max_san * 0.01)
+                        owner.components.sanity:DoDelta(max_san * 0.03)
                     end
                 end)
 
@@ -48,18 +51,43 @@ AddPrefabPostInit("world", function(inst)
                     if not attacker or not attacker:IsValid() then return end
                     if attacker == owner then return end
 
-                    -- 特效（3秒冷却）
+                    -- 特效（3秒冷却，改用轻量特效减轻卡顿）
                     local now = _G.GetTime and _G.GetTime() or 0
                     if not owner._strawberry_fx_cd or now - owner._strawberry_fx_cd >= 3 then
                         owner._strawberry_fx_cd = now
                         if GLOBAL.SpawnPrefab then
                             local x, y, z = attacker.Transform:GetWorldPosition()
-                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                            local fx = GLOBAL.SpawnPrefab("collapse_small")
                             if fx then
                                 fx.Transform:SetPosition(x, y, z)
                             end
                         end
                     end
+
+                    -- 糖分过量：攻速-35%、移速-35%，持续5秒（不叠加）
+                    if attacker:HasTag("strawberry_sugar") then return end
+                    if not attacker.components.locomotor then return end
+                    attacker:AddTag("strawberry_sugar")
+
+                    local mult = 0.65 -- 降为原来的65%
+                    attacker.components.locomotor:SetExternalSpeedMultiplier(owner, "strawberry_sugar", mult)
+
+                    local old_period = nil
+                    if attacker.components.combat and type(attacker.components.combat.min_attack_period) == "number" then
+                        old_period = attacker.components.combat.min_attack_period
+                        attacker.components.combat.min_attack_period = old_period / mult
+                    end
+
+                    attacker:DoTaskInTime(5, function()
+                        if not attacker:IsValid() then return end
+                        attacker:RemoveTag("strawberry_sugar")
+                        if attacker.components.locomotor then
+                            attacker.components.locomotor:RemoveExternalSpeedMultiplier(owner, "strawberry_sugar")
+                        end
+                        if attacker.components.combat and old_period ~= nil then
+                            attacker.components.combat.min_attack_period = old_period
+                        end
+                    end)
                 end
                 owner:ListenForEvent("attacked", owner._strawberry_attacked_handler)
 
