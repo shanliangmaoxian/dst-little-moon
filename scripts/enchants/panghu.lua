@@ -82,6 +82,7 @@ AddPrefabPostInit("world", function(inst)
                 for _,victim in ipairs(victims) do
 
                     if victim ~= owner
+                    and not victim:HasTag("player")
                     and victim:IsValid()
                     and victim.components.health
                     and not victim.components.health:IsDead()
