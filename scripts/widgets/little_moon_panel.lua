@@ -9,11 +9,15 @@ local TEMPLATES = require("widgets/redux/templates")
 local POSITION_FILE = "dst_little_moon_merged_position"
 local PANEL_WIDTH = 300
 local HANDLE_HEIGHT = 30
+local SECTION_TITLE_HEIGHT = 26
 local DEFAULT_X = 126
 local DEFAULT_Y = -150
 
 local GOLD = { 0.89, 0.76, 0.47, 1 }
+local DIM_GOLD = { 0.35, 0.28, 0.18, 0.7 }
 local WHITE = { 1, 1, 1, 1 }
+local DARK_BG = { 0.05, 0.05, 0.06, 0.95 }
+local TITLE_BG = { 0.12, 0.10, 0.08, 0.85 }
 
 local CHAT_MSG_SAVE_ID = "dst_little_moon_chat_msgs"
 local DEFAULT_CHAT_MSGS = { "嘤嘤嘤", "#roll", "鼠标右键改消息", "鼠标右键改消息" }
@@ -45,6 +49,42 @@ local function ScreenYToTopOffset(y)
 	return y - screen_h
 end
 
+-- 创建一个可折叠 section 标题条（不含内容，只返回标题条 widget 和 label 引用）
+local function CreateSectionTitle(parent, text, onClick)
+	local w = parent:AddChild(Widget("title_" .. text))
+
+	local bg = w:AddChild(Image("images/ui.xml", "white.tex"))
+	bg:SetSize(PANEL_WIDTH, SECTION_TITLE_HEIGHT)
+	bg:SetTint(unpack(TITLE_BG))
+	bg:SetClickable(false)
+
+	local line = w:AddChild(Image("images/ui.xml", "white.tex"))
+	line:SetSize(PANEL_WIDTH - 40, 1)
+	line:SetTint(unpack(DIM_GOLD))
+	line:SetPosition(0, -SECTION_TITLE_HEIGHT / 2 + 1, 0)
+	line:SetClickable(false)
+
+	local label = w:AddChild(Text(CHATFONT, 20, "▼ " .. text))
+	label:SetPosition(-88, 0, 0)
+	label:SetColour(unpack(GOLD))
+	if label.EnableOutline then label:EnableOutline(true) end
+
+	local click = w:AddChild(Image("images/ui.xml", "white.tex"))
+	click:SetSize(PANEL_WIDTH, SECTION_TITLE_HEIGHT)
+	click:SetTint(1, 1, 1, 0)
+	click:SetClickable(true)
+	click:SetHoverText("点击折叠/展开")
+	click.OnMouseButton = function(_, button, down)
+		if button == MOUSEBUTTON_LEFT and not down then
+			onClick()
+			return true
+		end
+		return false
+	end
+
+	return w, label
+end
+
 local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat, enable_death_stats)
 	Widget._ctor(self, "LittleMoonPanel")
 
@@ -63,56 +103,42 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_offset_x = 0
 	self.drag_offset_y = 0
 
-	-- 1. 动态计算面板总高度
-	local panel_height = HANDLE_HEIGHT + 10
-	if self.enable_ql_helper then panel_height = panel_height + 80 end
-	if self.enable_treasure then
-		panel_height = panel_height + 85
-		if self.dig_treasure_mode > 0 then
-			panel_height = panel_height + 45
-		end
-	end
-	if self.enable_auto_pickup then panel_height = panel_height + 45 end
-	if self.enable_suicide then panel_height = panel_height + 45 end
-	if self.enable_quick_chat then panel_height = panel_height + 120 end
-	if self.enable_death_stats then panel_height = panel_height + 80 end
-	self.panel_height = panel_height
+	self.sections = {}
 
 	self:SetScale(scale or 1.0)
 	self:SetHAnchor(ANCHOR_LEFT)
 	self:SetVAnchor(ANCHOR_TOP)
 	self:SetPosition(DEFAULT_X, DEFAULT_Y, 0)
 
-	-- 背景
+	-- 背景（初始大小由 RebuildLayout 设置）
 	self.background = self:AddChild(Image("images/ui.xml", "white.tex"))
-	self.background:SetSize(PANEL_WIDTH, panel_height)
-	self.background:SetTint(0.05, 0.05, 0.06, 0.95)
+	self.background:SetTint(unpack(DARK_BG))
 	self.background:SetClickable(false)
 
 	-- 页眉
 	self.header = self:AddChild(Image("images/ui.xml", "white.tex"))
-	self.header:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
 	self.header:SetTint(0.15, 0.08, 0.05, 0.98)
-	self.header:SetPosition(0, panel_height / 2 - HANDLE_HEIGHT / 2, 0)
 
-	local function AddBorder(w, h, x, y, tint)
-		local b = self:AddChild(Image("images/ui.xml", "white.tex"))
-		b:SetSize(w, h)
-		b:SetTint(unpack(tint))
-		b:SetPosition(x, y, 0)
-		b:SetClickable(false)
-		return b
-	end
-	AddBorder(PANEL_WIDTH, 2, 0, panel_height / 2 - 1, GOLD)
-	AddBorder(PANEL_WIDTH, 2, 0, -panel_height / 2 + 1, {0.25, 0.20, 0.14, 0.85})
-	AddBorder(2, panel_height, -PANEL_WIDTH / 2 + 1, 0, {0.25, 0.20, 0.14, 0.85})
-	AddBorder(2, panel_height, PANEL_WIDTH / 2 - 1, 0, {0.25, 0.20, 0.14, 0.85})
+	-- 四周边框（由 RebuildLayout 更新位置）
+	self.border_top = self:AddChild(Image("images/ui.xml", "white.tex"))
+	self.border_top:SetTint(unpack(GOLD))
+	self.border_top:SetClickable(false)
 
-	-- 拖动手柄
+	self.border_bottom = self:AddChild(Image("images/ui.xml", "white.tex"))
+	self.border_bottom:SetTint(unpack({0.25, 0.20, 0.14, 0.85}))
+	self.border_bottom:SetClickable(false)
+
+	self.border_left = self:AddChild(Image("images/ui.xml", "white.tex"))
+	self.border_left:SetTint(unpack({0.25, 0.20, 0.14, 0.85}))
+	self.border_left:SetClickable(false)
+
+	self.border_right = self:AddChild(Image("images/ui.xml", "white.tex"))
+	self.border_right:SetTint(unpack({0.25, 0.20, 0.14, 0.85}))
+	self.border_right:SetClickable(false)
+
+	-- 拖动手柄（上方）
 	self.handle = self:AddChild(Image("images/ui.xml", "white.tex"))
-	self.handle:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
 	self.handle:SetTint(1, 1, 1, 0)
-	self.handle:SetPosition(0, panel_height / 2 - HANDLE_HEIGHT / 2, 0)
 	self.handle:SetClickable(true)
 	self.handle:SetHoverText("拖动面板")
 	self.handle.OnMouseButton = function(_, button, down) return self:OnHandleMouseButton(button, down) end
@@ -121,10 +147,9 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_dots:SetColour(unpack(GOLD))
 	self.drag_dots:SetPosition(0, -1, 0)
 
+	-- 拖动手柄（下方）
 	self.handle_bottom = self:AddChild(Image("images/ui.xml", "white.tex"))
-	self.handle_bottom:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
 	self.handle_bottom:SetTint(1, 1, 1, 0)
-	self.handle_bottom:SetPosition(0, -panel_height / 2 + HANDLE_HEIGHT / 2, 0)
 	self.handle_bottom:SetClickable(true)
 	self.handle_bottom:SetHoverText("拖动面板")
 	self.handle_bottom.OnMouseButton = function(_, button, down) return self:OnHandleMouseButton(button, down) end
@@ -133,62 +158,67 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_dots_bottom:SetColour(unpack(GOLD))
 	self.drag_dots_bottom:SetPosition(0, -1, 0)
 
-	local current_y = panel_height / 2 - HANDLE_HEIGHT - 20
-
-	-------------------------------------------------------
-	-- 快捷指令
-	-------------------------------------------------------
+	-------------------------------------------------------------------
+	-- 快捷指令 (QL Helper)
+	-------------------------------------------------------------------
 	if self.enable_ql_helper then
-		self.section1_title = self:AddChild(Text(CHATFONT, 24, "快捷指令"))
-		self.section1_title:SetPosition(0, current_y, 0)
-		self.section1_title:SetColour(unpack(GOLD))
-		if self.section1_title.EnableOutline then self.section1_title:EnableOutline(true) end
+		local title_w, title_label = CreateSectionTitle(self, "快捷指令", function() self:ToggleSection("ql") end)
+		local container = self:AddChild(Widget("ql_container"))
 
-		self.ql_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#ql", true) end, "清理返钱 (#ql)", { 120, 36 }))
-		self.ql_button:SetPosition(-70, current_y - 38, 0)
+		self.ql_button = container:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#ql", true) end, "清理返钱 (#ql)", { 120, 36 }))
+		self.ql_button:SetPosition(-70, 0, 0)
 		self.ql_button:SetTextSize(20)
 
-		self.cleanup_button = self:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#cleanup)", { 120, 36 }))
-		self.cleanup_button:SetPosition(70, current_y - 38, 0)
+		self.cleanup_button = container:AddChild(TEMPLATES.StandardButton(function() TheNet:Say("#cleanup", true) end, "清理掉落 (#cleanup)", { 120, 36 }))
+		self.cleanup_button:SetPosition(70, 0, 0)
 		self.cleanup_button:SetTextSize(20)
 
-		current_y = current_y - 80
-
-		if self.enable_suicide or self.enable_treasure or self.enable_auto_pickup then
-			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
-		end
+		table.insert(self.sections, {
+			key = "ql",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = 50,
+			collapsed = false,
+			section_name = "快捷指令",
+		})
 	end
 
-	-------------------------------------------------------
-	-- 自杀功能
-	-------------------------------------------------------
+	-------------------------------------------------------------------
+	-- 自杀
+	-------------------------------------------------------------------
 	if self.enable_suicide then
-		local suicide_y = current_y - 5
-		self.suicide_button = self:AddChild(TEMPLATES.StandardButton(function()
+		local title_w, title_label = CreateSectionTitle(self, "快捷自杀", function() self:ToggleSection("suicide") end)
+		local container = self:AddChild(Widget("suicide_container"))
+
+		self.suicide_button = container:AddChild(TEMPLATES.StandardButton(function()
 			if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["Suicide"] then
 				SendModRPCToServer(MOD_RPC["LittleMoon"]["Suicide"])
 			end
 		end, "快捷自杀", { 120, 36 }))
-		self.suicide_button:SetPosition(0, suicide_y, 0)
+		self.suicide_button:SetPosition(0, 0, 0)
 		self.suicide_button:SetTextSize(20)
 
-		current_y = current_y - 45
-
-		if self.enable_treasure or self.enable_auto_pickup then
-			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
-		end
+		table.insert(self.sections, {
+			key = "suicide",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = 45,
+			collapsed = false,
+			section_name = "快捷自杀",
+		})
 	end
 
-	-------------------------------------------------------
-	-- 宝藏召唤
-	-------------------------------------------------------
+	-------------------------------------------------------------------
+	-- 宝藏点召唤
+	-------------------------------------------------------------------
 	if self.enable_treasure then
-		self.section2_title = self:AddChild(Text(CHATFONT, 24, "宝藏点召唤"))
-		self.section2_title:SetPosition(0, current_y, 0)
-		self.section2_title:SetColour(unpack(GOLD))
-		if self.section2_title.EnableOutline then self.section2_title:EnableOutline(true) end
+		local title_w, title_label = CreateSectionTitle(self, "宝藏点召唤", function() self:ToggleSection("treasure") end)
+		local container = self:AddChild(Widget("treasure_container"))
 
-		local summon_y = current_y - 40
 		self.selected_count = 1
 		local spinner_data = {}
 		for _, count in ipairs({1, 5, 10, 20, 50}) do
@@ -198,8 +228,8 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 		end
 		if #spinner_data == 0 then table.insert(spinner_data, { text = "1", data = 1 }) end
 
-		self.spinner_root = self:AddChild(Widget("spinner_root"))
-		self.spinner_root:SetPosition(-75, summon_y)
+		self.spinner_root = container:AddChild(Widget("spinner_root"))
+		self.spinner_root:SetPosition(-75, 5)
 
 		self.spinner_label = self.spinner_root:AddChild(Text(CHATFONT, 22, "数量:"))
 		self.spinner_label:SetPosition(-50, 0)
@@ -210,18 +240,18 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 		self.spinner:SetOnChangedFn(function(data) self.selected_count = data end)
 		self.spinner:SetPosition(20, 0)
 
-		self.btn_summon = self:AddChild(TEMPLATES.StandardButton(function()
+		self.btn_summon = container:AddChild(TEMPLATES.StandardButton(function()
 			if MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["Summon"] then
 				SendModRPCToServer(MOD_RPC["LittleMoon"]["Summon"], self.selected_count)
 			end
 		end, "立即召唤", { 110, 36 }))
-		self.btn_summon:SetPosition(75, summon_y)
+		self.btn_summon:SetPosition(75, 5)
 		self.btn_summon:SetTextSize(20)
 
-		current_y = current_y - 85
+		local treasure_height = 55
 
+		-- 一键挖宝（dig_treasure_mode > 0 时才显示）
 		if self.dig_treasure_mode > 0 then
-			local dig_y = current_y + 5
 			self.dig_count = self.dig_treasure_mode
 			local dig_spinner_data = {}
 			for _, dcount in ipairs({0, 1, 3, 5, 10}) do
@@ -235,8 +265,8 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 				table.insert(dig_spinner_data, { text = "关闭", data = 0 })
 			end
 
-			self.dig_spinner_root = self:AddChild(Widget("dig_spinner_root"))
-			self.dig_spinner_root:SetPosition(-75, dig_y)
+			self.dig_spinner_root = container:AddChild(Widget("dig_spinner_root"))
+			self.dig_spinner_root:SetPosition(-75, -20)
 
 			self.dig_spinner_label = self.dig_spinner_root:AddChild(Text(CHATFONT, 22, "一键:"))
 			self.dig_spinner_label:SetPosition(-50, 0)
@@ -254,27 +284,35 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 				end
 			end
 
-			self.btn_quick_dig = self:AddChild(TEMPLATES.StandardButton(function()
+			self.btn_quick_dig = container:AddChild(TEMPLATES.StandardButton(function()
 				if self.dig_count > 0 and MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["QuickDig"] then
 					SendModRPCToServer(MOD_RPC["LittleMoon"]["QuickDig"], self.dig_count)
 				end
 			end, "一键挖宝", { 110, 36 }))
-			self.btn_quick_dig:SetPosition(75, dig_y)
+			self.btn_quick_dig:SetPosition(75, -20)
 			self.btn_quick_dig:SetTextSize(20)
 
-			current_y = current_y - 45
+			treasure_height = 100
 		end
 
-		if self.enable_auto_pickup then
-			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
-		end
+		table.insert(self.sections, {
+			key = "treasure",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = treasure_height,
+			collapsed = false,
+			section_name = "宝藏点召唤",
+		})
 	end
 
-	-------------------------------------------------------
+	-------------------------------------------------------------------
 	-- 自动吸入
-	-------------------------------------------------------
+	-------------------------------------------------------------------
 	if self.enable_auto_pickup then
-		local assistant_y = current_y - 5
+		local title_w, title_label = CreateSectionTitle(self, "自动吸入", function() self:ToggleSection("pickup") end)
+		local container = self:AddChild(Widget("pickup_container"))
 		local real_owner = self.owner or ThePlayer
 
 		local initial_checked = false
@@ -282,14 +320,14 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			initial_checked = real_owner.auto_pickup_enabled:value()
 		end
 
-		self.auto_pickup_cb = self:AddChild(TEMPLATES.LabelCheckbox(function(v)
+		self.auto_pickup_cb = container:AddChild(TEMPLATES.LabelCheckbox(function(v)
 			local p = self.owner or ThePlayer
 			if p and MOD_RPC["LittleMoon"] and MOD_RPC["LittleMoon"]["SetAutoPickup"] then
 				SendModRPCToServer(MOD_RPC["LittleMoon"]["SetAutoPickup"], v)
 			end
 		end, initial_checked, "开启自动吸入物品", CHATFONT, 22, WHITE))
 
-		self.auto_pickup_cb:SetPosition(0, assistant_y, 0)
+		self.auto_pickup_cb:SetPosition(0, 0, 0)
 
 		if self.auto_pickup_cb.label then
 			self.auto_pickup_cb.label:SetColour(unpack(WHITE))
@@ -308,32 +346,36 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 				end
 			end, real_owner)
 		end
+
+		table.insert(self.sections, {
+			key = "pickup",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = 45,
+			collapsed = false,
+			section_name = "自动吸入",
+		})
 	end
 
-	-------------------------------------------------------
+	-------------------------------------------------------------------
 	-- 快捷发送
-	-------------------------------------------------------
+	-------------------------------------------------------------------
 	if self.enable_quick_chat then
-		if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup then
-			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
-		end
-
-		self.chat_title = self:AddChild(Text(CHATFONT, 24, "快捷发送"))
-		self.chat_title:SetPosition(0, current_y, 0)
-		self.chat_title:SetColour(unpack(GOLD))
-		if self.chat_title.EnableOutline then self.chat_title:EnableOutline(true) end
+		local title_w, title_label = CreateSectionTitle(self, "快捷发送", function() self:ToggleSection("chat") end)
+		local container = self:AddChild(Widget("chat_container"))
 
 		self.chat_msgs = LoadChatMsgs()
-		local chat_y = current_y - 30
 
 		for i = 1, #self.chat_msgs do
 			local msg_index = i
 			local msg = self.chat_msgs[msg_index]
 			local pos_x = msg_index % 2 == 1 and -60 or 60
 			local offset_idx = math.ceil(msg_index / 2) - 1
-			local btn_y = chat_y - offset_idx * 40
+			local btn_y = 15 - offset_idx * 40
 
-			local btn = self:AddChild(TEMPLATES.StandardButton(function()
+			local btn = container:AddChild(TEMPLATES.StandardButton(function()
 				TheNet:Say(self.chat_msgs[msg_index], true)
 			end, msg, { 110, 30 }))
 			btn:SetPosition(pos_x, btn_y, 0)
@@ -388,41 +430,155 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			end
 		end
 
-		current_y = current_y - (math.ceil(#self.chat_msgs / 2) * 40 + 25)
+		table.insert(self.sections, {
+			key = "chat",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = math.ceil(#self.chat_msgs / 2) * 40 + 10,
+			collapsed = false,
+			section_name = "快捷发送",
+		})
 	end
 
-	-------------------------------------------------------
-	-- 死亡统计
-	-------------------------------------------------------
+	-------------------------------------------------------------------
+	-- 冒险记录
+	-------------------------------------------------------------------
 	if self.enable_death_stats then
-		if self.enable_ql_helper or self.enable_suicide or self.enable_treasure or self.enable_auto_pickup or self.enable_quick_chat then
-			AddBorder(PANEL_WIDTH - 40, 1, 0, current_y + 15, {0.4, 0.4, 0.4, 0.6})
-		end
+		local title_w, title_label = CreateSectionTitle(self, "冒险记录", function() self:ToggleSection("death") end)
+		local container = self:AddChild(Widget("death_container"))
 
-		self.death_title = self:AddChild(Text(CHATFONT, 24, "冒险记录"))
-		self.death_title:SetPosition(0, current_y, 0)
-		self.death_title:SetColour(unpack(GOLD))
-		if self.death_title.EnableOutline then self.death_title:EnableOutline(true) end
-
-		self.death_btn = self:AddChild(TEMPLATES.StandardButton(function()
+		self.death_btn = container:AddChild(TEMPLATES.StandardButton(function()
 			if ThePlayer and ThePlayer.HUD and ThePlayer.HUD.death_stats_panel then
 				ThePlayer.HUD.death_stats_panel:Toggle()
 			end
 		end, "冒险记录", { 120, 36 }))
-		self.death_btn:SetPosition(0, current_y - 38, 0)
+		self.death_btn:SetPosition(0, 0, 0)
 		self.death_btn:SetTextSize(20)
 
-		current_y = current_y - 50
+		table.insert(self.sections, {
+			key = "death",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = 45,
+			collapsed = false,
+			section_name = "冒险记录",
+		})
 	end
+
+	-- 初始布局
+	self:RebuildLayout()
 
 	self:LoadPosition()
 	self:Hide()
 end)
 
+-------------------------------------------------------------------
+-- Section 折叠/展开
+-------------------------------------------------------------------
+function LittleMoonPanel:ToggleSection(key)
+	for _, sec in ipairs(self.sections) do
+		if sec.key == key then
+			sec.collapsed = not sec.collapsed
+			break
+		end
+	end
+	self:RebuildLayout()
+end
+
+function LittleMoonPanel:UpdateTitleArrow(sec)
+	local arrow = sec.collapsed and "▶" or "▼"
+	if sec.title_label then
+		sec.title_label:SetString(arrow .. " " .. sec.section_name)
+	end
+end
+
+-------------------------------------------------------------------
+-- 布局重建（在折叠/展开时重算所有位置）
+-------------------------------------------------------------------
+function LittleMoonPanel:RebuildLayout()
+	-- 1. 计算面板总高度
+	local total = HANDLE_HEIGHT + 5
+	for _, sec in ipairs(self.sections) do
+		if sec.enabled then
+			total = total + SECTION_TITLE_HEIGHT + 2
+			if not sec.collapsed then
+				total = total + sec.container_height
+			end
+		end
+	end
+	total = total + HANDLE_HEIGHT + 5
+	self.panel_height = total
+
+	-- 2. 背景
+	self.background:SetSize(PANEL_WIDTH, total)
+
+	-- 3. 页眉
+	self.header:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
+	self.header:SetPosition(0, total / 2 - HANDLE_HEIGHT / 2, 0)
+
+	-- 4. 四周边框
+	self.border_top:SetSize(PANEL_WIDTH, 2)
+	self.border_top:SetPosition(0, total / 2 - 1, 0)
+	self.border_bottom:SetSize(PANEL_WIDTH, 2)
+	self.border_bottom:SetPosition(0, -total / 2 + 1, 0)
+	self.border_left:SetSize(2, total)
+	self.border_left:SetPosition(-PANEL_WIDTH / 2 + 1, 0, 0)
+	self.border_right:SetSize(2, total)
+	self.border_right:SetPosition(PANEL_WIDTH / 2 - 1, 0, 0)
+
+	-- 5. 拖动手柄
+	self.handle:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
+	self.handle:SetPosition(0, total / 2 - HANDLE_HEIGHT / 2, 0)
+	self.handle_bottom:SetSize(PANEL_WIDTH, HANDLE_HEIGHT)
+	self.handle_bottom:SetPosition(0, -total / 2 + HANDLE_HEIGHT / 2, 0)
+
+	-- 6. 排列 section
+	local y = total / 2 - HANDLE_HEIGHT - 5
+
+	for _, sec in ipairs(self.sections) do
+		if sec.enabled then
+			local ty = y - SECTION_TITLE_HEIGHT / 2
+			sec.title_bar:SetPosition(0, ty, 0)
+			sec.title_bar:Show()
+			y = y - SECTION_TITLE_HEIGHT
+
+			if not sec.collapsed then
+				local cy = y - sec.container_height / 2
+				sec.container:SetPosition(0, cy, 0)
+				sec.container:Show()
+				y = y - sec.container_height
+			else
+				sec.container:Hide()
+			end
+
+			y = y - 2  -- gap between sections
+
+			self:UpdateTitleArrow(sec)
+		else
+			sec.title_bar:Hide()
+			sec.container:Hide()
+		end
+	end
+
+	-- 更新夹持位置
+	local x, cur_y = self:GetPositionXYZ()
+	self:SetClampedPosition(x, cur_y)
+end
+
+-------------------------------------------------------------------
+-- 面板开关
+-------------------------------------------------------------------
 function LittleMoonPanel:Toggle()
 	if self:IsVisible() then self:Hide() else self:Show(); self:MoveToFront() end
 end
 
+-------------------------------------------------------------------
+-- 拖拽
+-------------------------------------------------------------------
 function LittleMoonPanel:OnHandleMouseButton(button, down)
 	if button ~= MOUSEBUTTON_LEFT then return false end
 	if down then self:StartDragging() else self:StopDragging() end
