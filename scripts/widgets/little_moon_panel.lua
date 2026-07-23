@@ -180,7 +180,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = 50,
-			collapsed = false,
+			collapsed = true,
 			section_name = "快捷指令",
 		})
 	end
@@ -207,7 +207,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = 45,
-			collapsed = false,
+			collapsed = true,
 			section_name = "快捷自杀",
 		})
 	end
@@ -302,7 +302,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = treasure_height,
-			collapsed = false,
+			collapsed = true,
 			section_name = "快捷挖宝",
 		})
 	end
@@ -354,7 +354,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = 45,
-			collapsed = false,
+			collapsed = true,
 			section_name = "自动吸入",
 		})
 	end
@@ -437,7 +437,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = math.ceil(#self.chat_msgs / 2) * 40 + 10,
-			collapsed = false,
+			collapsed = true,
 			section_name = "快捷发送",
 		})
 	end
@@ -464,7 +464,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			title_label = title_label,
 			container = container,
 			container_height = 45,
-			collapsed = false,
+			collapsed = true,
 			section_name = "冒险记录",
 		})
 	end
