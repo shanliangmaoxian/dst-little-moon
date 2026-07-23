@@ -216,7 +216,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	-- 宝藏点召唤
 	-------------------------------------------------------------------
 	if self.enable_treasure then
-		local title_w, title_label = CreateSectionTitle(self, "宝藏点召唤", function() self:ToggleSection("treasure") end)
+		local title_w, title_label = CreateSectionTitle(self, "快捷挖宝", function() self:ToggleSection("treasure") end)
 		local container = self:AddChild(Widget("treasure_container"))
 
 		self.selected_count = 1
@@ -303,7 +303,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 			container = container,
 			container_height = treasure_height,
 			collapsed = false,
-			section_name = "宝藏点召唤",
+			section_name = "快捷挖宝",
 		})
 	end
 
