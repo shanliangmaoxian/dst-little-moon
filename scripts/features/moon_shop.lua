@@ -224,6 +224,21 @@ local function InitMoonShop()
         end
     end
 
+    -- 月熠兑换: 5 个月亮碎片 → 1 个月熠
+    if CFG.ENABLE_MOON_SHOP_SPARK then
+        local spark_recipe_id = "MoonShop_moonstorm_spark"
+        if not (AllRecipes and AllRecipes[spark_recipe_id]) then
+            AddRecipe2(
+                spark_recipe_id,
+                { Ingredient("moonglass", 5) },
+                TECH.NONE,
+                { product = "moonstorm_spark", nounlock = true, numtogive = 1 },
+                filter_list
+            )
+            print("[小月亮商店] 月熠兑换注册成功")
+        end
+    end
+
     -- 世纪之花球茎 (需要泰拉模组 2526778484)
     if CFG.ENABLE_SHIJIZHIHUA_BULB and soul_exchange_enabled then
         if not _G.STRINGS.NAMES.SHIJIZHIHUA_BULB then _G.STRINGS.NAMES.SHIJIZHIHUA_BULB = "世纪之花球茎" end

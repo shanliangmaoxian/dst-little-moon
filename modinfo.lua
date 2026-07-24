@@ -452,4 +452,14 @@ configuration_options = {
         },
         default = true,
     },
+    {
+        name = "ENABLE_MOON_SHOP_SPARK",
+        label = "月熠兑换",
+        hover = "小月亮商店中显示用 5 个月亮碎片兑换 1 个月熠",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
 }
