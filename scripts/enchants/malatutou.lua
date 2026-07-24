@@ -15,8 +15,8 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 local function spawn_decoy(owner)
     local x, y, z = owner.Transform:GetWorldPosition()
 
-    -- 生成一个猪人作为假身（有战斗AI，会吸引仇恨）
-    local decoy = _G.SpawnPrefab("pigman")
+    -- 生成一个兔人作为假身（有战斗AI，会吸引仇恨）
+    local decoy = _G.SpawnPrefab("bunnyman")
     if not decoy then return end
 
     decoy.Transform:SetPosition(x, y, z)
@@ -32,7 +32,7 @@ local function spawn_decoy(owner)
     if fx then fx.Transform:SetPosition(x, y + 1, z) end
 
     -- 移除可能干扰的种族标签
-    local tags_to_remove = { "pig", "pigman", "monster" }
+    local tags_to_remove = { "rabbit", "bunnyman", "monster" }
     for _, tag in ipairs(tags_to_remove) do
         if decoy:HasTag(tag) then decoy:RemoveTag(tag) end
     end
@@ -235,12 +235,12 @@ AddPrefabPostInit("world", function(inst)
                 owner:ListenForEvent("picksomething", owner._mltt_pick_handler)
 
                 -- ========== 极低概率产惊喜种子 ==========
-                -- 每60秒3%概率 ≈ 平均33分钟一个种子
-                owner._mltt_seed_task = owner:DoPeriodicTask(60, function()
+                -- 每480秒1%概率 ≈ 平均13小时一个种子
+                owner._mltt_seed_task = owner:DoPeriodicTask(480, function()
                     if not _G.Moon_HasEffect(owner, "malatutou") then return end
                     if not owner:IsValid() then return end
-                    if math.random() <= 0.03 and owner.components.inventory then
-                        local seed = _G.SpawnPrefab("seeds")
+                    if math.random() <= 0.01 and owner.components.inventory then
+                        local seed = _G.SpawnPrefab("ancienttree_seed")
                         if seed then
                             owner.components.inventory:GiveItem(seed, nil, owner:GetPosition())
                             if owner.components.talker then
