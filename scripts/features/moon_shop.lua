@@ -99,11 +99,14 @@ local function InitMoonShop()
     end
 
     -- HH附魔强化 Boss 兑换 (100 水晶小人)
-    if CFG.ENABLE_MOON_SHOP_BOSS and hh_enabled then
-        local boss_items = {
-            { "alterguardian_phase4_lunarrift", "天体后裔" },
-            { "stalker_atrium",                  "织影者" },
-        }
+    if hh_enabled then
+        local boss_items = {}
+        if CFG.ENABLE_MOON_SHOP_BOSS_CELESTIAL then
+            table.insert(boss_items, { "alterguardian_phase4_lunarrift", "天体后裔" })
+        end
+        if CFG.ENABLE_MOON_SHOP_BOSS_STALKER then
+            table.insert(boss_items, { "stalker_atrium", "织影者" })
+        end
         local boss_count = 0
         for _, item in ipairs(boss_items) do
             local recipe_id = "MoonShop_" .. item[1]
@@ -125,7 +128,9 @@ local function InitMoonShop()
                 boss_count = boss_count + 1
             end
         end
-        print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
+        if boss_count > 0 then
+            print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
+        end
     end
 
     -- 遍历之迹兑换 (需要 HH 附魔 3096210166 + 小鸟 3398290914)

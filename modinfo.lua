@@ -393,9 +393,19 @@ configuration_options = {
         default = true,
     },
     {
-        name = "ENABLE_MOON_SHOP_BOSS",
-        label = "BOSS兑换",
-        hover = "小月亮商店中显示用 100 水晶小人兑换 BOSS 掉落物（需 HH 附魔模组）",
+        name = "ENABLE_MOON_SHOP_BOSS_CELESTIAL",
+        label = "兑换天体后裔",
+        hover = "小月亮商店中用 100 水晶小人兑换天体后裔掉落物（需 HH 附魔模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_MOON_SHOP_BOSS_STALKER",
+        label = "兑换织影者",
+        hover = "小月亮商店中用 100 水晶小人兑换织影者掉落物（需 HH 附魔模组）",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },
