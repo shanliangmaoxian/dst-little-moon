@@ -413,6 +413,26 @@ configuration_options = {
         default = true,
     },
     {
+        name = "ENABLE_MOON_SHOP_BOSS_ALTERGUARDIAN",
+        label = "兑换天体英雄",
+        hover = "小月亮商店中用 100 水晶小人兑换天体英雄掉落物（需 HH 附魔模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "ENABLE_MOON_SHOP_BOSS_CRABKING",
+        label = "兑换帝王蟹",
+        hover = "小月亮商店中用 100 水晶小人兑换帝王蟹掉落物（需 HH 附魔模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
         name = "ENABLE_MOON_SHOP_SOUL",
         label = "灵魂互换",
         hover = "小月亮商店中显示 3:1 暗影/光明之魂互换配方（需泰拉模组）",

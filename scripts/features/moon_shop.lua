@@ -107,6 +107,12 @@ local function InitMoonShop()
         if CFG.ENABLE_MOON_SHOP_BOSS_STALKER then
             table.insert(boss_items, { "stalker_atrium", "织影者" })
         end
+        if CFG.ENABLE_MOON_SHOP_BOSS_ALTERGUARDIAN then
+            table.insert(boss_items, { "alterguardian_phase1", "天体英雄" })
+        end
+        if CFG.ENABLE_MOON_SHOP_BOSS_CRABKING then
+            table.insert(boss_items, { "crabking", "帝王蟹" })
+        end
         local boss_count = 0
         for _, item in ipairs(boss_items) do
             local recipe_id = "MoonShop_" .. item[1]
