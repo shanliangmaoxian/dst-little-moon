@@ -168,69 +168,69 @@ configuration_options = {
         default = false,
     },
 
-    AddTitle("物品自动吸入"),
-    {
-        name = "ENABLE_AUTO_PICKUP",
-        label = "开启自动吸入",
-        hover = "是否开启周围物品自动吸入背包功能",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = false,
-    },
-    {
-        name = "AUTO_PICKUP_RANGE",
-        label = "吸入范围",
-        hover = "设置自动吸入物品的距离",
-        options = {
-            { description = "较近 (3码)", data = 3 },
-            { description = "标准 (5码)", data = 5 },
-            { description = "较远 (8码)", data = 8 },
-            { description = "超远 (12码)", data = 12 },
-        },
-        default = 5,
-    },
+    -- AddTitle("物品自动吸入"),
+    -- {
+    --     name = "ENABLE_AUTO_PICKUP",
+    --     label = "开启自动吸入",
+    --     hover = "是否开启周围物品自动吸入背包功能",
+    --     options = {
+    --         { description = "开启", data = true },
+    --         { description = "关闭", data = false },
+    --     },
+    --     default = false,
+    -- },
+    -- {
+    --     name = "AUTO_PICKUP_RANGE",
+    --     label = "吸入范围",
+    --     hover = "设置自动吸入物品的距离",
+    --     options = {
+    --         { description = "较近 (3码)", data = 3 },
+    --         { description = "标准 (5码)", data = 5 },
+    --         { description = "较远 (8码)", data = 8 },
+    --         { description = "超远 (12码)", data = 12 },
+    --     },
+    --     default = 5,
+    -- },
 
-    AddTitle("掉落自动堆叠"),
+    -- AddTitle("掉落自动堆叠"),
 
-    {
-        name = "ENABLE_AUTO_STACK",
-        label = "开启掉落自动堆叠",
-        hover = "物品掉落时自动与周围同类物品合并堆叠，请勿同时开启多个堆叠上限模组",
-        options = {
-            { description = "开启", data = true },
-            { description = "关闭", data = false },
-        },
-        default = false,
-    },
-    {
-        name = "ENABLE_MORE_STACKING",
-        label = "更多堆叠",
-        hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠，请勿同时开启多个堆叠上限模组",
-        options = {
-            { description = "关闭", data = false },
-            { description = "开启", data = true },
-            { description = "开启+丢出自动分离", data = 2, hover = "小动物等丢地上会自动分离开" },
-        },
-        default = false,
-    },
-    {
-        name = "STACK_SIZE_MULTIPLIER",
-        label = "堆叠上限",
-        hover = "修改物品堆叠上限，请勿同时开启多个堆叠上限模组",
-        options = {
-            { description = "关闭", data = false },
-            { description = "60", data = 60 },
-            { description = "99", data = 99 },
-            { description = "128", data = 128 },
-            { description = "200", data = 200 },
-            { description = "500", data = 500 },
-            { description = "999", data = 999 },
-            { description = "9999", data = 9999 },
-        },
-        default = 200,
-    },
+    -- {
+    --     name = "ENABLE_AUTO_STACK",
+    --     label = "开启掉落自动堆叠",
+    --     hover = "物品掉落时自动与周围同类物品合并堆叠，请勿同时开启多个堆叠上限模组",
+    --     options = {
+    --         { description = "开启", data = true },
+    --         { description = "关闭", data = false },
+    --     },
+    --     default = false,
+    -- },
+    -- {
+    --     name = "ENABLE_MORE_STACKING",
+    --     label = "更多堆叠",
+    --     hover = "需要开启堆叠上限。让鸟、小动物、牛角、鱼等生物和物品也能堆叠，请勿同时开启多个堆叠上限模组",
+    --     options = {
+    --         { description = "关闭", data = false },
+    --         { description = "开启", data = true },
+    --         { description = "开启+丢出自动分离", data = 2, hover = "小动物等丢地上会自动分离开" },
+    --     },
+    --     default = false,
+    -- },
+    -- {
+    --     name = "STACK_SIZE_MULTIPLIER",
+    --     label = "堆叠上限",
+    --     hover = "修改物品堆叠上限，请勿同时开启多个堆叠上限模组",
+    --     options = {
+    --         { description = "关闭", data = false },
+    --         { description = "60", data = 60 },
+    --         { description = "99", data = 99 },
+    --         { description = "128", data = 128 },
+    --         { description = "200", data = 200 },
+    --         { description = "500", data = 500 },
+    --         { description = "999", data = 999 },
+    --         { description = "9999", data = 9999 },
+    --     },
+    --     default = 200,
+    -- },
 
     AddTitle("客户端反作弊"),
     {
