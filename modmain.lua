@@ -52,6 +52,7 @@ modimport("scripts/features/wardrobe_anywhere")
 modimport("scripts/features/death_stats")
 modimport("scripts/features/ban_items")
 modimport("scripts/features/moon_shop")
+modimport("scripts/features/mob_enhance/init")
 
 -- ------------------------------------------------------------------
 -- 3. 附魔模块

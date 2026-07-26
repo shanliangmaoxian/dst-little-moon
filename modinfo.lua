@@ -125,6 +125,50 @@ configuration_options = {
         default = 20,
     },
 
+    AddTitle("怪物强化"),
+    {
+        name = "ENABLE_MOB_ENHANCE",
+        label = "开启怪物强化",
+        hover = "为Boss和普通怪物添加防御层和附魔能力（共50+种怪物，22种附魔）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = false,
+    },
+    {
+        name = "MOB_ENHANCE_BOSS",
+        label = "强化Boss",
+        hover = "龙蝇、巨鹿、熊獾等23个Boss获得强化（需开启怪物强化）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "MOB_ENHANCE_NORMAL",
+        label = "强化普通怪",
+        hover = "猎犬、蜘蛛、猪人等50+种敌对生物获得强化（需开启怪物强化）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
+        name = "MOB_ENHANCE_LEVEL",
+        label = "强化难度",
+        hover = "难度越高，怪物的附魔效果越强。Boss和普通怪共用此难度",
+        options = {
+            { description = "简单 (×0.6)", data = "easy" },
+            { description = "普通 (×1.0)", data = "normal" },
+            { description = "困难 (×3.0, +3附魔)", data = "hard" },
+            { description = "噩梦 (×5.0, +5附魔)", data = "nightmare" },
+        },
+        default = "normal",
+    },
+
     AddTitle("更多附魔"),
     {
         name = "ENABLE_MORE_ENCHANTS",
