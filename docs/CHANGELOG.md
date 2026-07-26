@@ -1,5 +1,15 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.15.9 - 2026-07-26
+### 修改
+- **小月亮商店** — `ENABLE_MOON_SHOP_BOSS` 拆分为四个独立配置项：`ENABLE_MOON_SHOP_BOSS_CELESTIAL`（天体后裔）、`ENABLE_MOON_SHOP_BOSS_STALKER`（织影者）、`ENABLE_MOON_SHOP_BOSS_ALTERGUARDIAN`（天体英雄）、`ENABLE_MOON_SHOP_BOSS_CRABKING`（帝王蟹），可单独开关
+
+### 修改
+- **功能** — 暂时隐藏堆叠和物品吸入
+
+### 新增
+- **小月亮商店** — 新增 Boss 兑换：天体英雄 (`alterguardian_phase1`) 和 帝王蟹 (`crabking`)，各 100 水晶小人兑换
+
 ## 1.15.8 - 2026-07-23
 ### 新增
 - **小月亮商店** — 新增月熠兑换：5 个月亮碎片 → 1 个月熠，配置项 `ENABLE_MOON_SHOP_SPARK` 控制
