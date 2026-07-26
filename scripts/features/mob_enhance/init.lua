@@ -170,9 +170,26 @@ for prefab_name, info in pairs(MOON_MOB_TABLE) do
             -- 抽取附魔
             local enchant_ids = RollEnchants(tier)
 
-            -- 启动（运行时检测 HH 框架）
+            -- 防御层配置（总开关关闭或检测到让我瞧瞧则全部禁用）
+            -- 检测 3700206644（让我瞧瞧）是否开启
+            local letmeseemod = _G.Moon_IsModEnabled and _G.Moon_IsModEnabled("workshop-3700206644") or false
+
+            -- 防御层配置（总开关关闭或检测到让我瞧瞧则全部禁用）
+            local defense_enabled = CFG.ENABLE_MOB_DEFENSE and not letmeseemod
+            local defense_cfg = {}
+            if defense_enabled then
+                defense_cfg = {
+                    mitigation = CFG.MOB_DEFENSE_MITIGATION or false,
+                    dynamic    = CFG.MOB_DEFENSE_DYNAMIC or false,
+                    cap        = CFG.MOB_DEFENSE_CAP or false,
+                    freq       = CFG.MOB_DEFENSE_FREQ or false,
+                    scope      = CFG.MOB_DEFENSE_SCOPE or "all",
+                }
+            end
+
+            -- 启动
             local runtime_hh = _G.Moon_IsHHEnabled and _G.Moon_IsHHEnabled() or false
-            comp:OnStart(tier, diff_cfg.mult, enchant_ids, MOON_MOB_ENCHANTS, runtime_hh)
+            comp:OnStart(tier, diff_cfg.mult, enchant_ids, MOON_MOB_ENCHANTS, runtime_hh, defense_cfg, letmeseemod)
         end)
     end)
     end

@@ -18,13 +18,17 @@ end)
 ---------------------------------------------------------------------
 -- 初始化：由 init.lua 在 AddPrefabPostInit 中调用
 ---------------------------------------------------------------------
-function MoonMobEnhance:OnStart(tier, diff_mult, enchant_ids, enchants_config, hh_enabled)
+function MoonMobEnhance:OnStart(tier, diff_mult, enchant_ids, enchants_config, hh_enabled, defense_cfg, letmeseemod)
     self.tier = tier or "normal"
     self.difficulty_mult = diff_mult or 1.0
     self.hh_enabled = hh_enabled or false
+    self.defense_cfg = defense_cfg or {}
+    self.letmeseemod = letmeseemod or false
 
-    -- 1. 应用防御层（所有强化怪物都有）
-    self:_ApplyDefense()
+    -- 1. 应用防御层（检测到让我瞧瞧则跳过，避免冲突）
+    if not self.letmeseemod then
+        self:_ApplyDefense()
+    end
 
     -- 2. 应用抽到的附魔
     if enchant_ids and enchants_config then
@@ -49,12 +53,20 @@ function MoonMobEnhance:OnStart(tier, diff_mult, enchant_ids, enchants_config, h
 end
 
 ---------------------------------------------------------------------
--- 防御层（移植自 3700206644 的生物加强）
+-- 防御层
+-- 从 self.defense_cfg 读取配置：mitigation/dynamic/cap/freq/scope
 ---------------------------------------------------------------------
 function MoonMobEnhance:_ApplyDefense()
     if self._defense_hooked then return end
     local health = self.inst.components.health
     if not health then return end
+
+    local d = self.defense_cfg
+
+    -- 全部关闭则跳过
+    if not d.mitigation and not d.dynamic and not d.cap and not d.freq then
+        return
+    end
 
     self._origin_DoDelta = health.DoDelta
     local enhance = self
@@ -69,52 +81,72 @@ function MoonMobEnhance:_ApplyDefense()
             return enhance._origin_DoDelta(self, delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
         end
 
-        -- 只拦截伤害（负值）
         if delta >= 0 then
+            return enhance._origin_DoDelta(self, delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
+        end
+
+        local dc = comp.defense_cfg
+        local is_boss = comp.tier == "boss"
+
+        -- 防御范围：仅Boss时跳过普通怪
+        if dc.scope == "boss" and not is_boss then
             return enhance._origin_DoDelta(self, delta, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
         end
 
         local damage = -delta
         local mult = comp.difficulty_mult
 
-        ---- 1. 动态减伤：血量越低减伤越高 ----
-        local hp_pct = self:GetPercent()
-        if comp.tier == "boss" then
-            -- Boss: 30%~90% 减伤
-            local reduction = 0.3 + (1 - hp_pct) * 0.6
-            damage = damage * (1 - reduction)
-        else
-            -- 普通: 10%~70% 减伤
-            local reduction = 0.1 + (1 - hp_pct) * 0.6
+        -- 1. 基础减伤
+        if dc.mitigation and dc.mitigation > 0 then
+            damage = damage * (1 - dc.mitigation * mult)
+        end
+
+        -- 2. 动态减伤
+        if dc.dynamic then
+            local hp_pct = self:GetPercent()
+            local reduction = 0
+            if dc.dynamic == 1 then  -- 线性
+                local base = is_boss and 0.3 or 0.1
+                reduction = base + (1 - hp_pct) * 0.6
+            elseif dc.dynamic == 3 then  -- 阶梯式
+                if hp_pct > 0.75 then
+                    reduction = 0.3
+                elseif hp_pct > 0.5 then
+                    reduction = 0.5
+                elseif hp_pct > 0.25 then
+                    reduction = 0.7
+                else
+                    reduction = 0.9
+                end
+            end
             damage = damage * (1 - reduction)
         end
 
-        ---- 2. 单次伤害上限 ----
+        -- 3. 单次限伤
         local max_hp = self.maxhealth or 1
-        local cap_pct = comp.tier == "boss" and 0.05 or 0.15
-        local cap = max_hp * cap_pct * mult
-        if damage > cap then
-            damage = cap
-            -- 限伤特效（延迟一帧避免重入）
-            if afflicter and afflicter:IsValid() then
-                local px, py, pz = comp.inst.Transform:GetWorldPosition()
-                afflicter:DoTaskInTime(0, function()
-                    if not comp.inst:IsValid() then return end
-                    local fx = SpawnPrefab("statue_transition_2")
-                    if fx then
-                        fx.Transform:SetPosition(px, py, pz)
-                    end
-                end)
+        if dc.cap then
+            local cap_val = max_hp * (dc.cap / 100) * mult
+            if damage > cap_val then
+                damage = cap_val
+                if afflicter and afflicter:IsValid() then
+                    local px, py, pz = comp.inst.Transform:GetWorldPosition()
+                    afflicter:DoTaskInTime(0, function()
+                        if not comp.inst:IsValid() then return end
+                        local fx = SpawnPrefab("statue_transition_2")
+                        if fx then
+                            fx.Transform:SetPosition(px, py, pz)
+                        end
+                    end)
+                end
             end
         end
 
-        ---- 3. 频率限制 ----
-        local now = GetTime()
-        if afflicter and afflicter.GUID then
+        -- 4. 频率限制
+        if dc.freq and afflicter and afflicter.GUID then
+            local now = GetTime()
             local src_key = "mob_defense_freq_" .. afflicter.GUID
             local last_time = comp[src_key] or 0
-            local min_interval = comp.tier == "boss" and 0.5 or 0.3
-            if now - last_time < min_interval and damage > max_hp * 0.01 then
+            if now - last_time < dc.freq then
                 return enhance._origin_DoDelta(self, 0, overtime, cause, ignore_invincible, afflicter, ignore_absorb, ...)
             end
             comp[src_key] = now
