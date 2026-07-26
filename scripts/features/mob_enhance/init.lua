@@ -43,11 +43,18 @@ local MOON_MOB_TABLE = {}
 -- Boss
 local boss_list = {
     "deerclops", "bearger", "moose", "dragonfly", "antlion",
-    "beequeen", "klaus", "malbatross", "toadstool", "toadstool_dark",
+    "beequeen", "klaus", "klaus_sack", "malbatross",
+    "toadstool", "toadstool_cap", "toadstool_dark",
     "crabking", "stalker", "stalker_atrium", "stalker_forest",
     "alterguardian_phase1", "alterguardian_phase2", "alterguardian_phase3",
+    "alterguardian_phase1_lunarrift", "alterguardian_phase4_lunarrift",
     "minotaur", "spiderqueen", "warg",
     "eyeofterror", "twinofterror1", "twinofterror2",
+    "shadow_rook", "shadow_knight", "shadow_bishop", "lordfruitfly",
+    "daywalker", "daywalker2",
+    "worm_boss",
+    "mutateddeerclops", "mutatedbearger", "mutatedwarg",
+    "vault_pillar_guard",
 }
 for _, name in ipairs(boss_list) do
     MOON_MOB_TABLE[name] = { tier = "boss" }
@@ -58,7 +65,8 @@ local normal_list = {
     "leif", "leif_sparse",
     "hound", "firehound", "icehound", "moonhound", "mutatedhound", "clayhound",
     "spider", "spider_warrior", "spider_hider", "spider_spitter", "spider_mutated", "spider_water",
-    "pigman", "pigguard", "bunnyman", "merm", "mermguard",
+    "spider_moon", "spider_healer",
+    "pigman", "pigguard", "werepig", "moonpig", "bunnyman", "merm", "mermguard",
     "tentacle", "tentacle_pillar", "tentacle_pillar_arm",
     "frog", "mosquito", "bat",
     "cookiecutter", "shark", "gnarwail",
@@ -67,12 +75,13 @@ local normal_list = {
     "slurper", "worm", "krampus",
     "walrus",
     "beefalo", "koalefant_summer", "koalefant_winter", "lightninggoat",
-    "penguin", "tallbird", "teenbird",
+    "penguin", "mutated_penguin", "tallbird", "teenbird",
     "mossling", "birchnutdrake",
     "knight", "knight_nightmare", "bishop", "bishop_nightmare", "rook", "rook_nightmare",
     "eyeplant",
     "stalker_minion1", "stalker_minion2",
     "eyeofterror_mini", "eyeofterror_mini_grounded",
+    "claywarg", "gingerbreadwarg", "spat",
 }
 for _, name in ipairs(normal_list) do
     MOON_MOB_TABLE[name] = { tier = "normal" }
