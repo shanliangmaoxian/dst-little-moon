@@ -19,3 +19,16 @@ end
 function _G.Moon_IsMYXLEnabled()
     return _G.Moon_IsModEnabled("workshop-3014076942")
 end
+
+-- 免疫僵直：挂钩 wilson 状态机的 attacked 事件，有 jiangzhi 效果时跳过受击动画
+AddStategraphPostInit("wilson", function(sg)
+    if sg.events and sg.events.attacked then
+        local old_attacked_fn = sg.events.attacked.fn
+        sg.events.attacked.fn = function(inst, data)
+            if _G.Moon_HasEffect(inst, "jiangzhi") or inst:HasTag("playerghost") then
+                return
+            end
+            return old_attacked_fn and old_attacked_fn(inst, data)
+        end
+    end
+end)

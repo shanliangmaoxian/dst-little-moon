@@ -32,6 +32,7 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:AddEffectValueByKey("immunityKnockBack", 1)
                 end
+                _G.Moon_AddEffect(owner, "jiangzhi", "Legend_YUEBAN", 1)
 
                 -- 攻击附带自身当前生命值5%额外伤害
                 owner._yueban_attack_handler = function(attacker, data)
@@ -95,6 +96,7 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:ReduceEffectValueByKey("immunityKnockBack", 1)
                 end
+                _G.Moon_ReduceEffect(owner, "jiangzhi", "Legend_YUEBAN", 1)
 
                 if owner._yueban_attack_handler then
                     owner:RemoveEventCallback("onattackother", owner._yueban_attack_handler)

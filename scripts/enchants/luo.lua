@@ -34,6 +34,7 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:AddEffectValueByKey("immunityKnockBack", 1)
                 end
+                _G.Moon_AddEffect(owner, "jiangzhi", "Legend_LUO", 1)
 
                 -- 影怪无视：移除玩家标签让影怪不主动攻击，但加回标记让游戏逻辑正常工作
                 if not owner:HasTag("shadowcreature") then
@@ -118,6 +119,7 @@ AddPrefabPostInit("world", function(inst)
                     hh:ReduceEffectValueByKey("immunityKnockBack", 1)
                     hh:ReduceEffectValueByKey("absorbDamage", (owner._luo_shield_stacks or 0) * 5)
                 end
+                _G.Moon_ReduceEffect(owner, "jiangzhi", "Legend_LUO", 1)
 
                 if owner._luo_added_notarget then
                     owner:RemoveTag("notarget")
