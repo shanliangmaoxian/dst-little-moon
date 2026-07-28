@@ -19,6 +19,12 @@
 ### 新增
 - **小月亮商店** — 新增 Boss 兑换：天体英雄 (`alterguardian_phase1`) 和 帝王蟹 (`crabking`)，各 100 水晶小人兑换
 
+### 修复
+- **月半/萝的守护** — 免疫僵直无效的问题
+  - 根因：之前只通过 `immunityKnockBack` 免疫了击退，但未处理 DST 的受击动画僵直（attacked stategraph 事件）
+  - 修复：在核心层添加 `AddStategraphPostInit('wilson', ...)` 钩子拦截 attacked 事件，附魔装备时注册 `jiangzhi` 效果
+  - 涉及文件：`mod_utils.lua`（全局钩子）、`yueban.lua`、`luo.lua`（注册/移除 jiangzhi 效果）
+
 ## 1.15.8 - 2026-07-23
 ### 新增
 - **小月亮商店** — 新增月熠兑换：5 个月亮碎片 → 1 个月熠，配置项 `ENABLE_MOON_SHOP_SPARK` 控制
