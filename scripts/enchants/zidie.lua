@@ -1,8 +1,9 @@
 -- 小月亮 附魔：紫蝶
 -- 身化蝶影，以假乱真！
--- 攻击5%几率召唤蝶影分身（继承50%属性，持续8秒，最多2个）
+-- 攻击5%几率召唤蝶影分身（固定为大虚影 gestalt_guard，继承50%属性，持续8秒，最多2个）
 -- 分身自动攻击附近敌人。分身存在时本体伤害+30%
 -- 移速永久+20%，分身移速+40%
+-- 大虚影不会破坏建筑，也不会攻击玩家
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -32,43 +33,13 @@ local function has_alive_clones(owner)
     return #(owner._zidie_clones or {}) > 0
 end
 
--- 紫蝶分身生物池（带战斗AI的DST生物，会被染成紫色）
-local CLONE_POOL = {
-    "pigman",      -- 猪人
-    "spider",      -- 蜘蛛
-    "hound",       -- 猎犬
-    "beefalo",     -- 皮弗娄牛
-    "tallbird",    -- 高脚鸟
-    "lightninggoat", -- 闪电山羊
-    "catcoon",     -- 浣猫
-    "frog",        -- 青蛙
-    "bunnyman",    -- 兔人
-    "merm",        -- 鱼人
-    "rocky",       -- 石虾
-    "bushcrafter", -- 草壁异兽
-    "perdling",    -- 火鸡
-    "koalefant",   -- 考拉象
-    "dragonfly",   -- 龙鹰！
-    "bearger",     -- 熊獾
-    "deerclops",   -- 巨鹿
-    "moose",       -- 麋鹿鹅
-    "spider_warrior", -- 蜘蛛战士
-    "knight",      -- 发条骑士
-    "bishop",      -- 发条主教
-    "rook",        -- 发条战车
-}
-
--- 召唤一个蝶影分身
+-- 蝶影固定召唤大虚影（gestalt_guard，月之守卫）
+-- 原先随机生物池会召出熊獾/巨鹿/龙蝇等，践踏/吐息会破坏建筑，故改为大虚影
 local function spawn_clone(owner, target)
     local x, y, z = owner.Transform:GetWorldPosition()
 
-    -- 从生物池随机选一个
-    local prefab_name = CLONE_POOL[math.random(#CLONE_POOL)]
-    local clone = _G.SpawnPrefab(prefab_name)
-    if not clone then
-        -- 保底猪人
-        clone = _G.SpawnPrefab("pigman")
-    end
+    -- 固定召唤大虚影
+    local clone = _G.SpawnPrefab("gestalt_guard")
     if not clone then return nil end
 
     -- 定位：玩家和目标的中间偏目标方向，加随机偏移
@@ -85,12 +56,6 @@ local function spawn_clone(owner, target)
     if clone.AnimState then
         clone.AnimState:SetMultColour(0.7, 0.3, 1, 0.75)
         clone.AnimState:SetAddColour(0.3, 0, 0.5, 0)
-    end
-
-    -- 摘掉原始种族标签，避免友军误伤等逻辑干扰
-    local tags_to_remove = { "pig", "pigman", "spider", "hound", "rabbit", "merm", "goat", "cat", "bird", "monster" }
-    for _, tag in ipairs(tags_to_remove) do
-        if clone:HasTag(tag) then clone:RemoveTag(tag) end
     end
 
     -- 配置战斗：继承50%攻击力
@@ -110,8 +75,8 @@ local function spawn_clone(owner, target)
 
     -- 移速+40%
     if clone.components.locomotor then
-        clone.components.locomotor.walkspeed = 4 * 1.4
-        clone.components.locomotor.runspeed = 7 * 1.4
+        clone.components.locomotor.walkspeed = (clone.components.locomotor.walkspeed or 4) * 1.4
+        clone.components.locomotor.runspeed = (clone.components.locomotor.runspeed or 7) * 1.4
     end
 
     -- 友军标签（防止玩家主动攻击 + AI无视）
@@ -136,7 +101,7 @@ local function spawn_clone(owner, target)
         end
     end
 
-    -- 分身也不攻击玩家：钩住SetTarget
+    -- 分身也不攻击玩家：钩住SetTarget（大虚影原本会主动攻击低理智玩家，这里拦截）
     if clone.components.combat then
         local oldSetTarget = clone.components.combat.SetTarget
         clone.components.combat.SetTarget = function(self, target)
@@ -173,7 +138,7 @@ AddPrefabPostInit("world", function(inst)
     _G.AddSpecialEquipEffect("Legend_ZIDIE", {
         name = "紫蝶",
         client_text = "紫\n蝶",
-        desc = "攻击5%几率召唤蝶影(随机生物,8秒,最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
+        desc = "攻击5%几率召唤大虚影(8秒,最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
         check_desc = "身化蝶影，以假乱真！",
         can_add = false,
         only_one = true,
@@ -195,7 +160,7 @@ AddPrefabPostInit("world", function(inst)
                     hh:AddEffectValueByKey("addSpeedPercent", 20)
                 end
 
-                -- 监听攻击事件：20%几率召唤分身
+                -- 监听攻击事件：5%几率召唤分身
                 owner._zidie_attack_handler = function(attacker, data)
                     if not _G.Moon_HasEffect(owner, "zidie") then return end
                     local target = data and data.target
