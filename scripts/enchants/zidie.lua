@@ -1,9 +1,9 @@
 -- 小月亮 附魔：紫蝶
 -- 身化蝶影，以假乱真！
--- 攻击5%几率召唤蝶影分身（固定为大虚影 gestalt_guard，继承50%属性，持续8秒，最多2个）
--- 分身自动攻击附近敌人。分身存在时本体伤害+30%
--- 移速永久+20%，分身移速+40%
--- 大虚影不会破坏建筑，也不会攻击玩家
+-- 攻击5%几率召唤蝶影分身（启迪之冠小虚影 alterguardianhat_projectile，继承50%属性，最多2个）
+-- 分身像启迪之冠一样冲向玩家当前目标攻击。分身存在时本体伤害+30%
+-- 移速永久+20%
+-- 小虚影不会破坏建筑，也不会攻击玩家
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -33,13 +33,13 @@ local function has_alive_clones(owner)
     return #(owner._zidie_clones or {}) > 0
 end
 
--- 蝶影固定召唤大虚影（gestalt_guard，月之守卫）
--- 原先随机生物池会召出熊獾/巨鹿/龙蝇等，践踏/吐息会破坏建筑，故改为大虚影
+-- 蝶影固定召唤小虚影（alterguardianhat_projectile，启迪之冠的月之虚影弹）
+-- 像启迪之冠一样：出现后冲向玩家当前目标攻击，随后自行消散
 local function spawn_clone(owner, target)
     local x, y, z = owner.Transform:GetWorldPosition()
 
-    -- 固定召唤大虚影
-    local clone = _G.SpawnPrefab("gestalt_guard")
+    -- 固定召唤启迪之冠小虚影
+    local clone = _G.SpawnPrefab("alterguardianhat_projectile")
     if not clone then return nil end
 
     -- 定位：玩家和目标的中间偏目标方向，加随机偏移
@@ -53,71 +53,47 @@ local function spawn_clone(owner, target)
     if fx then fx.Transform:SetPosition(sx, y + 0.5, sz) end
 
     -- 紫蝶化外观：紫色半透明！
+    -- 虚影的可见主体是 blobhead(大头)，主实体+大头都要染色
     if clone.AnimState then
         clone.AnimState:SetMultColour(0.7, 0.3, 1, 0.75)
         clone.AnimState:SetAddColour(0.3, 0, 0.5, 0)
     end
-
-    -- 配置战斗：继承50%攻击力
-    if clone.components.combat then
-        clone.components.combat.defaultdamage = (owner.components.combat and owner.components.combat.defaultdamage or 10) * 0.5
+    if clone.blobhead and clone.blobhead.AnimState then
+        clone.blobhead.AnimState:SetMultColour(0.7, 0.3, 1, 0.75)
+    end
+    -- 虚影自带的透明组件会把大头刷回白色，替换成紫色版，保住染色
+    if clone.components.transparentonsanity then
+        clone.components.transparentonsanity.onalphachangedfn = function(cinst, a)
+            if cinst.blobhead and cinst.blobhead.AnimState then
+                cinst.blobhead.AnimState:OverrideMultColour(0.7, 0.3, 1, a)
+            end
+        end
+        clone.components.transparentonsanity:ForceUpdate()
     end
 
-    -- 设置初始目标
-    if target:IsValid() then
-        clone.components.combat:SetTarget(target)
-    end
-
-    -- 跟随玩家
+    -- 配置：像启迪之冠一样攻击玩家当前目标
     if clone.components.follower then
         clone.components.follower:SetLeader(owner)
     end
-
-    -- 移速+40%
-    if clone.components.locomotor then
-        clone.components.locomotor.walkspeed = (clone.components.locomotor.walkspeed or 4) * 1.4
-        clone.components.locomotor.runspeed = (clone.components.locomotor.runspeed or 7) * 1.4
+    clone._focustarget = target                          -- 优先打玩家当前目标
+    if clone.SetTargetPosition then
+        clone:SetTargetPosition(_G.Vector3(tx, ty, tz))  -- 朝目标方向飞
     end
-
-    -- 友军标签（防止玩家主动攻击 + AI无视）
-    if not clone:HasTag("companion") then clone:AddTag("companion") end
-    if not clone:HasTag("friendly") then clone:AddTag("friendly") end
-    if not clone:HasTag("notarget") then clone:AddTag("notarget") end
-
-    -- 玩家无法攻击它：钩住health.DoDelta，免疫玩家来源的伤害
-    if clone.components.health then
-        local oldDoDelta = clone.components.health.DoDelta
-        clone.components.health.DoDelta = function(self, delta, overtime, cause, ...)
-            if delta < 0 then
-                -- 检查剩余参数中是否有玩家实体
-                local args = { ... }
-                for _, arg in ipairs(args) do
-                    if type(arg) == "table" and arg.IsValid and arg:IsValid() and arg.HasTag and arg:HasTag("player") then
-                        return -- 玩家造成的伤害全部免疫
-                    end
-                end
-            end
-            return oldDoDelta(self, delta, overtime, cause, ...)
-        end
-    end
-
-    -- 分身也不攻击玩家：钩住SetTarget（大虚影原本会主动攻击低理智玩家，这里拦截）
+    -- 伤害继承50%攻击力
     if clone.components.combat then
-        local oldSetTarget = clone.components.combat.SetTarget
-        clone.components.combat.SetTarget = function(self, target)
-            if target and target:IsValid() and target:HasTag("player") then
-                return
-            end
-            return oldSetTarget(self, target)
+        clone.components.combat.defaultdamage = (owner.components.combat and owner.components.combat.defaultdamage or 10) * 0.5
+    end
+    -- 保险：绝不攻击玩家
+    local orig_find = clone.find_attack_victim
+    clone.find_attack_victim = function(cinst)
+        local t = orig_find and orig_find(cinst)
+        if t and t:IsValid() and t:HasTag("player") then
+            return nil
         end
+        return t
     end
 
-    -- 不睡觉
-    if clone.components.sleepinguser then
-        clone:RemoveComponent("sleepinguser")
-    end
-
-    -- 8秒后消失
+    -- 兜底清理（正常0.4秒内自行消散，此任务防卡住）
     clone:DoTaskInTime(8, function()
         if clone:IsValid() then
             local cx, cy, cz = clone.Transform:GetWorldPosition()
@@ -138,7 +114,7 @@ AddPrefabPostInit("world", function(inst)
     _G.AddSpecialEquipEffect("Legend_ZIDIE", {
         name = "紫蝶",
         client_text = "紫\n蝶",
-        desc = "攻击5%几率召唤大虚影(8秒,最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
+        desc = "攻击5%几率召唤小虚影(最多2个)\n继承50%属性,自动追击,本体伤害+30%\n移速永久+20%,不可被玩家攻击",
         check_desc = "身化蝶影，以假乱真！",
         can_add = false,
         only_one = true,
