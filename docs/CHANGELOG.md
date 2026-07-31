@@ -25,6 +25,22 @@
   - 修复：在核心层添加 `AddStategraphPostInit('wilson', ...)` 钩子拦截 attacked 事件，附魔装备时注册 `jiangzhi` 效果
   - 涉及文件：`mod_utils.lua`（全局钩子）、`yueban.lua`、`luo.lua`（注册/移除 jiangzhi 效果）
 
+### 新增
+- **蔷薇主教** — 新增附魔 蔷薇主教：将血肉织成能抵御伤害的披风。血量≤50%时每损失1%血+0.6%移速（上限+30%）；受击冰霜爆发（4格内敌人冻结1秒+50%攻击力伤害，CD4秒）；6格内有队友时双方缓慢回血
+  - 涉及文件：`scripts/enchants/qiangwei.lua`、`modmain.lua`（注册加载）
+
+### 修改
+- **紫蝶** — 蝶影不再召唤随机怪/大虚影，改为启迪之冠小虚影 `alterguardianhat_projectile`（像启迪之冠一样飞向玩家当前目标攻击，继承50%属性，最多2个）
+  - 修复虚影没有紫色阴影的问题：虚影可见主体是客户端单独 spawn 的 blobhead 大头，需同时染主实体+大头，并替换 transparentonsanity 的 onalphachangedfn 防止被刷白
+  - 双保险确保虚影绝不攻击玩家（leader 盟友判定 + find_attack_victim 过滤 player tag）
+  - 涉及文件：`scripts/enchants/zidie.lua`
+- **蝴蝶的小阿飞** — 全面强化：护体蝴蝶 3→5 只，受击从全额抵消改为消耗1只减免60%伤害；恢复 8秒→6秒，击杀回复 15→25血+10→15精神并恢复2只；新增每只蝴蝶+4%伤害（满5只+20%），随消耗/恢复实时增减；移速+20%保留；移除蝶影弹（与紫蝶重复）
+  - 涉及文件：`scripts/enchants/hufei.lua`
+
+### 新增
+- **等等秋零** — 新增附魔 等等秋零：我是浅笑我怕谁！暴击率+30%、暴击效果+100%（暴击3倍）；每次攻击附带50点真实伤害（无视防御穿刺）；真伤可被"破虚"附魔转换（每50点→+5%暴击率+10%暴击效果），与"等秋零"（防御免疫）并存
+  - 涉及文件：`scripts/enchants/dengdengqiuling.lua`、`modmain.lua`（注册加载）
+
 ## 1.15.8 - 2026-07-23
 ### 新增
 - **小月亮商店** — 新增月熠兑换：5 个月亮碎片 → 1 个月熠，配置项 `ENABLE_MOON_SHOP_SPARK` 控制

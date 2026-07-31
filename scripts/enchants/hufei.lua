@@ -1,11 +1,27 @@
 -- 小月亮 附魔：蝴蝶的小阿飞
--- 最多3只蝴蝶护体，受到伤害时消耗1只蝴蝶抵消伤害
--- 击杀回复15生命+10精神并恢复1只蝴蝶。移速+20%
+-- 5只光翼蝴蝶护体：受击消耗1只减免60%伤害
+-- 每6秒恢复1只；击杀回复25生命+15精神并恢复2只
+-- 每只蝴蝶+4%伤害(满5只+20%)，移速+20%
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
 
 if not CFG.ENABLE_MORE_ENCHANTS then return end
+
+-- 更新蝴蝶增伤（每只蝴蝶 +4% 伤害）
+local function update_damage_bonus(owner)
+    local hh = owner.components.hh_player
+    if not hh then return end
+    local n = owner._hufei_butterflies or 0
+    local target = n * 4
+    local cur = owner._hufei_damage_bonus or 0
+    if target > cur then
+        hh:AddEffectValueByKey("addComDamagePercent", target - cur)
+    elseif target < cur then
+        hh:ReduceEffectValueByKey("addComDamagePercent", cur - target)
+    end
+    owner._hufei_damage_bonus = target
+end
 
 AddPrefabPostInit("world", function(inst)
     if not _G.Moon_IsHHEnabled() then return end
@@ -13,8 +29,8 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_HUFEI", {
         name = "蝴蝶的小阿飞",
         client_text = "蝶\n飞",
-        desc = "最多3只光翼蝴蝶护体\n受到伤害时消耗1只光翼蝴蝶抗伤\n击杀回复15生命+10精神\n移速+20%",
-        check_desc = "蝶翼护体，抗伤保命！",
+        desc = "5只光翼蝴蝶护体,受击耗1只减免60%\n每6秒回1只;击杀回25血+15精神+2只\n每只蝴蝶+4%伤害,移速+20%",
+        check_desc = "蝶翼护体，攻守兼备！",
         can_add = false,
         only_one = true,
         is_special = false,
@@ -26,66 +42,71 @@ AddPrefabPostInit("world", function(inst)
             _G.Moon_AddEffect(owner, "hufei", "Legend_HUFEI", 1)
             if not owner._hufei_hooked then
                 owner._hufei_hooked = true
-                owner._hufei_butterflies = 3  -- 初始3只蝴蝶
+                owner._hufei_butterflies = 5      -- 初始5只
 
                 -- 永久移速+20%
                 local hh = owner.components.hh_player
                 if hh then
                     hh:AddEffectValueByKey("addSpeedPercent", 20)
                 end
+                update_damage_bonus(owner)
 
-                -- 勾住 health:DoDelta 拦截伤害（蝴蝶抗伤）
+                -- 勾住 health:DoDelta 拦截伤害（蝴蝶抗伤：消耗1只，减免60%）
                 local health = owner.components.health
                 if health and not health._hufei_hooked_dodelta then
                     local oldDoDelta = health.DoDelta
                     health._hufei_old_dodelta = oldDoDelta
                     health.DoDelta = function(self, delta, overtime, cause, ...)
-                        -- 拦截伤害(负值)
-                        if delta < 0 then
-                            if _G.Moon_HasEffect(owner, "hufei") then
-                                local butterflies = owner._hufei_butterflies or 0
-                                if butterflies > 0 then
-                                    owner._hufei_butterflies = butterflies - 1
-                                    -- 蝶翼抗伤特效（2秒冷却）
-                                    if GLOBAL.SpawnPrefab then
-                                        local now = _G.GetTime and _G.GetTime() or 0
-                                        if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
-                                            owner._hufei_fx_cd = now
-                                            local x, y, z = owner.Transform:GetWorldPosition()
-                                            local fx = GLOBAL.SpawnPrefab("statue_transition_2")
-                                            if fx then
-                                                fx.Transform:SetPosition(x, y, z)
-                                            end
+                        -- 拦截伤害(负值)：消耗1只蝴蝶，减免60%
+                        if delta < 0 and _G.Moon_HasEffect(owner, "hufei") then
+                            local butterflies = owner._hufei_butterflies or 0
+                            if butterflies > 0 then
+                                owner._hufei_butterflies = butterflies - 1
+                                update_damage_bonus(owner)
+                                -- 蝶翼抗伤特效（2秒冷却）
+                                if GLOBAL.SpawnPrefab then
+                                    local now = _G.GetTime and _G.GetTime() or 0
+                                    if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
+                                        owner._hufei_fx_cd = now
+                                        local x, y, z = owner.Transform:GetWorldPosition()
+                                        local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                        if fx then
+                                            fx.Transform:SetPosition(x, y, z)
                                         end
                                     end
-                                    -- 抵消伤害，不调用原始 DoDelta
-                                    return
                                 end
+                                -- 剩余40%伤害照常结算
+                                delta = delta * 0.4
                             end
                         end
                         return oldDoDelta(self, delta, overtime, cause, ...)
                     end
                 end
 
-                -- 蝴蝶自动恢复：每8秒恢复1只
-                owner._hufei_regen_task = owner:DoPeriodicTask(8, function()
+                -- 蝴蝶自动恢复：每6秒恢复1只
+                owner._hufei_regen_task = owner:DoPeriodicTask(6, function()
                     if not _G.Moon_HasEffect(owner, "hufei") then return end
-                    owner._hufei_butterflies = math.min(3, (owner._hufei_butterflies or 0) + 1)
+                    local current = owner._hufei_butterflies or 0
+                    if current < 5 then
+                        owner._hufei_butterflies = current + 1
+                        update_damage_bonus(owner)
+                    end
                 end)
 
                 -- 击杀回复
                 owner._hufei_kill_handler = function(attacker, data)
                     if not _G.Moon_HasEffect(owner, "hufei") then return end
                     if owner.components.health then
-                        owner.components.health:DoDelta(15, false, nil)
+                        owner.components.health:DoDelta(25, false, nil)
                     end
                     if owner.components.sanity then
-                        owner.components.sanity:DoDelta(10)
+                        owner.components.sanity:DoDelta(15)
                     end
-                    -- 击杀恢复1只蝴蝶（上限3只）
+                    -- 击杀恢复2只蝴蝶（上限5只）
                     local current = owner._hufei_butterflies or 0
-                    if current < 3 then
-                        owner._hufei_butterflies = current + 1
+                    if current < 5 then
+                        owner._hufei_butterflies = math.min(5, current + 2)
+                        update_damage_bonus(owner)
                         -- 蝶翼恢复光效（2秒冷却，共用CD）
                         if GLOBAL.SpawnPrefab then
                             local now = _G.GetTime and _G.GetTime() or 0
@@ -106,11 +127,13 @@ AddPrefabPostInit("world", function(inst)
         un_equip_fn = function(inst, owner, value)
             _G.Moon_ReduceEffect(owner, "hufei", "Legend_HUFEI", 1)
             if not _G.Moon_HasEffect(owner, "hufei") then
-                -- 还原移速
+                -- 还原移速与蝴蝶增伤
                 local hh = owner.components.hh_player
                 if hh then
                     hh:ReduceEffectValueByKey("addSpeedPercent", 20)
+                    hh:ReduceEffectValueByKey("addComDamagePercent", owner._hufei_damage_bonus or 0)
                 end
+                owner._hufei_damage_bonus = nil
                 -- 还原 DoDelta
                 local health = owner.components.health
                 if health and health._hufei_old_dodelta then

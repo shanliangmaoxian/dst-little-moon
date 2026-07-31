@@ -100,6 +100,8 @@ modimport("scripts/enchants/ccs_blessing")
 modimport("scripts/enchants/malatutou")
 modimport("scripts/enchants/yangmaoke")
 modimport("scripts/enchants/youjishucai")
+modimport("scripts/enchants/qiangwei")
+modimport("scripts/enchants/dengdengqiuling")
 
 -- ------------------------------------------------------------------
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
@@ -119,3 +121,26 @@ end
 -- 5. 安全补丁 (始终加载)
 -- ------------------------------------------------------------------
 modimport("scripts/features/security_patch")
+
+-- ------------------------------------------------------------------
+-- 6. 蓝图本地化兜底 (始终加载)
+--    小月亮商店配方 name 形如 "MoonShop_cutstone"（非产物 prefab 名），
+--    STRINGS.NAMES 无对应条目；掉落任意蓝图随机抽到这些配方时，
+--    原版 blueprint.lua 会用 string.upper(recipe.name) 查 STRINGS.NAMES，
+--    拼接 nil 直接报错。这里为所有缺本地化名字的配方补上兜底名字。
+-- ------------------------------------------------------------------
+AddPrefabPostInit("world", function(inst)
+    if not _G.AllRecipes or not _G.STRINGS or not _G.STRINGS.NAMES then return end
+    for name, _ in pairs(_G.AllRecipes) do
+        if type(name) == "string" then
+            local key = string.upper(name)
+            if _G.STRINGS.NAMES[key] == nil then
+                if name:sub(1, 9) == "MoonShop_" then
+                    _G.STRINGS.NAMES[key] = "小月亮商店兑换"
+                else
+                    _G.STRINGS.NAMES[key] = name
+                end
+            end
+        end
+    end
+end)
