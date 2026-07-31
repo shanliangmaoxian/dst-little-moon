@@ -453,7 +453,7 @@ _G.MOON_MOB_ENCHANTS = {
                     end
                 end
             end
-            if nearest and nearest:IsValid() and nearest.components.health then
+            if not IsImmuneReflect(target) and nearest and nearest:IsValid()  and nearest.components.health then
                 local dmg = inst.components.combat and inst.components.combat.defaultdamage * 3 * mult or 100
                 DealDamage(inst, nearest, dmg, "mob_liang")
                 SpawnFX("moonglass_glow", nearest.Transform:GetWorldPosition())
