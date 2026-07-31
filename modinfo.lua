@@ -175,7 +175,7 @@ configuration_options = {
         label = "开启防御层",
         hover = "关闭时下面的防御层配置全部不生效",
         options = {
-            { description = "开启", data = true },
+            -- { description = "开启", data = true },
             { description = "关闭", data = false },
         },
         default = false,
