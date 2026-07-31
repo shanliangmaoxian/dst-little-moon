@@ -1,5 +1,11 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.16.0 - 2026-07-31
+
+### 修改
+- **怪物强化 — 附魔数量调整** — 取消「基础 + 额外」叠加机制，Boss 与普通怪统一按难度抽取固定数量：简单 1 / 普通 3 / 困难 5 / 噩梦 7 个附魔
+  - 涉及文件：`scripts/features/mob_enhance/init.lua`（`DIFFICULTY` 表 `extra_enchants` 改为 `enchant_count`，抽取逻辑直接取难度数量）、`modinfo.lua`（难度选项描述与 hover 文案同步更新）
+
 ## 1.15.9 - 2026-07-31
 
 ### 新增
