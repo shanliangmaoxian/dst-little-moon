@@ -1,7 +1,7 @@
 -- 小月亮 附魔：新史低 (#Legend_XSD)
 -- 获取：精英/Boss 概率掉落（低权重）
 -- 效果：装备时，在「欧皇模拟器」(workshop-3273001012) 的商店购物打 5~9 折
---       附魔石属性值 50~90 → 折扣 = 属性值/100（附魔石生成时随机，两端天然一致）
+--       附魔石属性值 5~9 → 折扣 = 属性值/10（附魔石生成时随机，两端天然一致）
 -- 前置：需同时开启 3273001012（幸运模拟器/欧皇模拟器）mod 才生效
 --
 -- 双端注册说明：
@@ -44,14 +44,14 @@ end)
 local XSD_CONFIG = {
     name = "新史低",
     client_text = "新\n史低",
-    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品 5~9 折",
+    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品%s折",
     check_desc = "需同时开启「欧皇模拟器」mod（workshop-3273001012）",
     ui_from_desc = "精英/Boss 概率掉落（低权重）",
     can_add = false,
     only_one = true,
     is_special = false,
     client_color = { 0.8, 0, 0.8, 1 },
-    value_range = { min = 50, max = 90 },
+    value_range = { min = 5, max = 9 },
     check_equip_can_add = function(inst)
         return true, "满足条件"
     end,
@@ -59,7 +59,7 @@ local XSD_CONFIG = {
         _G.Moon_AddEffect(owner, "xinshidi", "Legend_XSD", 1)
         -- 按装备记录折扣，多件同词条取最优惠
         owner._xsd_discounts = owner._xsd_discounts or {}
-        owner._xsd_discounts[inst] = (value or 90) / 100
+        owner._xsd_discounts[inst] = (value or 7) / 10
         local best = 1
         for _, d in pairs(owner._xsd_discounts) do
             if d < best then best = d end

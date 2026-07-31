@@ -2,7 +2,7 @@
 -- 每60秒召唤一只浣猫（上限3只），永久存在
 -- 每只浣猫：攻速+8%，移速+10%
 -- 每180秒一次：浣猫牺牲挡刀
--- 浣猫每30秒捡物报恩，5%概率带鱼
+-- 浣猫每30秒捡物报恩，5%概率带鱼（已注释：暂时停用报恩）
 -- 夜眼：夜晚额外+10%移速
 
 local _G = GLOBAL
@@ -130,7 +130,8 @@ local function spawn_cat(owner)
         end
     end
 
-    -- 猫的报恩：每30秒捡附近掉落物
+    -- 猫的报恩：每30秒捡附近掉落物（已注释：暂时停用）
+    --[[
     cat._ymk_gift_task = cat:DoPeriodicTask(30, function()
         if not cat:IsValid() or not owner:IsValid() then return end
         if not owner.components.inventory then return end
@@ -154,6 +155,7 @@ local function spawn_cat(owner)
             end
         end
     end)
+    ]]
 
     table.insert(owner._ymk_cats, cat)
     refresh_buffs(owner)
@@ -169,7 +171,7 @@ AddPrefabPostInit("world", function(inst)
     _G.AddSpecialEquipEffect("Legend_YANGMAOKE", {
         name = "养猫客",
         client_text = "养猫\n客",
-        desc = "每60秒召浣猫(上限3)\n每只:攻速+8%,移速+10%\n浣猫牺牲挡刀(180s冷却)\n每30秒捡物报恩(5%带鱼)\n夜晚额外+10%移速",
+        desc = "每60秒召浣猫(上限3)\n每只:攻速+8%,移速+10%\n浣猫牺牲挡刀(180s冷却)\n夜晚额外+10%移速",
         check_desc = "与猫同居，岁月静好…",
         can_add = false,
         only_one = true,
