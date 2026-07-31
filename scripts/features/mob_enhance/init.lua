@@ -26,10 +26,10 @@ local MOON_MOB_ENCHANTS = _G.MOON_MOB_ENCHANTS or {}
 -- 1. 难度配置
 -- =====================================================================
 local DIFFICULTY = {
-    easy    = { mult = 0.6, extra_enchants = 0 },
-    normal  = { mult = 1.0, extra_enchants = 0 },
-    hard    = { mult = 3.0, extra_enchants = 3 },
-    nightmare = { mult = 5.0, extra_enchants = 5 },
+    easy    = { mult = 0.6, extra_enchants = 1 },
+    normal  = { mult = 1.0, extra_enchants = 3 },
+    hard    = { mult = 3.0, extra_enchants = 5 },
+    nightmare = { mult = 5.0, extra_enchants = 7 },
 }
 
 local diff_cfg = DIFFICULTY[CFG.MOB_ENHANCE_LEVEL] or DIFFICULTY.normal
@@ -108,9 +108,9 @@ local function RollEnchants(tier)
     -- 确定抽取数量
     local count
     if tier == "boss" then
-        count = 3 + diff_cfg.extra_enchants  -- Boss 3~5 个
+        count = 3 + diff_cfg.extra_enchants  -- Boss: 3+extra 个 (easy 4 / normal 6 / hard 8 / nightmare 10)
     else
-        count = 2 + diff_cfg.extra_enchants  -- 普通怪 2~N 个
+        count = 2 + diff_cfg.extra_enchants  -- 普通怪: 2+extra 个 (easy 3 / normal 5 / hard 7 / nightmare 9)
     end
     count = math.min(count, #pool)
 

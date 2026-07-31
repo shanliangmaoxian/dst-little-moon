@@ -41,6 +41,19 @@
 - **等等秋零** — 新增附魔 等等秋零：我是浅笑我怕谁！暴击率+30%、暴击效果+100%（暴击3倍）；每次攻击附带50点真实伤害（无视防御穿刺）；真伤可被"破虚"附魔转换（每50点→+5%暴击率+10%暴击效果），与"等秋零"（防御免疫）并存
   - 涉及文件：`scripts/enchants/dengdengqiuling.lua`、`modmain.lua`（注册加载）
 
+### 修复
+- **蓝图掉落报错** — 掉落任意蓝图随机抽到小月亮商店配方时，原版 `blueprint.lua:201` 拼接 nil 崩溃
+  - 根因：商店配方 `AddRecipe2("MoonShop_xxx", ...)` 的 recipe.name 形如 `MoonShop_cutstone`（非产物 prefab 名），`STRINGS.NAMES` 无对应条目
+  - 修复：modmain 新增"蓝图本地化兜底"，遍历 `AllRecipes` 为所有缺本地化名字的配方补兜底名（`MoonShop_*` 显示"小月亮商店兑换"，其他 mod 配方用原名兜底），零副作用
+  - 涉及文件：`modmain.lua`
+- **蔷薇主教** — 三处修复：
+  - 持续伤害（寒冷/火焰/中毒等 `overtime`）不再触发冰霜爆发，只对战斗打击生效
+  - `GLOBAL.FindEntities` 在严格模式（strict.lua 未声明）下不可用 → 改用 C 层 `TheSim:FindEntities`（与全 mod 惯例一致）
+  - 玩家侧 `combat:DoDamage` 在 HH 框架下为 nil → 改用目标侧 `combat:GetAttacked`
+  - 涉及文件：`scripts/enchants/qiangwei.lua`
+- **蝴蝶的小阿飞** — 持续伤害不再消耗护体蝴蝶（冷/火/中毒环境护盾不再被秒清空）；新增可见的紫色光翼蝴蝶实体绕身环绕，数量与护体数实时同步（受击减、恢复/击杀加），卸载时全部清除
+  - 涉及文件：`scripts/enchants/hufei.lua`
+
 ## 1.15.8 - 2026-07-23
 ### 新增
 - **小月亮商店** — 新增月熠兑换：5 个月亮碎片 → 1 个月熠，配置项 `ENABLE_MOON_SHOP_SPARK` 控制
