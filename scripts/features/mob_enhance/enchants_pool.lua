@@ -30,6 +30,13 @@ local function DealDamage(source, target, damage, cause)
     end
 end
 
+-- 是否免疫反伤/受击反击（HH 玄武/神龟守御 immuneBramble 等）
+local function IsImmuneReflect(target)
+    if not target then return false end
+    local hh = target.components and target.components.hh_player
+    return (hh and hh.HasSpecialEffect and hh:HasSpecialEffect("immuneBramble")) or false
+end
+
 -- SpawnFX(prefab, pos_or_x, y_or_scale, z)
 -- pos_or_x: Vector3 或 x 坐标；y_or_scale: y 坐标或缩放；z: z 坐标
 -- 支持: SpawnFX("fx", posVector3, scale) 或 SpawnFX("fx", x, y, z, scale)
@@ -111,7 +118,9 @@ _G.MOON_MOB_ENCHANTS = {
                 base_dmg = inst.components.health.maxhealth * 0.05 * mult
             end
             for _, target in ipairs(FindEnemies(inst, 4)) do
-                DealDamage(inst, target, base_dmg, "mob_yueban")
+                if not IsImmuneReflect(target) then
+                    DealDamage(inst, target, base_dmg, "mob_yueban")
+                end
             end
             SpawnFX("collapse_small", inst.Transform:GetWorldPosition())
         end,
@@ -170,10 +179,14 @@ _G.MOON_MOB_ENCHANTS = {
                 local heal_ratio = tier == "boss" and 0.3 or 0.6
                 inst.components.health:DoDelta(damage * heal_ratio, false, "mob_aiyo_heal")
             end
-            -- 反伤
+            -- 反伤（攻击者免疫反伤如 HH 玄武/神龟守御 immuneBramble 则不反弹）
             if attacker and attacker:IsValid() and attacker.components.health then
-                local reflect_ratio = tier == "boss" and 0.5 or 1.0
-                attacker.components.health:DoDelta(-damage * reflect_ratio, false, "mob_aiyo_reflect")
+                local hh_attacker = attacker.components.hh_player
+                if not (hh_attacker and hh_attacker.HasSpecialEffect
+                    and hh_attacker:HasSpecialEffect("immuneBramble")) then
+                    local reflect_ratio = tier == "boss" and 0.5 or 1.0
+                    attacker.components.health:DoDelta(-damage * reflect_ratio, false, "mob_aiyo_reflect")
+                end
             end
         end,
         on_kill = function(inst, target, tier, mult, state)
@@ -501,8 +514,8 @@ _G.MOON_MOB_ENCHANTS = {
         name = "咕咕咕", weight = 1, boss_only = false,
         on_attacked = function(inst, attacker, damage, tier, mult, state)
             if not attacker or not attacker:IsValid() then return end
-            -- 42% 概率触发：反击
-            if math.random() < 0.42 then
+            -- 42% 概率触发：反击（攻击者免疫反伤则不反击）
+            if math.random() < 0.42 and not IsImmuneReflect(attacker) then
                 local counter = (inst.components.combat and inst.components.combat.defaultdamage * 2 or 100) * mult
                 DealDamage(inst, attacker, counter, "mob_gugugu")
                 SpawnFX("statue_transition_1", attacker.Transform:GetWorldPosition())
@@ -574,7 +587,9 @@ _G.MOON_MOB_ENCHANTS = {
             state._last_roar = now
             local dmg = (inst.components.combat and inst.components.combat.defaultdamage * 2 or 100) * mult
             for _, target in ipairs(FindEnemies(inst, 6)) do
-                DealDamage(inst, target, dmg, "mob_junjun")
+                if not IsImmuneReflect(target) then
+                    DealDamage(inst, target, dmg, "mob_junjun")
+                end
             end
             SpawnFX("groundpoundring_fx", inst.Transform:GetWorldPosition(), 2)
         end,
