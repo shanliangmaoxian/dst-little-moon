@@ -202,10 +202,10 @@ _G.MOON_MOB_ENCHANTS = {
     },
 
     -----------------------------------------------------------------
-    -- 烷基八氮 — 冰冻 + 冰爆
+    -- 急冻冻 — 冰冻 + 冰爆
     -----------------------------------------------------------------
     MOB_WJBD = {
-        name = "烷基八氮", weight = 2, boss_only = false,
+        name = "急冻冻", weight = 2, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if not IsValidTarget(inst, target) then return end
             local chance = tier == "boss" and 0.15 or 0.2
