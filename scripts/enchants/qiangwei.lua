@@ -47,20 +47,13 @@ local function frost_burst(owner)
     if fx then fx.Transform:SetPosition(x, y + 1, z) end
 
     local dmg = (owner.components.combat and owner.components.combat.defaultdamage or 10) * 0.5
-    local targets = _G.FindEntities(owner, FROST_RANGE, function(guy)
-        return guy.components.combat and guy.components.health
-            and not guy.components.health:IsDead()
-            and not guy:HasTag("player")
-            and not guy:HasTag("companion")
-            and not guy:HasTag("wall")
-            and not guy:HasTag("structure")
-            and not guy:HasTag("prey")
-            and not guy:HasTag("butterfly")
-    end)
+    -- 用 C 层 TheSim:FindEntities（严格模式下 GLOBAL.FindEntities 未声明不可用）
+    local targets = _G.TheSim:FindEntities(x, y, z, FROST_RANGE, { "_combat" }, { "INLIMBO", "FX", "NOCLICK", "DECOR", "player", "playerghost", "friendly", "companion", "wall", "structure", "prey", "butterfly" })
     for _, t in ipairs(targets) do
-        if t and t:IsValid() then
-            if owner.components.combat and owner.components.combat:CanTarget(t) then
-                owner.components.combat:DoDamage(t, dmg)
+        if t and t:IsValid() and t.components.health and not t.components.health:IsDead() then
+            -- 目标侧受击（HH 框架下玩家 combat:DoDamage 不可用，与良弓藏/胖虎一致）
+            if t.components.combat and t.components.combat.GetAttacked then
+                t.components.combat:GetAttacked(owner, dmg)
             end
             if t.components.freezable then
                 t.components.freezable:AddColdness(2, 1) -- 冻结1秒
@@ -98,7 +91,8 @@ AddPrefabPostInit("world", function(inst)
                     local oldDoDelta = health.DoDelta
                     health._qiangwei_old_dodelta = oldDoDelta
                     health.DoDelta = function(self, delta, overtime, cause, ...)
-                        if delta < 0 and _G.Moon_HasEffect(owner, "qiangwei") then
+                        -- 仅战斗打击(非持续伤害)触发冰霜爆发，冷/火/中毒等持续掉血不触发
+                        if delta < 0 and not overtime and _G.Moon_HasEffect(owner, "qiangwei") then
                             frost_burst(owner)
                         end
                         return oldDoDelta(self, delta, overtime, cause, ...)
@@ -115,7 +109,8 @@ AddPrefabPostInit("world", function(inst)
                 owner._qiangwei_heal_task = owner:DoPeriodicTask(HEAL_TICK, function()
                     if not _G.Moon_HasEffect(owner, "qiangwei") then return end
                     if not owner:IsValid() then return end
-                    local allies = _G.FindEntities(owner, HEAL_RANGE, nil, { "player" })
+                    local hx, hy, hz = owner.Transform:GetWorldPosition()
+                    local allies = _G.TheSim:FindEntities(hx, hy, hz, HEAL_RANGE, { "player" }, { "playerghost", "INLIMBO" })
                     local has_ally = false
                     for _, p in ipairs(allies) do
                         if p ~= owner and p.components.health and not p.components.health:IsDead() then
