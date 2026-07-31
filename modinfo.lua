@@ -159,12 +159,12 @@ configuration_options = {
     {
         name = "MOB_ENHANCE_LEVEL",
         label = "强化难度",
-        hover = "难度越高，怪物的附魔效果越强。Boss和普通怪共用此难度",
+        hover = "难度越高，怪物的附魔效果越强。附魔数 = 基础(普通怪2/Boss3) + 额外。Boss和普通怪共用此难度",
         options = {
-            { description = "简单 (×0.6, +1附魔)", data = "easy" },
-            { description = "普通 (×1.0, +3附魔)", data = "normal" },
-            { description = "困难 (×3.0, +5附魔)", data = "hard" },
-            { description = "噩梦 (×5.0, +7附魔)", data = "nightmare" },
+            { description = "简单 (×0.6, 共3~4附魔)", data = "easy" },
+            { description = "普通 (×1.0, 共5~6附魔)", data = "normal" },
+            { description = "困难 (×3.0, 共7~8附魔)", data = "hard" },
+            { description = "噩梦 (×5.0, 共9~10附魔)", data = "nightmare" },
         },
         default = "normal",
     },
