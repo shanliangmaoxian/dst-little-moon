@@ -1,5 +1,21 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.15.9 - 2026-07-31
+
+### 新增
+- **附魔「新史低」** — 新增附魔 新史低（词条 ID `Legend_XSD`）：需同时开启「欧皇模拟器」(workshop-3273001012) 才生效；装备后在欧皇模拟器商店购物打 5~9 折（附魔石属性值 5~9 随机，仅装备者本人享受折扣）；精英/Boss 低权重掉落（0.005）
+  - 折扣走 `slotmachineutils.getShopItemFinalPrice` 单点 hook：服务端购买扣款、客户端商店 UI 显示、余额预估三处价格一致
+  - 双端注册：服务端 `AddPrefabPostInit("world")`，客户端 `AddPlayerPostInit` 补装词条 + hook，避免 UI 显示原价/余额误判
+  - 涉及文件：`scripts/enchants/xinshidi.lua`（新增）、`modmain.lua`（注册加载）
+
+### 修改
+- **养猫客** — 暂时停用「报恩」效果（浣猫每 30 秒捡物、5% 概率带鱼），召唤/属性加成/牺牲挡刀/夜眼不受影响
+  - 涉及文件：`scripts/enchants/yangmaoke.lua`
+- **新史低** — 装备词条描述由区间改为显示具体折扣值（`%s` 占位符，如"商店物品5折"），帮助面板仍显示 5~9 折区间
+
+### 修复
+- **新史低** — 修复 `strict.lua` 严格模式下读取未声明全局变量 `_Moon_ShopBuyer` 导致购买崩溃：临时"购买上下文"全局变量改用 `rawset`/`rawget` 读写（详见 `docs/MODDING_PITFALLS.md` 第 20 条）
+
 ## 1.15.9 - 2026-07-26
 ### 修改
 - **小月亮商店** — `ENABLE_MOON_SHOP_BOSS` 拆分为四个独立配置项：`ENABLE_MOON_SHOP_BOSS_CELESTIAL`（天体后裔）、`ENABLE_MOON_SHOP_BOSS_STALKER`（织影者）、`ENABLE_MOON_SHOP_BOSS_ALTERGUARDIAN`（天体英雄）、`ENABLE_MOON_SHOP_BOSS_CRABKING`（帝王蟹），可单独开关
