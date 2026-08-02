@@ -18,25 +18,9 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 -- Part 1: 组件钩子（编译期注册，运行期检测附魔是否存在）
 -- =========================================================
 
--- 1a. 包装 MoneyManager:OnBuy，提供"当前购买买家"上下文
---     供 getShopItemFinalPrice 判断是否打折（getShopItemFinalPrice 无玩家参数）
-AddComponentPostInit("moneymanager", function(self)
-    if not _G.TheWorld or not _G.TheWorld.ismastersim then
-        return
-    end
-    local _old_OnBuy = self.OnBuy
-    self.OnBuy = function(self, itemName, number, lastskin)
-        -- rawset/rawget 绕过 strict.lua 的全局未声明检查（字段仅在购买期间临时存在）
-        _G.rawset(_G, "_Moon_ShopBuyer", self.inst)
-        local results = { _G.pcall(_old_OnBuy, self, itemName, number, lastskin) }
-        _G.rawset(_G, "_Moon_ShopBuyer", nil)
-        if results[1] then
-            return results[2], results[3]
-        end
-        _G.print("[小月亮] 新史低: 购买处理异常 " .. _G.tostring(results[2]))
-        return false, 0
-    end
-end)
+-- 1a. MoneyManager:OnBuy 包装改在 AddPlayerPostInit（玩家创建时）执行：
+--     晚于所有 mod 的 AddComponentPostInit，确保包装位于调用链最外层，
+--     能拦截到「黑店」等绕过 getShopItemFinalPrice 的写死价扣款并退还新史低差价。
 
 -- =========================================================
 -- Part 2: 词条配置（服务端/客户端共用，保证两端行为一致）
@@ -107,7 +91,7 @@ local function XSD_Install()
         local _old_getShopItemFinalPrice = utils.getShopItemFinalPrice
         utils.getShopItemFinalPrice = function(itemName)
             local price = _old_getShopItemFinalPrice(itemName)
-            -- 服务端：购买流程中的买家（由 1a 的 OnBuy 包装临时设置）
+            -- 服务端：购买流程中的买家（由 AddPlayerPostInit 的 OnBuy 包装临时设置）
             -- rawget 读取：该全局字段并非永久存在，直接读会触发 strict.lua 未声明报错
             local owner = _G.rawget(_G, "_Moon_ShopBuyer")
             -- 客户端：本地玩家（商店 UI 显示价格 / 余额判断）
@@ -137,6 +121,50 @@ AddPrefabPostInit("world", function(inst)
 end)
 
 -- 客户端：本地玩家创建时补装（两端都会触发；服务端已被 installed 标记跳过）
+-- 服务端：玩家创建时对 moneymanager.OnBuy 做最终包装（晚于所有 AddComponentPostInit，
+-- 确保包装在最外层），提供「当前购买买家」上下文供 getShopItemFinalPrice 打折，
+-- 并对「黑店」等绕过 getShopItemFinalPrice 的写死价扣款退还新史低差价。
 AddPlayerPostInit(function(inst)
     XSD_Install()
+
+    if _G.TheWorld and _G.TheWorld.ismastersim
+        and inst.components and inst.components.moneymanager then
+        local mm = inst.components.moneymanager
+        if not mm._moon_xsd_onbuy_wrapped then
+            mm._moon_xsd_onbuy_wrapped = true
+            local _old_OnBuy = mm.OnBuy
+            mm.OnBuy = function(self, itemName, number, lastskin)
+                -- rawset/rawget 绕过 strict.lua 的全局未声明检查（字段仅在购买期间临时存在）
+                _G.rawset(_G, "_Moon_ShopBuyer", self.inst)
+                local balance_before = self.balance or 0
+                local results = { _G.pcall(_old_OnBuy, self, itemName, number, lastskin) }
+                -- 新史低差价退还：部分商店（如「黑店」）的 OnBuy 用写死价扣款，绕过
+                -- getShopItemFinalPrice，新史低 hook 拦不到。这里对比「实际扣款」与
+                -- 「折后总价」，多扣的部分退还给买家（普通物品已打折，差额≈0，不受影响）。
+                -- 注意：必须在清空 _Moon_ShopBuyer 之前调用 getShopItemFinalPrice，
+                -- 否则 hook 内拿不到买家、返回原价，差额会被算成 0。
+                if results[1] and self.inst and self.inst._xsd_discount
+                    and _G.Moon_HasEffect(self.inst, "xinshidi") then
+                    local utils = _G.TUNING and _G.TUNING.slotmachineutils
+                    if utils and utils.getShopItemFinalPrice then
+                        local actual_cost = balance_before - (self.balance or 0)
+                        local discounted_total = utils.getShopItemFinalPrice(itemName) * (number or 1)
+                        local refund = actual_cost - discounted_total
+                        if refund > 0.01 then
+                            self.balance = _G.math.clamp((self.balance or 0) + refund, 0, 4294967295)
+                            if self.syncData then
+                                self:syncData()
+                            end
+                        end
+                    end
+                end
+                _G.rawset(_G, "_Moon_ShopBuyer", nil)
+                if results[1] then
+                    return results[2], results[3]
+                end
+                _G.print("[小月亮] 新史低: 购买处理异常 " .. _G.tostring(results[2]))
+                return false, 0
+            end
+        end
+    end
 end)
