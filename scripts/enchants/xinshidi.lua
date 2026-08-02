@@ -28,8 +28,8 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 local XSD_CONFIG = {
     name = "新史低",
     client_text = "新\n史低",
-    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品%s折",
-    check_desc = "需同时开启「欧皇模拟器」mod（workshop-3273001012）",
+    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品%s折\n（装备后需重新打开商店生效，如果失效脱掉在带上）",
+    check_desc = "需开启欧皇商店",
     ui_from_desc = "精英/Boss 概率掉落（低权重）",
     can_add = false,
     only_one = true,
@@ -50,7 +50,7 @@ local XSD_CONFIG = {
         end
         owner._xsd_discount = best
         if _G.TheWorld and _G.TheWorld.ismastersim and owner.components.talker then
-            owner.components.talker:Say(string.format("新史低！商店购物 %.0f 折！", best * 10))
+            owner.components.talker:Say(string.format("新史低！商店购物 %.0f 折！重新打开商店生效！！", best * 10))
         end
     end,
     un_equip_fn = function(inst, owner, value)
