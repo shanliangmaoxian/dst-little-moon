@@ -1,5 +1,16 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.16.2 - 2026-08-02
+
+### 修改
+- **有机蔬菜** — 吃锅料理效果改为 100% 双倍（血量/饥饿/理智回复×2），并新增 20% 几率返还一个（等同不消耗）
+  - 涉及文件：`scripts/enchants/youjishucai.lua`（返还几率常量 `RETURN_CHANCE = 0.2` 可调）
+
+### 修复
+- **新史低** — 修复部分商店物品不享受折扣：`moneymanager.OnBuy` 包装移至 `AddPlayerPostInit`（晚于所有 `AddComponentPostInit`，确保在调用链最外层），新增「实际扣款 − 折后总价」差额退还，「黑店」等绕过 `getShopItemFinalPrice` 的写死价扣款也按折后价净扣
+  - 涉及文件：`scripts/enchants/xinshidi.lua`
+- **新史低** — 装备描述补充说明：装备后需重新打开商店才生效（欧皇商店价格在打开/翻页时渲染，不实时刷新）
+
 ## 1.16.1 - 2026-07-31
 
 ### 修改
