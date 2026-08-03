@@ -1,7 +1,7 @@
 -- 小月亮 附魔：新史低 (#Legend_XSD)
 -- 获取：精英/Boss 概率掉落（低权重）
 -- 效果：装备时，在「欧皇模拟器」(workshop-3273001012) 的商店购物打 5~9 折
---       附魔石属性值 5~9 → 折扣 = 属性值/10（附魔石生成时随机，两端天然一致）
+--       附魔石属性值 5~9 → 折扣 = (14-属性值)/10（属性值越高折扣越好：5→9折，9→5折满值）
 -- 前置：需同时开启 3273001012（幸运模拟器/欧皇模拟器）mod 才生效
 --
 -- 双端注册说明：
@@ -28,7 +28,7 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 local XSD_CONFIG = {
     name = "新史低",
     client_text = "新\n史低",
-    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品%s折\n（装备后需重新打开商店生效，如果失效脱掉在带上）",
+    desc = "「欧皇模拟器」商店购物折扣！\n装备后商店物品%s折\n（装备后价格不变，购买生效，如果失效脱掉在带上）",
     check_desc = "需开启欧皇商店",
     ui_from_desc = "精英/Boss 概率掉落（低权重）",
     can_add = false,
@@ -42,15 +42,16 @@ local XSD_CONFIG = {
     on_equip_fn = function(inst, owner, value)
         _G.Moon_AddEffect(owner, "xinshidi", "Legend_XSD", 1)
         -- 按装备记录折扣，多件同词条取最优惠
+        -- 数值映射与一般附魔一致：属性值越高折扣越好（9=满值→5折，5→9折）
         owner._xsd_discounts = owner._xsd_discounts or {}
-        owner._xsd_discounts[inst] = (value or 7) / 10
+        owner._xsd_discounts[inst] = (14 - (value or 7)) / 10
         local best = 1
         for _, d in pairs(owner._xsd_discounts) do
             if d < best then best = d end
         end
         owner._xsd_discount = best
         if _G.TheWorld and _G.TheWorld.ismastersim and owner.components.talker then
-            owner.components.talker:Say(string.format("新史低！商店购物 %.0f 折！重新打开商店生效！！", best * 10))
+            owner.components.talker:Say(string.format("新史低！商店购物 %.0f 折！！！", best * 10))
         end
     end,
     un_equip_fn = function(inst, owner, value)
@@ -166,5 +167,31 @@ AddPlayerPostInit(function(inst)
                 return false, 0
             end
         end
+    end
+end)
+
+-- =========================================================
+-- Part 4: 客户端词条描述换算（hook HH 的 hh_equip:GetBuffDebugList）
+-- =========================================================
+-- HH 框架显示词条时用附魔石原始 value 填充 desc 的 %s，且 value==max 时
+-- 追加「(已满)」。折扣反转映射（9=满值→5折）后 value 与折数不再相等，
+-- 直接显示会误导（满值石头显示「商店物品9折(已满)」，实际 5 折）。
+-- 这里包装 GetBuffDebugList，把 XSD 词条描述中的折数替换为换算值，
+-- 如「商店物品9折(已满)」→「商店物品5折(已满)」。
+-- 无副作用：非 XSD 词条不匹配替换规则原样返回；HH 未加载时本回调不触发。
+AddComponentPostInit("hh_equip", function(self)
+    if not self or type(self.GetBuffDebugList) ~= "function" then return end
+    local _old_GetBuffDebugList = self.GetBuffDebugList
+    self.GetBuffDebugList = function(comp, player)
+        local list = _old_GetBuffDebugList(comp, player)
+        if not list then return list end
+        for _, entry in _G.ipairs(list) do
+            local v = entry.name
+            if v and v.name == "Legend_XSD" and type(v.value) == "number" then
+                -- 反转映射：value 9（满）→5折，value 5→9折
+                entry.desc = (entry.desc or ""):gsub("商店物品%d+折", "商店物品" .. _G.tostring(14 - v.value) .. "折")
+            end
+        end
+        return list
     end
 end)
