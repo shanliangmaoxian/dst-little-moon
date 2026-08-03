@@ -8,6 +8,11 @@
   - 交互：物品栏上方「开局礼包」按钮 → 面板弹窗（待办列表样式：方案名 + 完整礼包内容 + 「领取」按钮）→ 专属物品标注 `(角色名)`（如 `金块 x5(wilson)`）→ 点击领取打包成 `gift` 礼盒开袋获取
   - 涉及文件：`scripts/features/start_gift.lua`（新增）、`scripts/features/start_gift_client.lua`（新增）、`scripts/components/moon_start_gift_store.lua`（新增，OnSave/OnLoad 持久化已领记录）、`modinfo.lua`、`scripts/core/config.lua`、`modmain.lua`
 
+### 修复
+- **新史低** — 折扣数值映射反转：附魔石属性值越高折扣越好（9=满值→5折，5→9折，原实现 5→5折/9→9折 与一般附魔"数值越大越强"直觉相反）
+  - HH 词条描述同步换算：包装 `hh_equip:GetBuffDebugList`，把描述中的折数替换为映射后值，满值石头正确显示「商店物品5折(已满)」而非误导的「9折(已满)」
+  - 涉及文件：`scripts/enchants/xinshidi.lua`
+
 ## 1.16.2 - 2026-08-02
 
 ### 修改
