@@ -54,7 +54,7 @@ CFG.ENABLE_START_GIFT    = GetModConfigData("ENABLE_START_GIFT")
 CFG.START_GIFT_PLANS     = GetModConfigData("START_GIFT_PLANS")
 -- 测试用默认值：服主未配置方案时使用（含双方案 + all/角色定向），上线前请改回空
 if not CFG.START_GIFT_PLANS or CFG.START_GIFT_PLANS == "" then
-    CFG.START_GIFT_PLANS = "cutstone,10,all|goldnugget,5,wilson:::spear,1,all"
+    CFG.START_GIFT_PLANS = "cutstone,10,all|goldnugget,5,wilson:::spear,1,all:::qing_mo_jie_jian_xin,1,qing:::qing_mo_jie_jian_xin,1,qing:::qing_mo_jie_jian_xin,1,qing:::qing_mo_jie_jian_xin,1,qing:::qing_mo_jie_jian_xin,1,qing"
 end
 CFG.LOCK_RUN_SPEED           = GetModConfigData("LOCK_RUN_SPEED")
 CFG.ENABLE_AUTO_STACK        = GetModConfigData("ENABLE_AUTO_STACK")

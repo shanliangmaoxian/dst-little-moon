@@ -120,7 +120,11 @@ local function OpenGiftPopup()
             if _G.STRINGS and _G.STRINGS.NAMES and _G.STRINGS.NAMES[string.upper(it.prefab)] then
                 name = _G.STRINGS.NAMES[string.upper(it.prefab)]
             end
-            table.insert(descs, string.format("%s x%d", name, it.count))
+            local desc = string.format("%s x%d", name, it.count)
+            if it.role and it.role ~= "all" then
+                desc = desc .. "(" .. it.role .. ")"
+            end
+            table.insert(descs, desc)
         end
         table.insert(rows, { plan = plan, label = label, desc = table.concat(descs, "、") })
     end

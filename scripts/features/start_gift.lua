@@ -158,16 +158,13 @@ end
 -- ------------------------------------------------------------------
 -- RPC（命名空间 LittleMoon）
 -- ------------------------------------------------------------------
--- 按玩家角色过滤后的方案条目（用于客户端展示礼包内容）
-local function PlanItemsFor(player, plan_id)
+-- 方案全部条目（含专属物品及其角色，用于客户端展示完整礼包内容）
+local function PlanItemsFor(plan_id)
     local defs = PLAN_DATA[plan_id]
     if not defs then return {} end
-    local player_prefab = player.prefab or ""
     local items = {}
     for _, def in ipairs(defs) do
-        if RoleMatches(def.role, player_prefab) then
-            table.insert(items, { prefab = def.prefab, count = def.count })
-        end
+        table.insert(items, { prefab = def.prefab, count = def.count, role = def.role })
     end
     return items
 end
@@ -182,7 +179,7 @@ AddModRPCHandler("LittleMoon", "GetStartGiftPlans", function(player)
         claimed = GetStore() and GetStore():GetClaimed()[player.userid] or false,
     }
     for _, pid in ipairs(PLAN_LIST) do
-        result.contents[pid] = PlanItemsFor(player, pid)
+        result.contents[pid] = PlanItemsFor(pid)
     end
     local rpc = _G.CLIENT_MOD_RPC
     if rpc and rpc["LittleMoon"] and rpc["LittleMoon"]["StartGiftPlansResponse"] and _G.json then
