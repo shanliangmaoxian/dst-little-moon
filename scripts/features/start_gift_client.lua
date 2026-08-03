@@ -164,7 +164,7 @@ local function OpenGiftPopup()
     border_right:SetClickable(false)
 
     -- 标题
-    local title = root:AddChild(Text(_G.CHATFONT, 22, "开局礼包"))
+    local title = root:AddChild(Text(_G.CHATFONT, 22, "开局礼包,只能领取一次！！！"))
     title:SetPosition(0, H / 2 - 24, 0)
     title:SetColour(unpack(GOLD))
     if title.EnableOutline then title:EnableOutline(true) end

@@ -218,7 +218,7 @@ AddModRPCHandler("LittleMoon", "ClaimStartGift", function(player, plan)
     end
 
     if not GivePlan(player, plan) then
-        _G.Moon_Say(player, "礼包发放失败，请联系管理员检查礼包配置")
+        _G.Moon_Say(player, "礼包发放失败，该礼包是专属礼包或物品不存在")
         SendClaimResponse(player, false, plan)
         return
     end
