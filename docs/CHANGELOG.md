@@ -1,5 +1,13 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.17.0 - 2026-08-03
+
+### 新增
+- **开局礼包** — 玩家进服后可自选领取一次开局礼包（每个世界仅一次，已领记录随世界存档持久化，重新生成世界自动重置）
+  - 配置：`ENABLE_START_GIFT` 总开关 + `START_GIFT_PLANS` 单一配置串，格式 `物品,数量,角色|物品,数量,角色:::方案2`（`:::` 分方案、`|` 分同方案物品、角色 `all`=所有人 或 角色prefab 定向；数量/角色可省略，默认 1/all；方案数自动决定，标签自动生成"礼包A/B/C..."）
+  - 交互：物品栏上方「开局礼包」按钮 → 面板弹窗（待办列表样式：方案名 + 完整礼包内容 + 「领取」按钮）→ 专属物品标注 `(角色名)`（如 `金块 x5(wilson)`）→ 点击领取打包成 `gift` 礼盒开袋获取
+  - 涉及文件：`scripts/features/start_gift.lua`（新增）、`scripts/features/start_gift_client.lua`（新增）、`scripts/components/moon_start_gift_store.lua`（新增，OnSave/OnLoad 持久化已领记录）、`modinfo.lua`、`scripts/core/config.lua`、`modmain.lua`
+
 ## 1.16.2 - 2026-08-02
 
 ### 修改
