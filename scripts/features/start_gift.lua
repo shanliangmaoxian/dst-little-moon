@@ -109,6 +109,13 @@ end)
 -- ------------------------------------------------------------------
 -- 发放
 -- ------------------------------------------------------------------
+-- 背包满等 GiveItem 失败时，把物品放到玩家脚下（GetWorldPosition 返回多值，直接多值接收）
+local function DropAtFeet(inst, player)
+    if not (inst and inst.Transform and player and player.Transform) then return end
+    local x, y, z = player.Transform:GetWorldPosition()
+    inst.Transform:SetPosition(x, y, z)
+end
+
 local function GivePlan(player, plan)
     local defs = PLAN_DATA[plan]
     if not defs or #defs == 0 then return false end
@@ -131,55 +138,71 @@ local function GivePlan(player, plan)
     end
     if #items == 0 then return false end
 
-    local pos = player.Transform and player.Transform:GetWorldPosition() or nil
-
-    -- 打包成礼盒
+    -- 打包成礼盒（参考 ciallo.WrapAndGiveGift：gift + WrapItems + GiveItem，开袋获取物品）
     local gift = _G.SpawnPrefab("gift")
-    local ok = false
-    if gift and gift.components and gift.components.unwrappable then
-        gift.components.unwrappable:WrapItems(items, player)
-        for _, item in ipairs(items) do
-            if item and item:IsValid() then item:Remove() end
-        end
-        if gift.components.named then
-            gift.components.named:SetName("开局" .. (PLAN_LABELS[plan] or plan))
-        end
-        -- 先定位到玩家脚下，背包满时 GiveItem 失败也能留在原地而非世界原点
-        if pos then
-            gift.Transform:SetPosition(pos.x, pos.y, pos.z)
-        end
-        if player.components and player.components.inventory then
-            player.components.inventory:GiveItem(gift)
-        end
-        ok = true
-    else
+    if not (gift and gift.components and gift.components.unwrappable) then
         -- 礼盒不可用时降级直接给物品
         if gift then gift:Remove() end
         for _, item in ipairs(items) do
             if item and item:IsValid() then
                 if player.components and player.components.inventory then
-                    player.components.inventory:GiveItem(item)
-                elseif pos then
-                    item.Transform:SetPosition(pos.x, pos.y, pos.z)
+                    if not player.components.inventory:GiveItem(item) then
+                        DropAtFeet(item, player)
+                    end
+                else
+                    DropAtFeet(item, player)
                 end
             end
         end
-        ok = true
+        return true
     end
-    return ok
+
+    gift.components.unwrappable:WrapItems(items, player)
+    for _, item in ipairs(items) do
+        if item and item:IsValid() then item:Remove() end
+    end
+    if gift.components.named then
+        gift.components.named:SetName("开局" .. (PLAN_LABELS[plan] or plan))
+    end
+    if player.components and player.components.inventory then
+        if not player.components.inventory:GiveItem(gift) then
+            DropAtFeet(gift, player)
+        end
+    else
+        DropAtFeet(gift, player)
+    end
+    return true
 end
 
 -- ------------------------------------------------------------------
 -- RPC（命名空间 LittleMoon）
 -- ------------------------------------------------------------------
+-- 按玩家角色过滤后的方案条目（用于客户端展示礼包内容）
+local function PlanItemsFor(player, plan_id)
+    local defs = PLAN_DATA[plan_id]
+    if not defs then return {} end
+    local player_prefab = player.prefab or ""
+    local items = {}
+    for _, def in ipairs(defs) do
+        if RoleMatches(def.role, player_prefab) then
+            table.insert(items, { prefab = def.prefab, count = def.count })
+        end
+    end
+    return items
+end
+
 -- 查询可用方案与领取状态（客户端打开弹窗时调用）
 AddModRPCHandler("LittleMoon", "GetStartGiftPlans", function(player)
     if not player or not _G.TheWorld or not _G.TheWorld.ismastersim then return end
     local result = {
         plans = PLAN_LIST,
         labels = PLAN_LABELS,
+        contents = {},
         claimed = claimed[player.userid] or false,
     }
+    for _, pid in ipairs(PLAN_LIST) do
+        result.contents[pid] = PlanItemsFor(player, pid)
+    end
     local rpc = _G.CLIENT_MOD_RPC
     if rpc and rpc["LittleMoon"] and rpc["LittleMoon"]["StartGiftPlansResponse"] and _G.json then
         _G.SendModRPCToClient(rpc["LittleMoon"]["StartGiftPlansResponse"], player.userid, _G.json.encode(result))
