@@ -53,6 +53,8 @@ modimport("scripts/features/death_stats")
 modimport("scripts/features/ban_items")
 modimport("scripts/features/moon_shop")
 modimport("scripts/features/mob_enhance/init")
+modimport("scripts/features/start_gift")        -- 开局礼包（服务端逻辑，内部按配置启用）
+modimport("scripts/features/start_gift_client") -- 开局礼包（客户端弹窗 UI，内部按配置启用）
 
 -- ------------------------------------------------------------------
 -- 3. 附魔模块

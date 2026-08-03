@@ -610,4 +610,23 @@ configuration_options = {
         },
         default = true,
     },
+
+    AddTitle("开局礼包"),
+    {
+        name = "ENABLE_START_GIFT",
+        label = "开启开局礼包",
+        hover = "玩家进服后可自选领取一次开局礼包（全服仅一次，跨世界记录）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = false,
+    },
+    {
+        name = "START_GIFT_PLANS",
+        label = "礼包方案配置",
+        hover = "单一配置项配置全部方案。\n格式: 物品,数量,角色|物品,数量,角色:::方案2...\n| 分隔同方案的多个物品，::: 分隔多个方案，角色填 all（所有人）或角色prefab（如 wilson）\n示例: cutstone,10,all|goldnugget,5,wilson:::spear,1,all",
+        options = { {description = "在服务器mod配置中添加", data = ""} },
+        default = "",
+    },
 }
