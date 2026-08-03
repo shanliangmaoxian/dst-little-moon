@@ -1,7 +1,8 @@
 -- 小月亮 开局礼包（服务端）
 -- 玩家进服后可自选领取一次开局礼包（方案数由配置决定，全服仅一次）
 -- 配置格式: 物品,数量,角色|物品,数量,角色:::方案2...（角色 all=所有人 或 角色prefab）
--- 已领记录存 TheSim persistent string（存档级，地表/洞穴共享，跨世界有效）
+-- 已领记录随世界存档持久化（moon_start_gift_store 组件 OnSave/OnLoad）
+-- 重新生成世界自动清零；地表/洞穴各自记录
 
 local _G = GLOBAL
 local CFG = _G.MOON_CFG
@@ -10,11 +11,8 @@ if not CFG.ENABLE_START_GIFT then return end
 
 local AddModRPCHandler = AddModRPCHandler
 
--- 存档键（TheSim persistent string，位于存档目录，跨世界共享）
-local SAVE_KEY = "dst_little_moon_start_gift"
-
--- 已领记录 userid -> plan
-local claimed = {}
+-- 世界加载完成标记（领取只发生在玩家加入后，时序安全）
+local load_done = false
 
 -- ------------------------------------------------------------------
 -- 方案解析
@@ -71,39 +69,22 @@ local function RoleMatches(role, player_prefab)
 end
 
 -- ------------------------------------------------------------------
--- 存档读写
+-- 已领记录存取（moon_start_gift_store 组件，随世界存档持久化）
 -- ------------------------------------------------------------------
-local function SaveClaimed()
-    if _G.TheSim and _G.TheSim.SetPersistentString and _G.json then
-        _G.TheSim:SetPersistentString(SAVE_KEY, _G.json.encode(claimed), false)
+local function GetStore()
+    if _G.TheWorld and _G.TheWorld.components and _G.TheWorld.components.moon_start_gift_store then
+        return _G.TheWorld.components.moon_start_gift_store
     end
+    return nil
 end
 
--- 加载完成标记（回调里置位；未完成前拒绝领取，防跨世界重复竞态）
-local load_done = false
-local function LoadClaimed()
-    if load_done then return end
-    if not (_G.TheSim and _G.TheSim.GetPersistentString and _G.json) then
-        load_done = true
-        return
-    end
-    _G.TheSim:GetPersistentString(SAVE_KEY, function(success, data)
-        if success and data and data ~= "" then
-            local ok, decoded = _G.pcall(_G.json.decode, data)
-            if ok and type(decoded) == "table" then
-                for k, v in pairs(decoded) do
-                    claimed[k] = v
-                end
-            end
-        end
-        load_done = true
-    end)
-end
-
--- AddPrefabPostInit("world") 在客户端不触发，正好只有服务端读档
+-- AddPrefabPostInit("world") 在客户端不触发，正好只有服务端挂载组件
 AddPrefabPostInit("world", function(inst)
     if not _G.TheWorld or not _G.TheWorld.ismastersim then return end
-    LoadClaimed()
+    if not inst.components.moon_start_gift_store then
+        inst:AddComponent("moon_start_gift_store")
+    end
+    load_done = true
 end)
 
 -- ------------------------------------------------------------------
@@ -198,7 +179,7 @@ AddModRPCHandler("LittleMoon", "GetStartGiftPlans", function(player)
         plans = PLAN_LIST,
         labels = PLAN_LABELS,
         contents = {},
-        claimed = claimed[player.userid] or false,
+        claimed = GetStore() and GetStore():GetClaimed()[player.userid] or false,
     }
     for _, pid in ipairs(PLAN_LIST) do
         result.contents[pid] = PlanItemsFor(player, pid)
@@ -223,11 +204,12 @@ AddModRPCHandler("LittleMoon", "ClaimStartGift", function(player, plan)
     local userid = player.userid
     if not userid then return end
 
-    if not load_done then
+    local store = GetStore()
+    if not store or not load_done then
         _G.Moon_Say(player, "礼包数据加载中，请稍后再试")
         return
     end
-    if claimed[userid] then
+    if store:GetClaimed()[userid] then
         _G.Moon_Say(player, "你已经领取过开局礼包了")
         SendClaimResponse(player, false, plan)
         return
@@ -244,8 +226,7 @@ AddModRPCHandler("LittleMoon", "ClaimStartGift", function(player, plan)
         return
     end
 
-    claimed[userid] = plan
-    SaveClaimed()
+    store:SetClaimed(userid, plan)
     _G.Moon_Say(player, "已领取" .. (PLAN_LABELS[plan] or plan) .. "！")
     SendClaimResponse(player, true, plan)
 end)

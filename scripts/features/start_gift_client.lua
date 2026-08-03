@@ -59,15 +59,28 @@ local function RefreshGiftPopup()
     if not popup then return end
     local data = rawget(_G, "_moon_start_gift_data")
     local claimed_plan = data and data.claimed or false
-    for _, btn in ipairs(popup.plan_buttons or {}) do
-        btn:SetClickable(not claimed_plan)
+
+    -- 对号按钮：已领取则置灰禁用
+    for i, row in ipairs(popup.rows or {}) do
+        local check = popup.checks and popup.checks[i]
+        if check then
+            if claimed_plan then
+                check:SetText("已领取")
+                check:SetClickable(false)
+            else
+                check:SetText("领取")
+                check:SetClickable(true)
+            end
+        end
     end
+
+    -- 状态文字
     if popup.status_text then
         if claimed_plan then
             local label = data.labels and data.labels[claimed_plan] or claimed_plan
             popup.status_text:SetString("已领取：" .. tostring(label))
         else
-            popup.status_text:SetString("选择你要的开局礼包：")
+            popup.status_text:SetString("点击对号领取对应礼包")
         end
     end
 end
@@ -92,30 +105,28 @@ local function OpenGiftPopup()
 
     local controls = _G.ThePlayer.HUD.controls
     local root = controls:AddChild(Widget("moon_start_gift_popup"))
-    -- 居中弹窗（面板风格样式：半透明背景 + 四边框 + 金色标题）
+    -- 居中弹窗（面板风格），待办列表样式：每行方案名 + 内容简述 + 对号领取按钮
     root:SetHAnchor(_G.ANCHOR_MIDDLE)
     root:SetVAnchor(_G.ANCHOR_MIDDLE)
 
-    -- 组装方案区块（按钮 + 内容文本），高度随内容行数动态计算
+    -- 行数据
     local rows = {}
-    local body_h = 0
     for _, plan in ipairs(data.plans) do
         local label = data.labels and data.labels[plan] or plan
-        local lines = {}
+        local descs = {}
         local items = data.contents and data.contents[plan] or {}
         for _, it in ipairs(items) do
             local name = it.prefab
             if _G.STRINGS and _G.STRINGS.NAMES and _G.STRINGS.NAMES[string.upper(it.prefab)] then
                 name = _G.STRINGS.NAMES[string.upper(it.prefab)]
             end
-            table.insert(lines, string.format("%s x%d", name, it.count))
+            table.insert(descs, string.format("%s x%d", name, it.count))
         end
-        table.insert(rows, { plan = plan, label = label, lines = lines })
-        body_h = body_h + 40 + #lines * 18
+        table.insert(rows, { plan = plan, label = label, desc = table.concat(descs, "、") })
     end
 
-    local W = 340
-    local H = 104 + body_h + 40 -- 标题/状态区 + 方案区 + 关闭区
+    local W = 480
+    local H = 96 + #rows * 44 + 46
 
     -- 背景
     local bg = root:AddChild(Image("images/ui.xml", "white.tex"))
@@ -155,25 +166,43 @@ local function OpenGiftPopup()
     if title.EnableOutline then title:EnableOutline(true) end
 
     -- 状态文字
-    local status = root:AddChild(Text(_G.CHATFONT, 18, ""))
-    status:SetPosition(0, H / 2 - 54, 0)
-    status:SetColour(1, 1, 1, 1)
+    local status = root:AddChild(Text(_G.CHATFONT, 16, ""))
+    status:SetPosition(0, H / 2 - 52, 0)
+    status:SetColour(1, 1, 1, 0.8)
 
-    -- 方案区块
-    local plan_buttons = {}
-    local y = H / 2 - 86
-    for _, row in ipairs(rows) do
-        local btn = root:AddChild(TEMPLATES.StandardButton(function() ClaimPlan(row.plan) end, row.label, { 200, 40 }))
-        btn:SetPosition(0, y, 0)
-        btn:SetTextSize(20)
-        table.insert(plan_buttons, btn)
-        y = y - 40
-        if #row.lines > 0 then
-            local desc = root:AddChild(Text(_G.CHATFONT, 16, table.concat(row.lines, "\n")))
-            desc:SetPosition(0, y - #row.lines * 18 / 2 + 6, 0)
-            desc:SetColour(1, 1, 1, 0.85)
-            y = y - #row.lines * 18
+    -- 方案行（待办列表样式）
+    local checks = {}
+    local y = H / 2 - 80
+    for i, row in ipairs(rows) do
+        -- 行分隔线（第一行上方不画）
+        if i > 1 then
+            local line = root:AddChild(Image("images/ui.xml", "white.tex"))
+            line:SetSize(W - 40, 1)
+            line:SetTint(unpack({ 0.25, 0.20, 0.14, 0.5 }))
+            line:SetPosition(0, y + 24, 0)
+            line:SetClickable(false)
         end
+
+        -- 方案名
+        local name = root:AddChild(Text(_G.CHATFONT, 20, row.label))
+        name:SetPosition(-W / 2 + 72, y, 0)
+        name:SetColour(unpack(GOLD))
+        if name.EnableOutline then name:EnableOutline(true) end
+
+        -- 内容简述（单行截断）
+        local desc = root:AddChild(Text(_G.CHATFONT, 16, ""))
+        desc:SetMultilineTruncatedString(row.desc ~= "" and row.desc or "（无物品）", 1, 240)
+        desc:SetPosition(-W / 2 + 215, y, 0)
+        desc:SetColour(1, 1, 1, 0.8)
+
+        -- 领取按钮（未领取显示"领取"，领取后显示"已领取"并禁用）
+        local check = root:AddChild(TEMPLATES.StandardButton(function() ClaimPlan(row.plan) end, "领取", { 90, 34 }))
+        check:SetPosition(W / 2 - 55, y, 0)
+        check:SetTextSize(18)
+        check:SetHoverText("领取" .. row.label, { offset_y = 24 })
+        table.insert(checks, check)
+
+        y = y - 44
     end
 
     -- 关闭按钮
@@ -182,7 +211,8 @@ local function OpenGiftPopup()
     close_btn:SetTextSize(18)
 
     popup = root
-    popup.plan_buttons = plan_buttons
+    popup.rows = rows
+    popup.checks = checks
     popup.status_text = status
 
     RefreshGiftPopup()
