@@ -1,9 +1,10 @@
 -- 小月亮商店：召唤群友
 -- 商店配方 MoonShop_moon_qunyou_summon（100 水晶小人，猪皮图标）制作后，
--- 原地生成瞬发实体 moon_qunyou_summon → 在制作玩家身边召唤 5 只猪人群友：
---   各有名字+登场对白（槽位与名字一一对应，保证不重名），跟随玩家打架，存活 5 分钟；
---   存活期间每 60 秒补员 1 只（有空槽才补，天然限 5 只上限），5 分钟后补员停止、群友各自散去。
--- 逻辑与附魔 scripts/enchants/qunyou.lua 保持一致（参数同源，改一处请同步另一处）。
+-- 原地生成瞬发实体 moon_qunyou_summon → 在制作玩家身边召唤 1 只猪人群友：
+--   每次兑换只出 1 只，玩家周边最多同时 3 只（上限 3）；
+--   群友各有名字+登场对白（槽位与名字一一对应，保证不重名），跟随玩家打架，存活 5 分钟；
+--   存活期间每 60 秒补员 1 只（有空槽才补，天然限 3 只上限），5 分钟后补员停止、群友各自散去。
+-- 附魔版 scripts/enchants/qunyou.lua 保持原 5 只设定，本文件为商店版独立参数。
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -20,11 +21,11 @@ if _G.STRINGS and _G.STRINGS.NAMES then
     _G.STRINGS.NAMES.MOON_QUNYOU_SUMMON = "召唤群友"
 end
 if _G.STRINGS and _G.STRINGS.RECIPE_DESC then
-    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "100 水晶小人召唤 5 只猪人群友\n各有名字，跟随打架，存活5分钟，每60秒补员1只"
+    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "100 水晶小人召唤 1 只猪人群友\n周边最多同时 3 只，各有名字，跟随打架\n存活5分钟，每60秒补员1只"
 end
 
--- ======== 群友配置（与 qunyou.lua 保持一致） ========
-local MAX_PIGS = 5            -- 同时存在的群友上限
+-- ======== 群友配置 ========
+local MAX_PIGS = 3            -- 同时存在的群友上限（周边最多 3 只）
 local PIG_LIFETIME = 300      -- 每只群友存活秒数（5 分钟）
 local REFILL_INTERVAL = 60    -- 补员间隔（秒）
 local PIG_NAMES = { "萝猪", "球猪", "菜猪", "兔猪", "E猪", "挂白" }
@@ -98,6 +99,15 @@ local function spawn_qunyou(owner, slot)
         pig.components.sleeper:SetSleepTest(function() return false end)
     end
 
+    -- 召唤的猪人不出掉落物（免得杀猪刷肉/猪皮）：
+    -- SetLoot({}) 清固定掉落并重置 randomloot/numrandomloot，ClearRandomLoot 双保险
+    if pig.components.lootdropper then
+        pig.components.lootdropper:SetLoot({})
+        if pig.components.lootdropper.ClearRandomLoot then
+            pig.components.lootdropper:ClearRandomLoot()
+        end
+    end
+
     owner._moon_qunyou_pigs[slot] = pig
 
     -- 存活 5 分钟后各自散去
@@ -111,30 +121,29 @@ local function spawn_qunyou(owner, slot)
     return true
 end
 
--- 给 owner 部署一批群友（兑换触发）：首发 5 只 + 60 秒补员任务
--- 重复兑换 = 清掉旧一批再召新一批（槽位表不叠加）
+-- 给 owner 召唤 1 只群友（兑换触发）：每次兑换只出 1 只 + 60 秒补员任务
+-- 重复兑换 = 有空槽就再补 1 只（不清理已有群友）；满 3 只则提示不再出
 -- 补员任务随玩家实体存活（玩家下线任务自动销毁，群友仍在场上自行存活 5 分钟）
 function _G.Moon_Qunyou_SummonGroup(owner)
     if not (owner and owner:IsValid() and owner.Transform) then return end
     if owner:HasTag("playerghost") then return end
 
-    -- 清理旧一批群友（若有）
-    if owner._moon_qunyou_pigs then
-        for i = 1, MAX_PIGS do
-            local pig = owner._moon_qunyou_pigs[i]
-            if pig and pig:IsValid() then
-                pig:Remove()
-            end
-        end
-    else
+    -- 首次调用初始化槽位表
+    if not owner._moon_qunyou_pigs then
         owner._moon_qunyou_pigs = {}
     end
 
-    for i = 1, MAX_PIGS do
-        spawn_qunyou(owner, i)
+    -- 每次兑换只召唤 1 只（有空槽才补）
+    local slot = get_empty_slot(owner)
+    if not slot then
+        if _G.Moon_Say then
+            _G.Moon_Say(owner, "群友已满啦，周边最多 3 只")
+        end
+        return
     end
+    spawn_qunyou(owner, slot)
 
-    -- 每 60 秒补员 1 只（有空槽才补，天然限 5 只上限），最多补 ceil(300/60)=5 次覆盖整个存活窗口
+    -- 每 60 秒补员 1 只（有空槽才补，天然限 3 只上限），最多补 ceil(300/60)=5 次覆盖整个存活窗口
     -- 注意：DoPeriodicTask 第三参是 initialdelay 而非次数上限，须手动计数 Cancel
     if owner._moon_qunyou_refill_task then
         owner._moon_qunyou_refill_task:Cancel()

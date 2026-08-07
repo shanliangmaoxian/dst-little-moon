@@ -92,6 +92,15 @@ local function spawn_qunyou(owner, slot)
         pig.components.sleeper:SetSleepTest(function() return false end)
     end
 
+    -- 召唤的猪人不出掉落物（免得杀猪刷肉/猪皮）：
+    -- SetLoot({}) 清固定掉落并重置 randomloot/numrandomloot，ClearRandomLoot 双保险
+    if pig.components.lootdropper then
+        pig.components.lootdropper:SetLoot({})
+        if pig.components.lootdropper.ClearRandomLoot then
+            pig.components.lootdropper:ClearRandomLoot()
+        end
+    end
+
     owner._qunyou_pigs[slot] = pig
 
     -- 5 分钟后各自散去

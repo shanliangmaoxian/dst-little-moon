@@ -138,8 +138,8 @@ local function InitMoonShop()
             print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
         end
 
-        -- 召唤群友 (100 水晶小人)：制作后原地召唤 5 只猪人群友
-        -- 产物是瞬发实体 moon_qunyou_summon（scripts/features/moon_qunyou.lua），图标用原版猪皮
+        -- 召唤群友 (100 水晶小人)：制作后原地召唤 1 只猪人群友（周边最多 3 只）
+        -- 产物是瞬发实体 moon_qunyou_summon（scripts/features/moon_qunyou.lua），图标用 mod 自带猪人图
         if CFG.ENABLE_MOON_SHOP_BOSS_QUNYOU then
             local qunyou_recipe_id = "MoonShop_moon_qunyou_summon"
             if not (AllRecipes and AllRecipes[qunyou_recipe_id]) then
@@ -151,8 +151,8 @@ local function InitMoonShop()
                         product = "moon_qunyou_summon",
                         nounlock = true,
                         numtogive = 1,
-                        atlas = "images/inventoryimages.xml",
-                        image = "pigskin.tex",
+                        atlas = "images/inventoryimages/pig_man.xml",
+                        image = "pig_man.tex",
                     },
                     filter_list
                 )
