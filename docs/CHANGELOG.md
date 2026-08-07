@@ -10,6 +10,14 @@
 ### 修改
 - **新史低** — 恢复加载（1.17.1 因上述问题暂时去掉）：取消 `modmain.lua` 中 `modimport("scripts/enchants/xinshidi")` 注释
   - 涉及文件：`modmain.lua`
+- **心平气和 / 千月野** — 由娱乐附魔重做为「攻守兼备」套装：心平气和=防御位（单件减伤10%+每3秒回1.5%生命；与千月野齐穿→减伤25%、回复翻倍、受击30%几率获得25%生命护盾，冷却8秒），千月野=输出位（单件伤害+12%、攻速+10%；与心平气和齐穿→伤害+30%、攻速+30%、击杀触发月爆250%范围伤害，冷却3秒）
+  - 套装判定用 `Moon_HasEffect` 双向检查（HH 原生套装机制已被作者硬编码禁用，`hh_player:HasSuitEffect` 恒 false，故自实现组合技）
+  - 同名同 ID（`Legend_XPING` / `Legend_QIANYUE`），旧娱乐代码已删除；掉落权重保持 0.01
+  - 涉及文件：`scripts/enchants/xping.lua`、`scripts/enchants/qianyue.lua`、`docs/enchants.md`、`steam_description.txt`
+- **云中雀** — 恢复加载（此前暂时注释，待重新启用）：取消 `modmain.lua` 中 `modimport("scripts/enchants/yzq")` 注释
+  - 移除翱翔范围伤害的击退效果，改为纯数值强化：350% → 450% 攻击力范围伤害
+  - 修复翱翔无敌 DoDelta 包装：改为保存 wrapper 句柄并按归属校验还原（避免与其他 DoDelta 附魔同穿时覆盖包装链），无敌期间伤害归零走原函数（保持返回语义），1.5s 任务存句柄卸载时 Cancel
+  - 涉及文件：`scripts/enchants/yzq.lua`、`docs/enchants.md`（#11 描述同步为当前实现）
 
 ## 1.17.1 - 2026-08-04
 

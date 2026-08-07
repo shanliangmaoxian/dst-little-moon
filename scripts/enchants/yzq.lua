@@ -1,5 +1,5 @@
 -- 小月亮 附魔：云中雀
--- 移动速度+35%，每8秒获得「翱翔」buff：下一次攻击造成350%范围伤害并击退
+-- 移动速度+35%，每8秒获得「翱翔」buff：下一次攻击造成450%范围伤害
 -- 翱翔期间免疫伤害（持续1.5秒）
 
 local _G = GLOBAL
@@ -13,7 +13,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_YZQ", {
         name = "云中雀",
         client_text = "云中\n雀",
-        desc = "移速+35%，每8秒获翱翔buff\n下次攻击350%范围伤害+击退，翱翔期间免疫",
+        desc = "移速+35%，每8秒获翱翔buff\n下次攻击450%范围伤害，翱翔期间免疫",
         check_desc = "云中雀，自由翱翔！",
         can_add = false,
         only_one = true,
@@ -57,23 +57,26 @@ AddPrefabPostInit("world", function(inst)
                 local function activateSoaring()
                     owner._yzq_soaring = true
                     owner._yzq_soar_ready = false
-                    -- 免疫伤害
-                    if owner.components.health then
-                        if not owner._yzq_old_dodelta and owner.components.health.DoDelta then
-                            local oldDoDelta = owner.components.health.DoDelta
-                            owner._yzq_old_dodelta = oldDoDelta
-                            owner.components.health.DoDelta = function(self, delta, ...)
-                                if owner._yzq_soaring and delta < 0 then
-                                    return -- 免疫伤害
-                                end
-                                return oldDoDelta(self, delta, ...)
+                    -- 免疫伤害（包装 DoDelta，翱翔期间负值伤害归零走原函数）
+                    local health = owner.components.health
+                    if health and not health._yzq_hooked_dodelta then
+                        local oldDoDelta = health.DoDelta
+                        local function yzq_soar_wrapper(self, delta, ...)
+                            if owner._yzq_soaring and delta < 0 then
+                                return oldDoDelta(self, 0, ...) -- 免疫伤害（归零，保持返回语义）
                             end
+                            return oldDoDelta(self, delta, ...)
                         end
+                        health._yzq_old_dodelta = oldDoDelta
+                        health._yzq_wrapper = yzq_soar_wrapper
+                        health.DoDelta = yzq_soar_wrapper
+                        health._yzq_hooked_dodelta = true
                     end
-                    -- 1.5秒后结束
-                    owner:DoTaskInTime(1.5, function()
+                    -- 1.5秒后结束（存句柄，卸载时 Cancel）
+                    owner._yzq_soar_timer = owner:DoTaskInTime(1.5, function()
                         if owner:IsValid() then
                             owner._yzq_soaring = false
+                            owner._yzq_soar_timer = nil
                         end
                     end)
                 end
@@ -87,21 +90,13 @@ AddPrefabPostInit("world", function(inst)
                     if owner._yzq_soar_ready then
                         activateSoaring()
 
-                        -- 350% 范围伤害
+                        -- 450% 范围伤害
                         local tx, ty, tz = target.Transform:GetWorldPosition()
                         local nearby = GLOBAL.TheSim:FindEntities(tx, ty, tz, 4, { "_combat" })
                         for _, victim in ipairs(nearby) do
                             if victim ~= owner and victim.components.health and not victim.components.health:IsDead() then
                                 local dmg = (owner.components.combat and owner.components.combat.defaultdamage) or 34
-                                victim.components.health:DoDelta(-dmg * 3.5, false, nil)
-                                -- 击退
-                                if victim.components.locomotor and victim ~= target then
-                                    local vx, vy, vz = victim.Transform:GetWorldPosition()
-                                    local dx, dz = vx - tx, vz - tz
-                                    local dist = math.sqrt(dx * dx + dz * dz) or 1
-                                    local knock = 4
-                                    victim.Transform:SetPosition(vx + dx / dist * knock, vy, vz + dz / dist * knock)
-                                end
+                                victim.components.health:DoDelta(-dmg * 4.5, false, nil)
                             end
                         end
 
@@ -126,10 +121,15 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     hh:ReduceEffectValueByKey("addSpeedPercent", 35)
                 end
-                -- 恢复 DoDelta
-                if owner._yzq_old_dodelta and owner.components.health then
-                    owner.components.health.DoDelta = owner._yzq_old_dodelta
-                    owner._yzq_old_dodelta = nil
+                -- 恢复 DoDelta（校验归属：仅当当前包装还是自己的才还原）
+                local health = owner.components.health
+                if health and health._yzq_wrapper and health.DoDelta == health._yzq_wrapper then
+                    health.DoDelta = health._yzq_old_dodelta
+                end
+                if health then
+                    health._yzq_old_dodelta = nil
+                    health._yzq_wrapper = nil
+                    health._yzq_hooked_dodelta = nil
                 end
                 if owner._yzq_attack_handler then
                     owner:RemoveEventCallback("onattackother", owner._yzq_attack_handler)
@@ -138,6 +138,10 @@ AddPrefabPostInit("world", function(inst)
                 if owner._yzq_soar_task then
                     owner._yzq_soar_task:Cancel()
                     owner._yzq_soar_task = nil
+                end
+                if owner._yzq_soar_timer then
+                    owner._yzq_soar_timer:Cancel()
+                    owner._yzq_soar_timer = nil
                 end
                 owner._yzq_soaring = nil
                 owner._yzq_soar_ready = nil
