@@ -551,6 +551,16 @@ configuration_options = {
         default = true,
     },
     {
+        name = "ENABLE_MOON_SHOP_BOSS_QUNYOU",
+        label = "召唤群友",
+        hover = "小月亮商店中用 100 水晶小人召唤 5 只猪人群友（各有名字+登场对白，跟随打架，存活5分钟，每60秒补员1只）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+    {
         name = "ENABLE_MOON_SHOP_SOUL",
         label = "灵魂互换",
         hover = "小月亮商店中显示 3:1 暗影/光明之魂互换配方（需泰拉模组）",

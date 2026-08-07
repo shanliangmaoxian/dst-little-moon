@@ -86,8 +86,10 @@ local function spawn_qunyou(owner, slot)
     end
 
     -- 群友不睡觉（免得晚上集体掉线）
-    if pig.components.sleeper then
-        pig.components.sleeper:SetSleepiness(0)
+    -- 注意：sleeper 组件没有 SetSleepiness 方法（nil 调用会崩），
+    -- 正确做法是把睡眠测试函数替换为恒 false
+    if pig.components.sleeper and pig.components.sleeper.SetSleepTest then
+        pig.components.sleeper:SetSleepTest(function() return false end)
     end
 
     owner._qunyou_pigs[slot] = pig

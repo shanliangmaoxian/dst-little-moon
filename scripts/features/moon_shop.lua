@@ -137,6 +137,28 @@ local function InitMoonShop()
         if boss_count > 0 then
             print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
         end
+
+        -- 召唤群友 (100 水晶小人)：制作后原地召唤 5 只猪人群友
+        -- 产物是瞬发实体 moon_qunyou_summon（scripts/features/moon_qunyou.lua），图标用原版猪皮
+        if CFG.ENABLE_MOON_SHOP_BOSS_QUNYOU then
+            local qunyou_recipe_id = "MoonShop_moon_qunyou_summon"
+            if not (AllRecipes and AllRecipes[qunyou_recipe_id]) then
+                AddRecipe2(
+                    qunyou_recipe_id,
+                    { Ingredient("hh_essence", 100) },
+                    TECH.NONE,
+                    {
+                        product = "moon_qunyou_summon",
+                        nounlock = true,
+                        numtogive = 1,
+                        atlas = "images/inventoryimages.xml",
+                        image = "pigskin.tex",
+                    },
+                    filter_list
+                )
+                print("[小月亮商店] 召唤群友配方注册成功")
+            end
+        end
     end
 
     -- 遍历之迹兑换 (需要 HH 附魔 3096210166 + 小鸟 3398290914)
