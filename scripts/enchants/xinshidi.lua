@@ -125,13 +125,19 @@ end)
 -- 服务端：玩家创建时对 moneymanager.OnBuy 做最终包装（晚于所有 AddComponentPostInit，
 -- 确保包装在最外层），提供「当前购买买家」上下文供 getShopItemFinalPrice 打折，
 -- 并对「黑店」等绕过 getShopItemFinalPrice 的写死价扣款退还新史低差价。
+-- ⚠️ 时序：moneymanager 是欧皇模拟器在它自己的 AddPlayerPostInit 回调里动态添加的组件
+-- （非 prefab 静态注册），而 AddPlayerPostInit 回调按 mod 加载顺序执行——若本 mod 回调先跑，
+-- 组件还不存在。因此即时尝试一次后失败要 DoTaskInTime(0) 延迟兜底重试：
+-- 所有 AddPlayerPostInit 回调都在同一帧内执行完，下一帧组件必定已加。
 AddPlayerPostInit(function(inst)
     XSD_Install()
 
-    if _G.TheWorld and _G.TheWorld.ismastersim
-        and inst.components and inst.components.moneymanager then
-        local mm = inst.components.moneymanager
-        if not mm._moon_xsd_onbuy_wrapped then
+    if _G.TheWorld and _G.TheWorld.ismastersim then
+        local function TryWrapOnBuy()
+            local mm = inst.components and inst.components.moneymanager
+            if not mm or mm._moon_xsd_onbuy_wrapped then
+                return false
+            end
             mm._moon_xsd_onbuy_wrapped = true
             local _old_OnBuy = mm.OnBuy
             mm.OnBuy = function(self, itemName, number, lastskin)
@@ -166,6 +172,10 @@ AddPlayerPostInit(function(inst)
                 _G.print("[小月亮] 新史低: 购买处理异常 " .. _G.tostring(results[2]))
                 return false, 0
             end
+            return true
+        end
+        if not TryWrapOnBuy() then
+            inst:DoTaskInTime(0, TryWrapOnBuy)
         end
     end
 end)

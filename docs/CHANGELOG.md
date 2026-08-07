@@ -1,5 +1,16 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.17.2 - 2026-08-07
+
+### 修复
+- **新史低** — 修复服务端折扣"有时生效有时不生效"的加载顺序竞态：`moneymanager` 是欧皇模拟器在它自己的 `AddPlayerPostInit` 回调里动态添加的组件（非 prefab 静态注册），而 `AddPlayerPostInit` 回调按 mod 加载顺序执行——本 mod 回调先跑时组件还不存在，原一次性检查直接跳过 OnBuy 包装且不重试，导致服务端扣款/余额判断永远走原价（客户端 UI 却显示折后价，典型症状：host 生效、联机队友不生效）
+  - 修复：OnBuy 包装即时尝试一次，失败则 `inst:DoTaskInTime(0, ...)` 延迟兜底重试（所有 `AddPlayerPostInit` 回调在同一帧内执行完，下一帧组件必定已加），保持"调用链最外层"不变
+  - 涉及文件：`scripts/enchants/xinshidi.lua`
+
+### 修改
+- **新史低** — 恢复加载（1.17.1 因上述问题暂时去掉）：取消 `modmain.lua` 中 `modimport("scripts/enchants/xinshidi")` 注释
+  - 涉及文件：`modmain.lua`
+
 ## 1.17.1 - 2026-08-04
 
 ### 删除
