@@ -3,6 +3,8 @@
 ## 1.17.2 - 2026-08-07
 
 ### 修复
+- **召唤群友（附魔）** — 修复 `sleeper:SetSleepiness` 调用不存在的 API（`sleeper` 组件无此方法，夜晚召唤/装备触发时直接报错崩溃）：改为 `SetSleepTest(function() return false end)`；顺带清空召唤猪人的掉落物（`SetLoot({})` + `ClearRandomLoot()`），杀猪不掉肉/猪皮
+  - 涉及文件：`scripts/enchants/qunyou.lua`、`scripts/features/moon_qunyou.lua`
 - **新史低** — 修复服务端折扣"有时生效有时不生效"的加载顺序竞态：`moneymanager` 是欧皇模拟器在它自己的 `AddPlayerPostInit` 回调里动态添加的组件（非 prefab 静态注册），而 `AddPlayerPostInit` 回调按 mod 加载顺序执行——本 mod 回调先跑时组件还不存在，原一次性检查直接跳过 OnBuy 包装且不重试，导致服务端扣款/余额判断永远走原价（客户端 UI 却显示折后价，典型症状：host 生效、联机队友不生效）
   - 修复：OnBuy 包装即时尝试一次，失败则 `inst:DoTaskInTime(0, ...)` 延迟兜底重试（所有 `AddPlayerPostInit` 回调在同一帧内执行完，下一帧组件必定已加），保持"调用链最外层"不变
   - 涉及文件：`scripts/enchants/xinshidi.lua`
@@ -19,6 +21,11 @@
   - 修复翱翔无敌 DoDelta 包装：改为保存 wrapper 句柄并按归属校验还原（避免与其他 DoDelta 附魔同穿时覆盖包装链），无敌期间伤害归零走原函数（保持返回语义），1.5s 任务存句柄卸载时 Cancel
   - 涉及文件：`scripts/enchants/yzq.lua`、`docs/enchants.md`（#11 描述同步为当前实现）
 - **等秋零** — 去掉蕨叶效果
+
+### 新增
+- **召唤群友（月亮商店）** — 商店新增「召唤群友」兑换（100 水晶小人，猪人图标 `pig_man`）：制作后原地召唤 1 只猪人群友（各有名字+登场对白，跟随打架，不睡觉，击杀无掉落），玩家周边最多同时 3 只，存活 5 分钟、每 60 秒补员 1 只（有空位才补，补到 3 只上限为止）；满员重复兑换不再出新并提示
+  - 实现：新 prefab `moon_qunyou_summon`（瞬发召唤实体，利用制作流程 `onbuilt` 事件直接定位制作玩家）；新配置项 `ENABLE_MOON_SHOP_BOSS_QUNYOU`（默认开启，需 HH 附魔模组）
+  - 涉及文件：`scripts/features/moon_qunyou.lua`（新）、`scripts/features/moon_shop.lua`、`scripts/core/config.lua`、`modmain.lua`、`modinfo.lua`、`images/inventoryimages/pig_man.tex/xml`（新）
 
 ## 1.17.1 - 2026-08-04
 
