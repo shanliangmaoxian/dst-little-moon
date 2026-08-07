@@ -48,13 +48,6 @@ AddPrefabPostInit("world", function(inst)
                                 if owner.components.talker then
                                     owner.components.talker:Say("浅笑依然痴若离")
                                 end
-                                if _G.SpawnPrefab then
-                                    local fx = _G.SpawnPrefab("foliage")
-                                    if fx then
-                                        fx.Transform:SetPosition(owner.Transform:GetWorldPosition())
-                                        fx:DoTaskInTime(1, function() if fx:IsValid() then fx:Remove() end end)
-                                    end
-                                end
                                 delta = 0 -- 免疫伤害
                             end
                         end
