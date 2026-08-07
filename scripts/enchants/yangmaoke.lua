@@ -1,9 +1,9 @@
 -- 小月亮 附魔：养猫客
--- 每60秒召唤一只浣猫（上限3只），永久存在
--- 每只浣猫：攻速+8%，移速+10%
--- 每180秒一次：浣猫牺牲挡刀
+-- 每60秒召唤一只浣猫（上限4只），永久存在
+-- 每只浣猫：攻速+12%，移速+15%
+-- 每120秒一次：浣猫牺牲挡刀（挡刀后2秒无敌）
 -- 浣猫每30秒捡物报恩，5%概率带鱼（已注释：暂时停用报恩）
--- 夜眼：夜晚额外+10%移速
+-- 夜眼：夜晚额外+15%移速
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -43,18 +43,18 @@ local function refresh_buffs(owner)
 
     if prev ~= count then
         if prev > 0 then
-            hh:ReduceEffectValueByKey("atk_speed", prev * 8)
-            hh:ReduceEffectValueByKey("addSpeedPercent", prev * 10)
+            hh:ReduceEffectValueByKey("atk_speed", prev * 12)
+            hh:ReduceEffectValueByKey("addSpeedPercent", prev * 15)
         end
         if count > 0 then
-            hh:AddEffectValueByKey("atk_speed", count * 8)
-            hh:AddEffectValueByKey("addSpeedPercent", count * 10)
+            hh:AddEffectValueByKey("atk_speed", count * 12)
+            hh:AddEffectValueByKey("addSpeedPercent", count * 15)
         end
         owner._ymk_prev_cat_count = count
 
         if owner.components.talker then
-            if count == 3 then
-                owner.components.talker:Say("三只猫猫齐聚！圆满！")
+            if count == 4 then
+                owner.components.talker:Say("四只猫猫齐聚！圆满！")
             elseif count > prev then
                 owner.components.talker:Say("喵~新伙伴来了！")
             elseif count < prev and count > 0 then
@@ -171,7 +171,7 @@ AddPrefabPostInit("world", function(inst)
     _G.AddSpecialEquipEffect("Legend_YANGMAOKE", {
         name = "养猫客",
         client_text = "养猫\n客",
-        desc = "每60秒召浣猫(上限3)\n每只:攻速+8%,移速+10%\n浣猫牺牲挡刀(180s冷却)\n夜晚额外+10%移速",
+        desc = "每60秒召浣猫(上限4)\n每只:攻速+12%,移速+15%\n浣猫牺牲挡刀(120s冷却)\n挡刀后2s无敌\n夜晚额外+15%移速",
         check_desc = "与猫同居，岁月静好…",
         can_add = false,
         only_one = true,
@@ -188,6 +188,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._ymk_cats = {}
                 owner._ymk_prev_cat_count = 0
                 owner._ymk_last_sacrifice_time = 0
+                owner._ymk_invincible = false
 
                 -- 夜眼 + 昼夜属性切换
                 owner._ymk_night_buff_active = false
@@ -200,10 +201,10 @@ AddPrefabPostInit("world", function(inst)
                     if not hhp then return end
 
                     if is_night and not owner._ymk_night_buff_active then
-                        hhp:AddEffectValueByKey("addSpeedPercent", 10)
+                        hhp:AddEffectValueByKey("addSpeedPercent", 15)
                         owner._ymk_night_buff_active = true
                     elseif not is_night and owner._ymk_night_buff_active then
-                        hhp:ReduceEffectValueByKey("addSpeedPercent", 10)
+                        hhp:ReduceEffectValueByKey("addSpeedPercent", 15)
                         owner._ymk_night_buff_active = false
                     end
                 end)
@@ -212,7 +213,7 @@ AddPrefabPostInit("world", function(inst)
                 owner._ymk_summon_task = owner:DoPeriodicTask(60, function()
                     if not _G.Moon_HasEffect(owner, "yangmaoke") then return end
                     if not owner:IsValid() then return end
-                    if alive_cat_count(owner) >= 3 then return end
+                    if alive_cat_count(owner) >= 4 then return end
 
                     spawn_cat(owner)
                 end)
@@ -228,9 +229,9 @@ AddPrefabPostInit("world", function(inst)
                     health.DoDelta = function(self, delta, overtime, cause, ...)
                         if delta < 0 and not overtime then
                             local would_die = (self.currenthealth + delta) <= 0
-                            if would_die and _G.Moon_HasEffect(owner, "yangmaoke") then
+                            if would_die and _G.Moon_HasEffect(owner, "yangmaoke") and not owner._ymk_invincible then
                                 local now = _G.GetTime and _G.GetTime() or 0
-                                if now >= owner._ymk_last_sacrifice_time + 180 then
+                                if now >= owner._ymk_last_sacrifice_time + 120 then
                                     local count = alive_cat_count(owner)
                                     if count > 0 then
                                         -- 牺牲一只浣猫
@@ -251,6 +252,16 @@ AddPrefabPostInit("world", function(inst)
                                         if owner.components.talker then
                                             owner.components.talker:Say("喵呜…替我挡了一刀…")
                                         end
+
+                                        -- 挡刀后 2 秒无敌
+                                        owner._ymk_invincible = true
+                                        health:SetInvincible(true)
+                                        owner:DoTaskInTime(2, function()
+                                            if owner:IsValid() and owner._ymk_invincible then
+                                                owner.components.health:SetInvincible(false)
+                                                owner._ymk_invincible = nil
+                                            end
+                                        end)
 
                                         return  -- 免疫该次伤害
                                     end
@@ -283,11 +294,11 @@ AddPrefabPostInit("world", function(inst)
                 if hh then
                     local prev = owner._ymk_prev_cat_count or 0
                     if prev > 0 then
-                        hh:ReduceEffectValueByKey("atk_speed", prev * 8)
-                        hh:ReduceEffectValueByKey("addSpeedPercent", prev * 10)
+                        hh:ReduceEffectValueByKey("atk_speed", prev * 12)
+                        hh:ReduceEffectValueByKey("addSpeedPercent", prev * 15)
                     end
                     if owner._ymk_night_buff_active then
-                        hh:ReduceEffectValueByKey("addSpeedPercent", 10)
+                        hh:ReduceEffectValueByKey("addSpeedPercent", 15)
                     end
                 end
 
@@ -306,6 +317,12 @@ AddPrefabPostInit("world", function(inst)
                 if health and health._ymk_old_dodelta then
                     health.DoDelta = health._ymk_old_dodelta
                     health._ymk_old_dodelta = nil
+                end
+
+                -- 若还在无敌中,一并恢复
+                if health and owner._ymk_invincible then
+                    health:SetInvincible(false)
+                    owner._ymk_invincible = nil
                 end
 
                 owner._ymk_hooked = nil
