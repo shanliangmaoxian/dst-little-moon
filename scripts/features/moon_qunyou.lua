@@ -1,9 +1,9 @@
 -- 小月亮商店：召唤群友
 -- 商店配方 MoonShop_moon_qunyou_summon（100 水晶小人，猪皮图标）制作后，
 -- 原地生成瞬发实体 moon_qunyou_summon → 在制作玩家身边召唤 1 只猪人群友：
---   每次兑换只出 1 只，玩家周边最多同时 3 只（上限 3）；
---   群友各有名字+登场对白（槽位与名字一一对应，保证不重名），跟随玩家打架，一直存活不消失；
---   不可被攻击（notarget + noattack + SetInvincible 三层）；每 60 秒补员 1 只（有空槽才补，天然限 3 只上限），玩家在线期间持续补员；
+--   每次兑换只出 1 只，玩家周边最多同时 37 只（上限 37，每个附魔名一只）；
+--   群友各有名字（附魔名+猪，与槽位一一对应，保证不重名）+登场对白，跟随玩家打架，一直存活不消失；
+--   不可被攻击（notarget + noattack + SetInvincible 三层）；群友无敌不会死，故无补员；
 --   传送跟随：玩家传送（法杖/虫洞/雕像复活）后群友不会自动跟上（follower 的 GoToEntity 有距离上限），每 10 秒检查一次，超 40 码直接瞬移到玩家身边。
 -- 附魔版 scripts/enchants/qunyou.lua 保持原 5 只设定，本文件为商店版独立参数。
 
@@ -22,16 +22,22 @@ if _G.STRINGS and _G.STRINGS.NAMES then
     _G.STRINGS.NAMES.MOON_QUNYOU_SUMMON = "召唤群友"
 end
 if _G.STRINGS and _G.STRINGS.RECIPE_DESC then
-    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "100 水晶小人召唤 1 只猪人群友\n周边最多同时 3 只，各有名字，跟随打架\n一直存活+不可被攻击，每60秒补员1只"
+    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "100 水晶小人召唤 1 只猪人群友\n最多同时 37 只（附魔名+猪），各有名字，跟随打架\n一直存活+不可被攻击"
 end
 
 -- ======== 群友配置 ========
-local MAX_PIGS = 3            -- 同时存在的群友上限（周边最多 3 只）
-local REFILL_INTERVAL = 60    -- 补员间隔（秒）
+local MAX_PIGS = 37           -- 同时存在的群友上限（每个附魔名一只，与 PIG_NAMES 37 个对应）
 local FOLLOW_TELEPORT_DIST = 40 -- 群友距玩家超过该距离视为传送掉队，直接拉回身边（follower GoToEntity 上限约 40 码）
--- 群友一直存活：不设 PIG_LIFETIME 到期移除，死亡后由补员任务补回
-local PIG_NAMES = { "萝猪", "球猪", "菜猪", "兔猪", "E猪", "挂白" }
-local PIG_LINES = {
+-- 群友一直存活+无敌：不设 PIG_LIFETIME 到期移除、无补员（不会死）；被其他机制移除时清槽位
+local PIG_NAMES = {           -- 全部附魔名+猪（37 个，对应 docs/enchants.md #1~#35 + #97~#98）
+    "毛旭猪", "紫蝶猪", "番茄炒蛋猪",  "秀猪",
+    "无欲无求猪",  "球猪", "哎哟猪", "fay猪",
+    "云中雀猪", "摸瓜吃鱼猪", "挂白猪", "草莓奶昔猪", "萌新猪",
+    "咕咕咕猪", "干饭人猪", "飞猪", "我就跟着混猪", "酸酸草猪",
+    "胖虎猪", "等秋零猪", "君君猪", "萝猪",
+    "怀民猪", "E猪", "兔猪",
+}
+local PIG_LINES = {           -- 登场对白池（6 条，37 槽位按序循环取用）
     "九月九月，你在哪？不想上班想回家",
     "灌篮！可是我的球框呢？",
     "哎呀 你干嘛～",
@@ -41,7 +47,7 @@ local PIG_LINES = {
 }
 
 -- ======== 群友槽位管理（与 qunyou.lua 同构） ========
--- owner._moon_qunyou_pigs[slot] = pig，slot 与 PIG_NAMES[slot]/PIG_LINES[slot] 一一对应
+-- owner._moon_qunyou_pigs[slot] = pig，slot 与 PIG_NAMES[slot] 一一对应（名字不重名）；对白按槽位循环取用
 
 local function get_empty_slot(owner)
     local pigs = owner._moon_qunyou_pigs
@@ -54,7 +60,7 @@ local function get_empty_slot(owner)
     return nil
 end
 
--- 只清自己的引用：重复兑换时旧猪人的到期回调不能误清新一批同槽位猪人
+-- 只清自己的引用：重复兑换时旧猪人的 onremove 回调不能误清新一批同槽位猪人
 local function clear_slot(owner, slot, pig)
     if owner and owner._moon_qunyou_pigs and owner._moon_qunyou_pigs[slot] == pig then
         owner._moon_qunyou_pigs[slot] = nil
@@ -64,7 +70,7 @@ end
 -- 在 owner 身边召唤 1 只群友（位置 1.5~3 码随机，避免叠在一起）
 local function spawn_qunyou(owner, slot)
     local name = PIG_NAMES[slot]
-    local line = PIG_LINES[slot]
+    local line = PIG_LINES[(slot - 1) % #PIG_LINES + 1]  -- 对白池循环取用（37 槽位 > 6 条对白）
     local x, y, z = owner.Transform:GetWorldPosition()
 
     local angle = math.random() * 2 * math.pi
@@ -122,7 +128,7 @@ local function spawn_qunyou(owner, slot)
 
     owner._moon_qunyou_pigs[slot] = pig
 
-    -- 一直存活：不设到期移除；死亡/被移除时清槽位，由补员任务补回
+    -- 一直存活+无敌：不设到期移除；被其他机制移除时清槽位（无补员）
     pig:ListenForEvent("onremove", function()
         clear_slot(owner, slot, pig)
     end)
@@ -130,9 +136,9 @@ local function spawn_qunyou(owner, slot)
     return true
 end
 
--- 给 owner 召唤 1 只群友（兑换触发）：每次兑换只出 1 只 + 60 秒补员任务
--- 重复兑换 = 有空槽就再补 1 只（不清理已有群友）；满 3 只则提示不再出
--- 补员任务随玩家实体存活（玩家下线任务自动销毁，群友仍留在场上一直存活）
+-- 给 owner 召唤 1 只群友（兑换触发）：每次兑换只出 1 只
+-- 重复兑换 = 有空槽就再补 1 只（不清理已有群友）；满 37 只则提示不再出
+-- 群友无敌不会死，无补员任务；传送跟随任务随玩家实体存活（玩家下线自动销毁）
 function _G.Moon_Qunyou_SummonGroup(owner)
     if not (owner and owner:IsValid() and owner.Transform) then return end
     if owner:HasTag("playerghost") then return end
@@ -146,33 +152,11 @@ function _G.Moon_Qunyou_SummonGroup(owner)
     local slot = get_empty_slot(owner)
     if not slot then
         if _G.Moon_Say then
-            _G.Moon_Say(owner, "群友已满啦，周边最多 3 只")
+            _G.Moon_Say(owner, "群友已满啦，最多 37 只")
         end
         return
     end
     spawn_qunyou(owner, slot)
-
-    -- 每 60 秒补员 1 只（有空槽才补，天然限 3 只上限）；群友一直存活，补员持续到玩家下线
-    -- 注意：DoPeriodicTask 第三参是 initialdelay 而非次数上限；任务挂在玩家实体上，下线自动销毁
-    if owner._moon_qunyou_refill_task then
-        owner._moon_qunyou_refill_task:Cancel()
-        owner._moon_qunyou_refill_task = nil
-    end
-    owner._moon_qunyou_refill_task = owner:DoPeriodicTask(REFILL_INTERVAL, function()
-        if not owner:IsValid() then
-            if owner._moon_qunyou_refill_task then
-                owner._moon_qunyou_refill_task:Cancel()
-                owner._moon_qunyou_refill_task = nil
-            end
-            return
-        end
-        -- 玩家死亡期间暂停补员（复活后继续）
-        if owner:HasTag("playerghost") then return end
-        local slot = get_empty_slot(owner)
-        if slot then
-            spawn_qunyou(owner, slot)
-        end
-    end)
 
     -- 传送跟随：玩家传送后群友留在原地（follower 的 GoToEntity 有距离上限，且远处群友可能不更新），
     -- 每 10 秒检查一次，超过 FOLLOW_TELEPORT_DIST 直接瞬移到玩家身边；任务只建一次（多次兑换不累积）
