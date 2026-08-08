@@ -181,27 +181,28 @@ local function InitMoonShop()
         if boss_count > 0 then
             print("[小月亮商店] Boss兑换注册完成，共 " .. boss_count .. " 件")
         end
+    end
 
-        -- 召唤群友 (100 水晶小人)：制作后原地召唤 1 只猪人群友（周边最多 3 只）
-        -- 产物是瞬发实体 moon_qunyou_summon（scripts/features/moon_qunyou.lua），图标用 mod 自带猪人图
-        if CFG.ENABLE_MOON_SHOP_BOSS_QUNYOU then
-            local qunyou_recipe_id = "MoonShop_moon_qunyou_summon"
-            if not (AllRecipes and AllRecipes[qunyou_recipe_id]) then
-                AddRecipe2(
-                    qunyou_recipe_id,
-                    { Ingredient("hh_essence", 100) },
-                    TECH.NONE,
-                    {
-                        product = "moon_qunyou_summon",
-                        nounlock = true,
-                        numtogive = 1,
-                        atlas = "images/inventoryimages/pig_man.xml",
-                        image = "pig_man.tex",
-                    },
-                    filter_list
-                )
-                print("[小月亮商店] 召唤群友配方注册成功")
-            end
+    -- 召唤群友 (20 个大肉)：制作后原地召唤 1 只猪人群友（周边最多 3 只）
+    -- 产物是瞬发实体 moon_qunyou_summon（scripts/features/moon_qunyou.lua），图标用 mod 自带猪人图
+    -- 兑换材料是原版大肉，不依赖 HH 附魔模组
+    if CFG.ENABLE_MOON_SHOP_BOSS_QUNYOU then
+        local qunyou_recipe_id = "MoonShop_moon_qunyou_summon"
+        if not (AllRecipes and AllRecipes[qunyou_recipe_id]) then
+            AddRecipe2(
+                qunyou_recipe_id,
+                { Ingredient("meat", 20) },
+                TECH.NONE,
+                {
+                    product = "moon_qunyou_summon",
+                    nounlock = true,
+                    numtogive = 1,
+                    atlas = "images/inventoryimages/pig_man.xml",
+                    image = "pig_man.tex",
+                },
+                filter_list
+            )
+            print("[小月亮商店] 召唤群友配方注册成功")
         end
     end
 

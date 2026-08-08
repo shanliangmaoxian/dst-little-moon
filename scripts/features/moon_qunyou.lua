@@ -1,5 +1,5 @@
 -- 小月亮商店：召唤群友
--- 商店配方 MoonShop_moon_qunyou_summon（100 水晶小人，猪皮图标）制作后，
+-- 商店配方 MoonShop_moon_qunyou_summon（20 个大肉，猪皮图标）制作后，
 -- 原地生成瞬发实体 moon_qunyou_summon → 在制作玩家身边召唤 1 只猪人群友：
 --   每次兑换只出 1 只，玩家周边最多同时 N 只（上限 = 名字数量，一个名字一只）；
 --   群友各有名字（与槽位一一对应，保证不重名）+随机骚话（参考 demo/2944389000_玛言玛语），跟随玩家打架，一直存活不消失；
@@ -271,7 +271,7 @@ end
 
 -- RECIPE_DESC 需在 PIG_NAMES/MAX_PIGS 定义之后赋值（描述拼接名字数量，自动跟随）
 if _G.STRINGS and _G.STRINGS.RECIPE_DESC then
-    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "100 水晶小人召唤 1 只猪人群友\n最多同时 " .. MAX_PIGS .. " 只（一猪一名），各有名字，跟随打架\n一直存活+不可被攻击"
+    _G.STRINGS.RECIPE_DESC.MOONSHOP_MOON_QUNYOU_SUMMON = "20 个大肉召唤 1 只猪人群友\n最多同时 " .. MAX_PIGS .. " 只（一猪一名），各有名字，跟随打架\n一直存活+不可被攻击"
 end
 
 -- 注意：RegisterPrefabs 不在 mod 沙箱 env 显式提供，需经 GLOBAL 访问
