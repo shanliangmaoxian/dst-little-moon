@@ -1,5 +1,6 @@
 -- 小月亮 附魔：云中雀
--- 移动速度+35%，每8秒获得「翱翔」buff：下一次攻击造成450%范围伤害
+-- 移动速度+35%，攻击有15%几率造成300%伤害
+-- 每8秒获得「翱翔」buff：下一次攻击造成450%范围伤害
 -- 翱翔期间免疫伤害（持续1.5秒）
 
 local _G = GLOBAL
@@ -13,7 +14,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_YZQ", {
         name = "云中雀",
         client_text = "云中\n雀",
-        desc = "移速+35%，每8秒获翱翔buff\n下次攻击450%范围伤害，翱翔期间免疫",
+        desc = "移速+35%，攻击15%几率300%伤害\n每8秒获翱翔buff:下次攻击450%范围伤害,翱翔期间免疫",
         check_desc = "云中雀，自由翱翔！",
         can_add = false,
         only_one = true,
@@ -31,9 +32,11 @@ AddPrefabPostInit("world", function(inst)
 
                 local hh = owner.components.hh_player
 
-                -- 永久移速+35%
+                -- 永久移速+35%，攻击15%几率300%伤害(暴击3倍)
                 if hh then
                     hh:AddEffectValueByKey("addSpeedPercent", 35)
+                    hh:AddEffectValueByKey("criticalHitRate", 15)
+                    hh:AddEffectValueByKey("criticalHitEffect", 100)
                 end
 
                 -- 每8秒获得翱翔充能
@@ -116,10 +119,12 @@ AddPrefabPostInit("world", function(inst)
         un_equip_fn = function(inst, owner, value)
             _G.Moon_ReduceEffect(owner, "yzq", "Legend_YZQ", 1)
             if not _G.Moon_HasEffect(owner, "yzq") then
-                -- 恢复 speed
+                -- 恢复 speed / 暴击
                 local hh = owner.components.hh_player
                 if hh then
                     hh:ReduceEffectValueByKey("addSpeedPercent", 35)
+                    hh:ReduceEffectValueByKey("criticalHitRate", 15)
+                    hh:ReduceEffectValueByKey("criticalHitEffect", 100)
                 end
                 -- 恢复 DoDelta（校验归属：仅当当前包装还是自己的才还原）
                 local health = owner.components.health
