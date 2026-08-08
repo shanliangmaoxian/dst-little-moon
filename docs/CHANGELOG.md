@@ -6,6 +6,9 @@
 - **云中雀** — 新增被动暴击：攻击有 15% 几率造成 300% 伤害（暴击 3 倍；HH 框架 `criticalHitRate` 15 + `criticalHitEffect` 100，翱翔 450% 范围伤害不受影响）
   - 涉及文件：`scripts/enchants/yzq.lua`
 
+### 修改
+  - Boss强化去掉养猫客  
+
 ## 1.17.2 - 2026-08-07
 
 ### 修复
