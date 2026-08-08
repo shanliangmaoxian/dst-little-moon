@@ -463,33 +463,6 @@ _G.MOON_MOB_ENCHANTS = {
     },
 
     -----------------------------------------------------------------
-    -- 养猫客 — 召唤小怪（Boss 专用）
-    -----------------------------------------------------------------
-    MOB_YANGMAOKE = {
-        name = "养猫客", weight = 1, boss_only = true,
-        on_update = function(inst, tier, mult, state)
-            -- 限制召唤数量
-            local spawned = 0
-            for _, v in ipairs(FindEnemies(inst, 30)) do
-                if v.prefab == "catcoon" and v.components.health then
-                    spawned = spawned + 1
-                end
-            end
-            local max_spawn = tier == "boss" and 4 or 2
-            if spawned >= max_spawn then return end
-            local x, y, z = inst.Transform:GetWorldPosition()
-            local cat = SpawnPrefab("catcoon")
-            if cat then
-                cat.Transform:SetPosition(x + math.random(-3, 3), y, z + math.random(-3, 3))
-                if cat.components.combat then
-                    cat.components.combat:SuggestTarget(inst.components.combat and inst.components.combat.target)
-                end
-            end
-        end,
-        update_period = 60,
-    },
-
-    -----------------------------------------------------------------
     -- 蝴蝶的小阿飞 — 减伤 + 击杀回血
     -----------------------------------------------------------------
     MOB_HUFEI = {
