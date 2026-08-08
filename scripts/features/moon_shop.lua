@@ -51,6 +51,50 @@ local shop_items = {
     { "papyrus",        { { "cutreeds",   40 } } },  -- 4x10
 }
 
+-- ------------------------------------------------------------------
+-- 商店配方本地化：标题 + 专属描述
+-- 标题：DST 制作栏按 STRINGS.NAMES[string.upper(recipe.name)] 查（craftingmenu_details.lua:253），
+--       缺失时 modmain 蓝图兜底会统一填「小月亮商店兑换」，故为每个 MoonShop_ 配方显式补名；
+--       numtogive > 1 时 UI 会自动在标题后拼 "(xN)"（NUMTOGIVEFMT），标题只写产品名。
+-- 描述：UI 按 recipe.description（优先）或 STRINGS.RECIPE_DESC[string.upper(recipe.product)]
+--       显示（craftingmenu_details.lua:362）。专属描述写进 recipe.description，
+--       避免覆盖原版/他 mod 的 RECIPE_DESC[product]（如 cutstone 会显示原版配方描述）。
+--       召唤群友（moon_qunyou_summon）由 scripts/features/moon_qunyou.lua 自行处理，不在此表。
+-- ------------------------------------------------------------------
+local shop_localization = {
+    ["MoonShop_cutstone"]                     = { name = "石砖",       desc = "30 个石头兑换 10 块石砖" },
+    ["MoonShop_boards"]                       = { name = "木板",       desc = "40 个木头兑换 10 块木板" },
+    ["MoonShop_rope"]                         = { name = "绳子",       desc = "30 个干草兑换 10 根绳子" },
+    ["MoonShop_papyrus"]                      = { name = "莎草纸",     desc = "40 个芦苇兑换 10 张莎草纸" },
+    ["MoonShop_opalpreciousgem_10"]           = { name = "彩虹宝石",   desc = "6 色宝石各 10 个，兑换 10 颗彩虹宝石" },
+    ["MoonShop_opalpreciousgem_100"]          = { name = "彩虹宝石",   desc = "6 色宝石各 100 个，兑换 100 颗彩虹宝石" },
+    ["MoonShop_alterguardian_phase4_lunarrift"] = { name = "天体后裔", desc = "100 水晶小人兑换天体后裔掉落物（需 HH 附魔模组）" },
+    ["MoonShop_stalker_atrium"]               = { name = "织影者",     desc = "100 水晶小人兑换织影者掉落物（需 HH 附魔模组）" },
+    ["MoonShop_alterguardian_phase1"]         = { name = "天体英雄",   desc = "100 水晶小人兑换天体英雄掉落物（需 HH 附魔模组）" },
+    ["MoonShop_crabking"]                     = { name = "帝王蟹",     desc = "100 水晶小人兑换帝王蟹掉落物（需 HH 附魔模组）" },
+    ["MoonShop_hoshino_item_travel_traces"]   = { name = "遍历之迹",   desc = "500 水晶小人兑换遍历之迹（需 HH 附魔模组 + 小鸟模组）" },
+    ["MoonShop_treasure_hh_treasure_tally_x1"]  = { name = "寻宝卷轴", desc = "50 金子兑换 1 张寻宝卷轴" },
+    ["MoonShop_treasure_hh_treasure_tally_x10"] = { name = "寻宝卷轴", desc = "500 金子兑换 10 张寻宝卷轴" },
+    ["MoonShop_white_soul_from_black_soul"]   = { name = "光明之魂",   desc = "3 个暗影之魂兑换 1 个光明之魂" },
+    ["MoonShop_black_soul_from_white_soul"]   = { name = "暗影之魂",   desc = "3 个光明之魂兑换 1 个暗影之魂" },
+    ["MoonShop_emojitan"]                     = { name = "恶魔祭坛",   desc = "虚空异界的远古祭坛" },
+    ["MoonShop_moonstorm_spark"]              = { name = "月熠",       desc = "5 个月亮碎片兑换 1 个月熠" },
+    ["MoonShop_shijizhihua_bulb"]             = { name = "世纪之花球茎", desc = "原地放置，召唤世纪之花" },
+}
+
+-- 标题/描述兜底 key（recipe.name 大写）在两端 mod 加载时写入（modmain 蓝图兜底只填缺失项，不会覆盖）
+if _G.STRINGS and _G.STRINGS.NAMES and _G.STRINGS.RECIPE_DESC then
+    for recipe_id, entry in pairs(shop_localization) do
+        local key = string.upper(recipe_id)
+        if _G.STRINGS.NAMES[key] == nil then
+            _G.STRINGS.NAMES[key] = entry.name
+        end
+        if entry.desc and _G.STRINGS.RECIPE_DESC[key] == nil then
+            _G.STRINGS.RECIPE_DESC[key] = entry.desc
+        end
+    end
+end
+
 local function InitMoonShop()
 
     -- 批量材料兑换: 精炼材料 x10 + 彩虹宝石
@@ -292,6 +336,17 @@ local function InitMoonShop()
                 filter_list
             )
             print("[小月亮商店] shijizhihua_bulb 配方注册成功")
+        end
+    end
+
+    -- 商店配方专属描述写入 recipe.description
+    -- （craftingmenu_details.lua:362 优先读 recipe.description，否则回落到 RECIPE_DESC[product] 显示原版配方描述）
+    if _G.AllRecipes then
+        for recipe_id, entry in pairs(shop_localization) do
+            local recipe = _G.AllRecipes[recipe_id]
+            if recipe and entry.desc and recipe.description == nil then
+                recipe.description = entry.desc
+            end
         end
     end
 end
