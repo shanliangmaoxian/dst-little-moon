@@ -421,7 +421,7 @@ configuration_options = {
     {
         name = "BAN_ITEMS",
         label = "禁用物品列表,在BAN_ITEMS表中添加",
-        hover = "在此表中添加要禁用的物品 prefab 名称，支持原版及 mod 物品。\n格式: {'prefab1','prefab2','prefab3'}\n被禁用的物品无法制作，现有的也会被移除并退还材料。\n留空表则不禁用任何物品。",
+        hover = "在此表中添加要禁用的物品 prefab 名称，支持原版及 mod 物品。\n格式: {'prefab1','prefab2|30','prefab3'}\n'prefab' 永久禁用; 'prefab|30' 表示禁用 30 个游戏日后自动解禁(从配置生效时起算,服务器重启不重置)。\n被禁用的物品无法制作，现有的也会被移除并退还材料。\n留空表则不禁用任何物品。",
         options = { {description = "在服务器mod配置中添加", data = {}} },
         default = {},
     },

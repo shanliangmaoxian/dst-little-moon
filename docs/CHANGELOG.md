@@ -2,6 +2,10 @@
 
 ## 1.17.5 - 2026-08-12
 
+### 新增
+- **物品禁用天数限制** — `BAN_ITEMS` 配置支持 `'prefab|N'` 格式：`'prefab'` 永久禁用；`'prefab|30'` 表示禁用 30 个游戏日后自动解禁（起始天数 = 配置生效时，随世界存档持久化，服务器重启不重置）。到期后自动恢复物品生成与配方（含原版配方的 canbuild 还原）
+  - 涉及文件：`scripts/features/ban_items.lua`、`scripts/components/moon_ban_timer.lua`（新增）、`modinfo.lua`
+
 ### 修复
 - **开局礼包** — 修复跨世界重复领取：已领记录原先只存 world 组件（随世界存档），地表/洞穴是两个独立 world 且各持独立 user session，玩家进洞穴（尤其退出重进）又能领一次。改为**集群共享文件**为权威：已领记录写入所有 shard 进程都能访问的同一份 TheSim 持久化文件（候选位置按序探测：主机模式 `InClusterSlot(slot,"Master")` → 专用服务器 `"../../"` 相对路径上跳至 cluster 根 → 逐级兜底，首个可读位置即共享位置，启动时打印 `[小月亮] 开局礼包共享存储位置` 便于排查）；**重置清零**：共享文件不随世界重置删除，故额外记录每个 shard 的 `session_identifier`（key 用 `TheShard:GetShardId()`，地表 "1"/各层 "2"/"3"…，支持多层世界），某 shard session 变化即判定该世界重建 → 已领记录作废 → 重置后可重新领取；world 组件仅作旧档兼容（老版本记录查询时同步进共享文件）；**数量修复**：发放改为逐个数生成，配置给多少就给足多少，不再受物品堆叠上限（maxsize）截断影响（此前 `math.min(count, maxsize)` 在堆叠上限被环境改变时会少发）
   - 涉及文件：`scripts/features/start_gift.lua`
