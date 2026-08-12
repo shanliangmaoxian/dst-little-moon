@@ -1,6 +1,7 @@
--- 小月亮 开局礼包 已领记录组件
+-- 小月亮 开局礼包 已领记录组件（旧档兼容用）
 -- 挂在 TheWorld 上，通过 OnSave/OnLoad 随世界存档持久化
--- 世界重新生成（实体重建）时 OnLoad 无数据，已领记录自动清零
+-- 权威记录在 start_gift.lua 的集群共享文件；本组件仅保留老版本（1.17.4-）的已领记录，
+-- 新版本首次查询时同步进共享文件后即可废弃。世界重新生成时 OnLoad 无数据，自动清零
 
 local MoonStartGiftStore = Class(function(self, inst)
     self.inst = inst
