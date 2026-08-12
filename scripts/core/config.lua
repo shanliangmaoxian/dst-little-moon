@@ -58,8 +58,5 @@ if not CFG.START_GIFT_PLANS or CFG.START_GIFT_PLANS == "" then
     CFG.START_GIFT_PLANS = "cutstone,10,all|goldnugget,5,wilson:::spear,1,all"
 end
 CFG.LOCK_RUN_SPEED           = GetModConfigData("LOCK_RUN_SPEED")
-CFG.ENABLE_AUTO_STACK        = GetModConfigData("ENABLE_AUTO_STACK")
-CFG.STACK_SIZE_MULTIPLIER    = GetModConfigData("STACK_SIZE_MULTIPLIER")
-CFG.ENABLE_MORE_STACKING     = GetModConfigData("ENABLE_MORE_STACKING")
 
 GLOBAL.MOON_CFG = CFG
