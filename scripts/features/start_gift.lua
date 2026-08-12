@@ -130,7 +130,19 @@ end
 
 local function GetMySession()
     local meta = _G.TheWorld and _G.TheWorld.meta
-    return meta and meta.session_identifier or nil
+    if meta and meta.session_identifier then
+        return meta.session_identifier
+    end
+    -- 本地游戏 session_identifier 不可靠（可能为 nil 或重置后不变）
+    -- 回退：用 world 组件自维护的 session ID，随世界存档持久化，重置自然清零
+    local store = GetStore()
+    if store then
+        if not store._session then
+            store._session = "ws" .. tostring(os.time())
+        end
+        return store._session
+    end
+    return nil
 end
 
 -- 共享读写候选（顺序即优先级）；shared_target 记录首次探测到的可用位置，写入复用同一路径
@@ -209,6 +221,12 @@ local function CheckWorldReset(data)
             data.claimed = {}
         end
         data.sessions[key] = my_session
+    else
+        -- session_identifier 不可用时（本地游戏）回退：world store 为空 + 共享文件有记录 = 世界重置
+        local store = GetStore()
+        if store and next(store:GetClaimed()) == nil and next(data.claimed) ~= nil then
+            data.claimed = {}
+        end
     end
 end
 

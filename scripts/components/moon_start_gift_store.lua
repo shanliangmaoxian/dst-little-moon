@@ -13,13 +13,21 @@ function MoonStartGiftStore:OnSave()
     for k, v in pairs(self.claimed) do
         save[k] = v
     end
-    return next(save) and { claimed = save } or nil
+    local data = {}
+    if next(save) then data.claimed = save end
+    if self._session then data._session = self._session end
+    return next(data) and data or nil
 end
 
 function MoonStartGiftStore:OnLoad(data)
-    if data and type(data.claimed) == "table" then
-        for k, v in pairs(data.claimed) do
-            self.claimed[k] = v
+    if data then
+        if type(data.claimed) == "table" then
+            for k, v in pairs(data.claimed) do
+                self.claimed[k] = v
+            end
+        end
+        if data._session then
+            self._session = data._session
         end
     end
 end
