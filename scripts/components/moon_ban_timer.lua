@@ -11,7 +11,8 @@ end)
 
 function MoonBanTimer:GetStartCycle()
     if not self.start_cycle then
-        self.start_cycle = GLOBAL.TheWorld.state.cycles or 0
+        -- 组件由引擎 require 加载(非 modimport 沙箱),无 GLOBAL; self.inst 即 TheWorld
+        self.start_cycle = self.inst.state.cycles or 0
     end
     return self.start_cycle
 end

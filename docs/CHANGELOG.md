@@ -7,6 +7,10 @@
   - 涉及文件：`scripts/features/ban_items.lua`、`scripts/components/moon_ban_timer.lua`（新增）、`modinfo.lua`
 
 ### 修复
+- **物品禁用启动崩溃** — 天数解析在 modimport 加载阶段调用裸 `tonumber`，沙箱环境中为 nil（strict 服务器直接崩溃，报错 `attempt to call global 'tonumber' (a nil value)`）。改为 `_G.tonumber`（加载阶段数字转换一律走 `_G.`，与 treasure.lua/quick_dig.lua 先例一致；运行时回调可用裸函数）
+  - 涉及文件：`scripts/features/ban_items.lua`
+- **物品禁用运行崩溃** — `moon_ban_timer` 组件 `GetStartCycle` 引用裸 `GLOBAL`：组件由引擎 `require` 加载（非 modimport 沙箱），strict 模式下 `GLOBAL` 未声明，世界加载后首个任务帧直接报 `variable 'GLOBAL' is not declared`。改为 `self.inst.state.cycles`（组件即挂在 TheWorld 上，无需全局；与 moon_mob_enhance 组件注释"require 加载 GLOBAL 不可用"同坑）
+  - 涉及文件：`scripts/components/moon_ban_timer.lua`
 - **开局礼包** — 修复跨世界重复领取：已领记录原先只存 world 组件（随世界存档），地表/洞穴是两个独立 world 且各持独立 user session，玩家进洞穴（尤其退出重进）又能领一次。改为**集群共享文件**为权威：已领记录写入所有 shard 进程都能访问的同一份 TheSim 持久化文件（候选位置按序探测：主机模式 `InClusterSlot(slot,"Master")` → 专用服务器 `"../../"` 相对路径上跳至 cluster 根 → 逐级兜底，首个可读位置即共享位置，启动时打印 `[小月亮] 开局礼包共享存储位置` 便于排查）；**重置清零**：共享文件不随世界重置删除，故额外记录每个 shard 的 `session_identifier`（key 用 `TheShard:GetShardId()`，地表 "1"/各层 "2"/"3"…，支持多层世界），某 shard session 变化即判定该世界重建 → 已领记录作废 → 重置后可重新领取；world 组件仅作旧档兼容（老版本记录查询时同步进共享文件）；**数量修复**：发放改为逐个数生成，配置给多少就给足多少，不再受物品堆叠上限（maxsize）截断影响（此前 `math.min(count, maxsize)` 在堆叠上限被环境改变时会少发）
   - 涉及文件：`scripts/features/start_gift.lua`
 

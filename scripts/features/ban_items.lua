@@ -6,7 +6,7 @@
 
 local _G = GLOBAL
 local ban_items = GetModConfigData("BAN_ITEMS")
--- local ban_items = {"bigpeach", "krampus", "spear", "raincoat", "moonrockseed"}
+-- local ban_items = {"bigpeach|1", "krampus", "spear|1", "raincoat", "moonrockseed"}
 
 -- 空表则跳过
 if not ban_items or type(ban_items) ~= "table" or #ban_items == 0 then
@@ -21,7 +21,8 @@ for _, v in ipairs(ban_items) do
         if prefab then
             prefab = prefab:match("^%s*(.-)%s*$") -- 去首尾空格
             if days_str:match("^%d+$") then
-                local days = tonumber(days_str)
+                -- 加载阶段沙箱无裸 tonumber,必须走 _G (见 MODDING_PITFALLS)
+                local days = _G.tonumber(days_str)
                 if days and days > 0 then
                     ban_map[prefab] = { days = days }
                 else
