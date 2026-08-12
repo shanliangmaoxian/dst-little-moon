@@ -1,8 +1,11 @@
 -- 小月亮 开局礼包（服务端）
 -- 玩家进服后可自选领取一次开局礼包（方案数由配置决定，全服仅一次）
 -- 配置格式: 物品,数量,角色|物品,数量,角色:::方案2...（角色 all=所有人 或 角色prefab）
--- 已领记录随世界存档持久化（moon_start_gift_store 组件 OnSave/OnLoad）
--- 重新生成世界自动清零；地表/洞穴各自记录
+-- 已领记录三级：
+--   1. 集群共享文件（权威，见下）—— 地表/洞穴两个 shard 进程读写同一份记录，真共享
+--   2. world 组件 moon_start_gift_store —— 随当前世界存档持久化，旧档兼容/本世界兜底
+--   3. 玩家实体标记（OnSave/OnLoad）—— 在线传送（shard 迁移）时跟随玩家实体的即时兜底
+-- 重置世界后共享文件里记录的 session_identifier 与当前不符 → 记录自动作废，新世界可重新领取
 
 local _G = GLOBAL
 local CFG = _G.MOON_CFG
@@ -88,6 +91,164 @@ AddPrefabPostInit("world", function(inst)
 end)
 
 -- ------------------------------------------------------------------
+-- 集群共享已领记录（地表/洞穴真共享）
+-- DST 地表(Master)与洞穴(Caves)是两个独立进程，各持独立 user session / 世界存档，
+-- 玩家“退出重进另一世界”时读不到另一边的记录。已领记录写入两进程都能访问的同一份
+-- TheSim 持久化文件，候选位置按序探测（首个能读到的即共享位置，两进程选同一路径）：
+--   1) InClusterSlot(slot, "Master") —— 主机模式（slot 非 0）可靠共享（LoadShardInSlot 同款）
+--   2) "../../" —— 专用服务器 TheSim 根为 <cluster>/<shard>/save/，上两级即 cluster 根（两 shard 共享）
+--   3) "../" —— 退一级（shard 目录，仅兜底）
+--   4) 本 shard 根 —— 不共享，最后兜底
+-- 文件里记录地表/洞穴各自的 session_identifier：世界重置后 session 变化 → 记录作废，
+-- 新世界可重新领取（维持原设计行为）。
+-- ------------------------------------------------------------------
+local SHARED_KEY = "moon_gift_claims_v1"
+
+-- 集群 slot 号：仅主机模式（cluster slot）非 0；专用服务器 ShardIndex:Load 传 0/nil，视为无 slot
+local function GetSharedSlot()
+    local s = _G.ShardGameIndex and _G.ShardGameIndex:GetSlot()
+    if s and s ~= 0 then return s end
+    s = _G.SaveGameIndex and _G.SaveGameIndex:GetCurrentSaveSlot()
+    if s and s ~= 0 then return s end
+    return nil
+end
+
+-- 当前 shard 的唯一标识（session 字段 key）
+-- 不能用 surface/caves 二分：多层洞穴世界（3+ shard）会共用 "caves" 字段，洞穴A 写入
+-- session 后，洞穴B 读到 sessions.caves 与自己不同 → 误判世界重置 → 清空记录 → 又能领。
+-- TheShard:GetShardId() 是每进程唯一 id（地表 "1"、各洞穴层 "2"/"3"...，配置值，重置后不变），
+-- 适合做 key；加 "s" 前缀防数字/字符串混淆
+local function GetShardKey()
+    local sid = _G.TheShard and _G.TheShard.GetShardId and _G.TheShard:GetShardId()
+    if sid then
+        return "s" .. tostring(sid)
+    end
+    -- 兜底（理论上不会走到）：官方洞穴判断 TheWorld:HasTag("cave")
+    if _G.TheWorld and _G.TheWorld.HasTag and _G.TheWorld:HasTag("cave") then
+        return "caves"
+    end
+    return "surface"
+end
+
+local function GetMySession()
+    local meta = _G.TheWorld and _G.TheWorld.meta
+    return meta and meta.session_identifier or nil
+end
+
+-- 共享读写候选（顺序即优先级）；shared_target 记录首次探测到的可用位置，写入复用同一路径
+local shared_target = nil
+
+local function BuildSharedOps()
+    local ops = {}
+    local slot = GetSharedSlot()
+    if slot then
+        table.insert(ops, { name = "slot:" .. tostring(slot) .. "/Master/" .. SHARED_KEY,
+            read = function(cb) _G.TheSim:GetPersistentStringInClusterSlot(slot, "Master", SHARED_KEY, cb) end,
+            write = function(str) _G.TheSim:SetPersistentStringInClusterSlot(slot, "Master", SHARED_KEY, str, false, nil) end })
+    end
+    table.insert(ops, { name = "../../" .. SHARED_KEY,
+        read = function(cb) _G.TheSim:GetPersistentString("../../" .. SHARED_KEY, cb, false) end,
+        write = function(str) _G.TheSim:SetPersistentString("../../" .. SHARED_KEY, str, false, nil) end })
+    table.insert(ops, { name = "../" .. SHARED_KEY,
+        read = function(cb) _G.TheSim:GetPersistentString("../" .. SHARED_KEY, cb, false) end,
+        write = function(str) _G.TheSim:SetPersistentString("../" .. SHARED_KEY, str, false, nil) end })
+    table.insert(ops, { name = SHARED_KEY,
+        read = function(cb) _G.TheSim:GetPersistentString(SHARED_KEY, cb, false) end,
+        write = function(str) _G.TheSim:SetPersistentString(SHARED_KEY, str, false, nil) end })
+    return ops
+end
+
+-- 读共享已领记录（异步；success=true 即接受——含空数据，避免探测跳到不共享的后备位置）
+local function ReadShared(cb)
+    local ops = BuildSharedOps()
+    local function try(i)
+        if not ops[i] then
+            cb({ sessions = {}, claimed = {} })
+            return
+        end
+        ops[i].read(function(success, str)
+            if success then
+                if not shared_target then
+                    shared_target = ops[i]
+                    print("[小月亮] 开局礼包共享存储位置: " .. tostring(ops[i].name))
+                end
+                local data = { sessions = {}, claimed = {} }
+                if type(str) == "string" and str ~= "" then
+                    local ok, parsed = _G.pcall(_G.json.decode, str)
+                    if ok and type(parsed) == "table" then
+                        data = parsed
+                        if type(data.sessions) ~= "table" then data.sessions = {} end
+                        if type(data.claimed) ~= "table" then data.claimed = {} end
+                    end
+                end
+                cb(data)
+            else
+                try(i + 1)
+            end
+        end)
+    end
+    try(1)
+end
+
+local function WriteShared(data)
+    local target = shared_target or (BuildSharedOps())[1]
+    if target then
+        if not shared_target then
+            shared_target = target
+            print("[小月亮] 开局礼包共享存储位置(写入时选定): " .. tostring(target.name))
+        end
+        target.write(_G.json.encode(data))
+    end
+end
+
+-- 世界重置检测：本 shard 的 session 与共享记录不一致 → 世界被重置过 → 已领作废
+local function CheckWorldReset(data)
+    local key = GetShardKey()
+    local my_session = GetMySession()
+    if my_session then
+        if data.sessions[key] and data.sessions[key] ~= my_session then
+            data.claimed = {}
+        end
+        data.sessions[key] = my_session
+    end
+end
+
+-- ------------------------------------------------------------------
+-- 玩家实体已领标记（在线迁移/共享文件不可用时的兜底）
+-- 玩家实体的 OnSave 数据随 user session 持久化，shard 迁移（地表↔洞穴）时跟随玩家；
+-- 权威记录是上面的集群共享文件，此处仅作兜底。
+-- ------------------------------------------------------------------
+-- 领取防重入集合（异步读共享文件期间拒绝重复请求，防连点双发）
+local claim_pending = {}
+
+AddPlayerPostInit(function(player)
+    if not (player and player.ismastersim) then return end
+    player._moon_start_gift_claimed = false
+    -- 玩家离开时清理挂起的领取请求，防 userid 残留导致重进后永久被拒
+    player:ListenForEvent("onremove", function()
+        if player.userid then claim_pending[player.userid] = nil end
+    end)
+
+    local old_OnSave = player.OnSave
+    player.OnSave = function(player, data, ...)
+        if old_OnSave then old_OnSave(player, data, ...) end
+        if data then
+            data.moon_start_gift_claimed = player._moon_start_gift_claimed
+        end
+    end
+
+    local old_OnLoad = player.OnLoad
+    player.OnLoad = function(player, data, ...)
+        if old_OnLoad then old_OnLoad(player, data, ...) end
+        if data and type(data.moon_start_gift_claimed) == "string" then
+            player._moon_start_gift_claimed = data.moon_start_gift_claimed
+        else
+            player._moon_start_gift_claimed = false
+        end
+    end
+end)
+
+-- ------------------------------------------------------------------
 -- 发放
 -- ------------------------------------------------------------------
 -- 背包满等 GiveItem 失败时，把物品放到玩家脚下（GetWorldPosition 返回多值，直接多值接收）
@@ -170,21 +331,38 @@ local function PlanItemsFor(plan_id)
 end
 
 -- 查询可用方案与领取状态（客户端打开弹窗时调用）
+-- 已领状态从集群共享文件实时读取（异步），地表/洞穴读到同一份记录
 AddModRPCHandler("LittleMoon", "GetStartGiftPlans", function(player)
     if not player or not _G.TheWorld or not _G.TheWorld.ismastersim then return end
-    local result = {
-        plans = PLAN_LIST,
-        labels = PLAN_LABELS,
-        contents = {},
-        claimed = GetStore() and GetStore():GetClaimed()[player.userid] or false,
-    }
-    for _, pid in ipairs(PLAN_LIST) do
-        result.contents[pid] = PlanItemsFor(pid)
-    end
-    local rpc = _G.CLIENT_MOD_RPC
-    if rpc and rpc["LittleMoon"] and rpc["LittleMoon"]["StartGiftPlansResponse"] and _G.json then
-        _G.SendModRPCToClient(rpc["LittleMoon"]["StartGiftPlansResponse"], player.userid, _G.json.encode(result))
-    end
+    ReadShared(function(data)
+        CheckWorldReset(data)
+        local claimed = data.claimed[player.userid] or false
+        if not claimed then
+            -- 旧档迁移：老版本记录在 world store / 玩家标记，借本次查询同步进共享文件
+            local store = GetStore()
+            claimed = store and store:GetClaimed()[player.userid] or false
+            if not claimed and player._moon_start_gift_claimed then
+                claimed = player._moon_start_gift_claimed
+            end
+            if claimed then
+                data.claimed[player.userid] = claimed
+                WriteShared(data)
+            end
+        end
+        local result = {
+            plans = PLAN_LIST,
+            labels = PLAN_LABELS,
+            contents = {},
+            claimed = claimed,
+        }
+        for _, pid in ipairs(PLAN_LIST) do
+            result.contents[pid] = PlanItemsFor(pid)
+        end
+        local rpc = _G.CLIENT_MOD_RPC
+        if rpc and rpc["LittleMoon"] and rpc["LittleMoon"]["StartGiftPlansResponse"] and _G.json then
+            _G.SendModRPCToClient(rpc["LittleMoon"]["StartGiftPlansResponse"], player.userid, _G.json.encode(result))
+        end
+    end)
 end)
 
 -- 回执给客户端（成功/失败），用于回滚乐观置灰
@@ -195,7 +373,7 @@ local function SendClaimResponse(player, ok, plan)
     end
 end
 
--- 领取指定方案
+-- 领取指定方案（异步读共享文件，判定+写入同一回调内完成）
 AddModRPCHandler("LittleMoon", "ClaimStartGift", function(player, plan)
     if not player or not _G.TheWorld or not _G.TheWorld.ismastersim then return end
     local userid = player.userid
@@ -206,24 +384,42 @@ AddModRPCHandler("LittleMoon", "ClaimStartGift", function(player, plan)
         _G.Moon_Say(player, "礼包数据加载中，请稍后再试")
         return
     end
-    if store:GetClaimed()[userid] then
-        _G.Moon_Say(player, "你已经领取过开局礼包了")
-        SendClaimResponse(player, false, plan)
-        return
-    end
     if type(plan) ~= "string" or not PLAN_DATA[plan] then
         _G.Moon_Say(player, "无效的礼包方案")
         SendClaimResponse(player, false, plan)
         return
     end
-
-    if not GivePlan(player, plan) then
-        _G.Moon_Say(player, "礼包发放失败，该礼包是专属礼包或物品不存在")
-        SendClaimResponse(player, false, plan)
+    -- 防重入：同一玩家已有领取请求在处理中（异步读共享文件期间），直接拒绝
+    if claim_pending[userid] then
+        _G.Moon_Say(player, "礼包发放中，请稍候")
         return
     end
+    claim_pending[userid] = true
 
-    store:SetClaimed(userid, plan)
-    _G.Moon_Say(player, "已领取" .. (PLAN_LABELS[plan] or plan) .. "！")
-    SendClaimResponse(player, true, plan)
+    ReadShared(function(data)
+        claim_pending[userid] = nil
+        -- 玩家在异步读取期间离开：实体失效，放弃处理
+        if not player:IsValid() then return end
+        CheckWorldReset(data)
+        -- 已领判定：共享文件（权威）→ world store（旧档）→ 玩家标记（兜底）
+        local claimed = data.claimed[userid] or store:GetClaimed()[userid] or player._moon_start_gift_claimed
+        if claimed then
+            _G.Moon_Say(player, "你已经领取过开局礼包了")
+            SendClaimResponse(player, false, plan)
+            return
+        end
+
+        if not GivePlan(player, plan) then
+            _G.Moon_Say(player, "礼包发放失败，该礼包是专属礼包或物品不存在")
+            SendClaimResponse(player, false, plan)
+            return
+        end
+
+        data.claimed[userid] = plan
+        WriteShared(data)
+        store:SetClaimed(userid, plan)
+        player._moon_start_gift_claimed = plan
+        _G.Moon_Say(player, "已领取" .. (PLAN_LABELS[plan] or plan) .. "！")
+        SendClaimResponse(player, true, plan)
+    end)
 end)
