@@ -74,7 +74,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 毛旭 — 血量提升
     -----------------------------------------------------------------
     MOB_MX_HEALTH = {
-        name = "毛旭", weight = 3, boss_only = false,
+        name = "毛旭", desc = "最大生命提升（Boss +30% / 普通怪 +500，按难度倍率）", weight = 3, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             local health = inst.components.health
             if not health then return end
@@ -94,7 +94,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 月半 — HP 附加伤害 + 受击 AoE
     -----------------------------------------------------------------
     MOB_YUEBAN = {
-        name = "月半", weight = 2, boss_only = false,
+        name = "月半", desc = "攻击附带自身生命值5%伤害；受击概率范围震击", weight = 2, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._cooldown = 0
         end,
@@ -130,7 +130,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 山竹的捏 — 护盾吸收 + 破盾 AoE
     -----------------------------------------------------------------
     MOB_SHANZHU = {
-        name = "山竹的捏", weight = 2, boss_only = false,
+        name = "山竹的捏", desc = "护盾吸收60%伤害；破盾时范围伤害并回血", weight = 2, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             local health = inst.components.health
             if not health then return end
@@ -171,7 +171,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 哎哟 — 受击回血 + 反伤 + 击杀冲击波
     -----------------------------------------------------------------
     MOB_AIYO = {
-        name = "哎哟", weight = 2, boss_only = false,
+        name = "哎哟", desc = "受击60%概率回血并反伤；击杀范围冲击", weight = 2, boss_only = false,
         on_attacked = function(inst, attacker, damage, tier, mult, state)
             if not inst.components.health then return end
             -- 60% 概率回血
@@ -203,7 +203,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 胖虎 — 攻击概率 AoE 音波
     -----------------------------------------------------------------
     MOB_PANGHU = {
-        name = "胖虎", weight = 2, boss_only = false,
+        name = "胖虎", desc = "攻击15%概率音波范围伤害", weight = 2, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if math.random() > 0.15 then return end
             local dmg = tier == "boss" and (inst.components.health and inst.components.health.maxhealth * 0.05 * mult or 500) or 200 * mult
@@ -218,7 +218,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 急冻冻 — 冰冻 + 冰爆
     -----------------------------------------------------------------
     MOB_WJBD = {
-        name = "急冻冻", weight = 2, boss_only = false,
+        name = "急冻冻", desc = "攻击概率冰冻目标并引发冰爆", weight = 2, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if not IsValidTarget(inst, target) then return end
             local chance = tier == "boss" and 0.15 or 0.2
@@ -241,7 +241,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 草莓奶昔 — 周期性回血 + 减速攻击者
     -----------------------------------------------------------------
     MOB_STRAWBERRY = {
-        name = "草莓奶昔", weight = 3, boss_only = false,
+        name = "草莓奶昔", desc = "持续回血；受击减速攻击者", weight = 3, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._heal_amount = tier == "boss" and 0.03 or 0.05
         end,
@@ -268,7 +268,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 萝的守护 — 免伤 + 叠层减伤
     -----------------------------------------------------------------
     MOB_LUO = {
-        name = "萝的守护", weight = 2, boss_only = false,
+        name = "萝的守护", desc = "常驻50%减伤，受击叠加减伤最高25%", weight = 2, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._stacks = 0
             if inst.components.combat then
@@ -288,7 +288,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 等秋零 — 攻击力 + 移速 + 受击免疫
     -----------------------------------------------------------------
     MOB_DENGQIUHING = {
-        name = "等秋零", weight = 3, boss_only = false,
+        name = "等秋零", desc = "提升攻击力与移动速度", weight = 3, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             if inst.components.combat then
                 local base = inst.components.combat.defaultdamage or 10
@@ -310,7 +310,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 妖精庇护 — % 已损失生命真伤
     -----------------------------------------------------------------
     MOB_FAY = {
-        name = "妖精庇护", weight = 2, boss_only = false,
+        name = "妖精庇护", desc = "攻击附带目标已损失生命值8%伤害", weight = 2, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if not IsValidTarget(inst, target) then return end
             local target_health = target.components.health
@@ -327,7 +327,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 篮球 — 连击同一目标增伤
     -----------------------------------------------------------------
     MOB_LANQIU = {
-        name = "篮球", weight = 1, boss_only = false,
+        name = "篮球", desc = "连击同一目标叠层，叠满额外增伤", weight = 1, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._target = nil
             state._combo = 0
@@ -361,7 +361,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 空白 — 清除目标增益
     -----------------------------------------------------------------
     MOB_KONGBAI = {
-        name = "空白", weight = 1, boss_only = false,
+        name = "空白", desc = "概率清除目标增益并造成额外伤害", weight = 1, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if not IsValidTarget(inst, target) then return end
             if math.random() > 0.6 then return end
@@ -386,7 +386,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 是萌新喵 — 免死 + 高血量增伤
     -----------------------------------------------------------------
     MOB_MXM = {
-        name = "是萌新喵", weight = 1, boss_only = false,
+        name = "是萌新喵", desc = "攻击高血量目标（>70%）附加伤害", weight = 1, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             if tier == "boss" then
                 state._death_defiance_left = 3
@@ -409,7 +409,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 酸酸草 — 酸蚀叠层减防
     -----------------------------------------------------------------
     MOB_SUANSUANCAO = {
-        name = "酸酸草", weight = 2, boss_only = false,
+        name = "酸酸草", desc = "攻击叠加酸蚀降低目标防御并造成真伤", weight = 2, boss_only = false,
         on_attack = function(inst, target, tier, mult, state)
             if not IsValidTarget(inst, target) then return end
             if not target.components.combat then return end
@@ -427,7 +427,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 七步之外 — 攻击距离增加
     -----------------------------------------------------------------
     MOB_CHANGPI = {
-        name = "七步之外", weight = 3, boss_only = false,
+        name = "七步之外", desc = "攻击距离增加", weight = 3, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             if inst.components.combat then
                 local range_bonus = tier == "boss" and 4 or 2
@@ -440,7 +440,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 良弓藏 — 自动远程攻击（Boss 专用）
     -----------------------------------------------------------------
     MOB_LIANGGONGCANG = {
-        name = "良弓藏", weight = 1, boss_only = true,
+        name = "良弓藏", desc = "每30秒自动远程攻击附近敌人", weight = 1, boss_only = true,
         on_update = function(inst, tier, mult, state)
             -- 找最近的敌人射箭
             local nearest = nil
@@ -466,7 +466,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 蝴蝶的小阿飞 — 减伤 + 击杀回血
     -----------------------------------------------------------------
     MOB_HUFEI = {
-        name = "蝴蝶的小阿飞", weight = 2, boss_only = false,
+        name = "蝴蝶的小阿飞", desc = "常驻20%减伤；击杀恢复生命", weight = 2, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             if inst.components.combat then
                 inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst, 0.8, "mob_hufei")
@@ -484,7 +484,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 咕咕咕 — 闪避反击
     -----------------------------------------------------------------
     MOB_GUGUGU = {
-        name = "咕咕咕", weight = 1, boss_only = false,
+        name = "咕咕咕", desc = "受击42%概率闪避并反击", weight = 1, boss_only = false,
         on_attacked = function(inst, attacker, damage, tier, mult, state)
             if not attacker or not attacker:IsValid() then return end
             -- 42% 概率触发：反击（攻击者免疫反伤则不反击）
@@ -500,7 +500,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 云中雀 — 周期性爆发
     -----------------------------------------------------------------
     MOB_YZQ = {
-        name = "云中雀", weight = 1, boss_only = false,
+        name = "云中雀", desc = "每8秒范围爆发伤害", weight = 1, boss_only = false,
         on_update = function(inst, tier, mult, state)
             -- 每 8 秒爆发一次
             local dmg = (inst.components.combat and inst.components.combat.defaultdamage * 3.5 or 100) * mult
@@ -516,7 +516,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 紫蝶分身 — 攻击召唤分身
     -----------------------------------------------------------------
     MOB_ZIDIE = {
-        name = "紫蝶分身", weight = 1, boss_only = false,
+        name = "紫蝶分身", desc = "攻击概率召唤弱化分身助战（上限2）", weight = 1, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._clone_count = 0
         end,
@@ -548,7 +548,7 @@ _G.MOON_MOB_ENCHANTS = {
     -- 君可知 — 限伤 + 反击（与防御层互补）
     -----------------------------------------------------------------
     MOB_JUNJUN = {
-        name = "君可知", weight = 1, boss_only = false,
+        name = "君可知", desc = "受击时范围反击敌人", weight = 1, boss_only = false,
         on_apply = function(inst, tier, mult, state)
             state._last_roar = 0
         end,

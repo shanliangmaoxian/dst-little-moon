@@ -164,6 +164,8 @@ end
 function MoonMobEnhance:_ApplyEnchant(eid, cfg)
     if self.enchants[eid] then return end  -- 防重复
 
+    self._enchant_order = self._enchant_order or {}
+    table.insert(self._enchant_order, eid)
     self.enchants[eid] = { state = {}, cfg = cfg }
     local state = self.enchants[eid].state
 
@@ -234,31 +236,33 @@ end
 function MoonMobEnhance:_ApplyVisuals()
     local inst = self.inst
 
-    -- 构建附魔名字列表
-    local enchant_names = {}
-    for eid, data in pairs(self.enchants) do
-        if data.cfg and data.cfg.name then
-            table.insert(enchant_names, data.cfg.name)
+    -- 构建附魔描述行: "名字：详情"（按获得顺序）
+    local function BuildDescLines(enchants, order)
+        local lines = {}
+        for _, eid in ipairs(order or {}) do
+            local data = enchants[eid]
+            if data and data.cfg and data.cfg.name then
+                local line = data.cfg.name
+                if data.cfg.desc then
+                    line = line .. "：" .. data.cfg.desc
+                end
+                table.insert(lines, line)
+            end
         end
+        return lines
     end
-    local suffix = #enchant_names > 0 and " [" .. table.concat(enchant_names, "+") .. "]" or ""
 
     if self.hh_enabled then
         -- HH 面板激活时：通过 GetHHSpDesc01 扩展点注入
         inst.GetHHSpDesc01 = function(ent, player)
             local comp = ent.components.moon_mob_enhance
             if not comp then return nil end
-            local names = {}
-            for eid, data in pairs(comp.enchants) do
-                if data.cfg and data.cfg.name then
-                    table.insert(names, data.cfg.name)
-                end
-            end
-            if #names == 0 then return nil end
-            local title = comp.tier == "boss" and "[月之首领]" or "[月之强化]"
+            local lines = BuildDescLines(comp.enchants, comp._enchant_order)
+            if #lines == 0 then return nil end
+            local title = "月化"
             local color = comp.tier == "boss" and {255, 200, 100, 255} or {180, 120, 255, 255}
             return {
-                desc = table.concat(names, " + "),
+                desc = table.concat(lines, "\n"),
                 title = title,
                 color = color,
             }
@@ -267,10 +271,14 @@ function MoonMobEnhance:_ApplyVisuals()
         -- HH 未启用：覆盖检查文本
         if inst.components.inspectable then
             local old_desc = inst.components.inspectable.getdescriptionfn
-            local tier_label = self.tier == "boss" and "[月之首领]" or "[月之强化]"
+            local tier_label = "月化"
             inst.components.inspectable.getdescriptionfn = function(inst, viewer)
                 local base = (old_desc and old_desc(inst, viewer)) or ""
-                return "[月]" .. base .. "\n" .. tier_label .. suffix
+                local lines = { "[月]" .. base, tier_label }
+                for _, line in ipairs(BuildDescLines(self.enchants, self._enchant_order)) do
+                    table.insert(lines, line)
+                end
+                return table.concat(lines, "\n")
             end
         end
     end
@@ -314,6 +322,7 @@ function MoonMobEnhance:OnDeath()
         end
     end
     self.enchants = {}
+    self._enchant_order = nil
 
     -- 还原 DoDelta
     if self._defense_hooked and self._origin_DoDelta then
