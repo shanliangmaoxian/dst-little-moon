@@ -1,5 +1,15 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.17.6 - 2026-08-15
+
+### 修改
+- **怪物强化** — 「娱乐」难度选项移除，改为独立配置项「怪物附魔几率」(`MOB_ENCHANT_CHANCE`)：难度选项恢复 简单/普通/困难/噩梦；新增几率选项 10%/25%/50%/75%/100%（默认 100%，与原行为兼容），几率与难度解耦——通过几率判定后仍按所选难度抽取附魔数
+  - 涉及文件：`modinfo.lua`、`scripts/core/config.lua`、`scripts/features/mob_enhance/init.lua`
+- **怪物强化** — 附魔详情显示：21 个怪物附魔新增 `desc` 描述字段，HH 面板与检查文本由仅显示附魔名字改为逐行显示「附魔名：详情」（按获得顺序 `_enchant_order`，替代原 `pairs` 随机顺序）
+  - 涉及文件：`scripts/features/mob_enhance/enchants_pool.lua`、`scripts/components/moon_mob_enhance.lua`
+- **怪物强化** — 标签简化：`[月之强化]`/`[月之首领]` 统一改为 `月化`（去掉方括号，Boss 与普通怪一致，HH 面板仍以标题颜色区分）
+  - 涉及文件：`scripts/components/moon_mob_enhance.lua`
+
 ## 1.17.5 - 2026-08-12
 
 ### 新增
