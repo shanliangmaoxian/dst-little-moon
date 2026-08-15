@@ -159,15 +159,27 @@ configuration_options = {
     {
         name = "MOB_ENHANCE_LEVEL",
         label = "强化难度",
-        hover = "难度越高，怪物的附魔效果越强。附魔数 = 娱乐10%几率1 / 简单1 / 普通3 / 困难5 / 噩梦7，Boss和普通怪共用此难度",
+        hover = "难度越高，怪物的附魔效果越强。附魔数 = 简单1 / 普通3 / 困难5 / 噩梦7，Boss和普通怪共用此难度",
         options = {
-            { description = "娱乐 (×0.5, 10%几率1附魔)", data = "fun" },
             { description = "简单 (×0.6, 共1附魔)", data = "easy" },
             { description = "普通 (×1.0, 共3附魔)", data = "normal" },
             { description = "困难 (×3.0, 共5附魔)", data = "hard" },
             { description = "噩梦 (×5.0, 共7附魔)", data = "nightmare" },
         },
         default = "normal",
+    },
+    {
+        name = "MOB_ENCHANT_CHANCE",
+        label = "怪物附魔几率",
+        hover = "怪物获得附魔的概率。100% 时所有被强化的怪物必定获得附魔，调低后仅部分怪物获得附魔（需开启怪物强化）",
+        options = {
+            { description = "10%", data = 0.1 },
+            { description = "25%", data = 0.25 },
+            { description = "50%", data = 0.5 },
+            { description = "75%", data = 0.75 },
+            { description = "100%", data = 1.0 },
+        },
+        default = 1.0,
     },
 
     AddTitle("怪物强化 — 防御层"),

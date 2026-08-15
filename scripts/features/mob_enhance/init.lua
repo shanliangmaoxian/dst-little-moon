@@ -26,8 +26,6 @@ local MOON_MOB_ENCHANTS = _G.MOON_MOB_ENCHANTS or {}
 -- 1. 难度配置
 -- =====================================================================
 local DIFFICULTY = {
-    -- chance 存在时表示概率型难度: 只有 chance 几率获得 enchant_count 个附魔
-    fun       = { mult = 0.5, enchant_count = 1, chance = 0.1 },
     easy      = { mult = 0.6, enchant_count = 1 },
     normal    = { mult = 1.0, enchant_count = 3 },
     hard      = { mult = 3.0, enchant_count = 5 },
@@ -107,12 +105,14 @@ local function RollEnchants(tier)
         end
     end
 
-    -- 确定抽取数量（Boss 与普通怪一致，由难度直接决定，不再叠加额外附魔）
-    local count = diff_cfg.enchant_count  -- fun 10%几率1 / easy 1 / normal 3 / hard 5 / nightmare 7
-    -- 概率型难度（娱乐级）: 只有 chance 几率获得附魔
-    if diff_cfg.chance then
-        count = (math.random() < diff_cfg.chance) and diff_cfg.enchant_count or 0
+    -- 附魔几率（独立配置项 MOB_ENCHANT_CHANCE）: 未通过则本次不附魔
+    local chance = CFG.MOB_ENCHANT_CHANCE or 1.0
+    if chance < 1.0 and math.random() > chance then
+        return {}
     end
+
+    -- 确定抽取数量（Boss 与普通怪一致，由难度直接决定，不再叠加额外附魔）
+    local count = diff_cfg.enchant_count  -- easy 1 / normal 3 / hard 5 / nightmare 7
     count = math.min(count, #pool)
 
     if count <= 0 then return {} end
