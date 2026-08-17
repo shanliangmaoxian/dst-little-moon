@@ -3,14 +3,8 @@
 ## 1.18.0 - 2026-08-17
 
 ### 新增
-- **模组介绍 (Mod浏览器)** — 集成 demo/dst-mod-browser-master 的浏览器界面到助手面板：面板顶部新增「模组介绍」折叠 section，按钮打开烹饪指南风格的 Mod 列表界面（已收集/未收集 tab、Mod 网格、详情面板、打开Wiki/打开Steam工坊按钮），列出服务器当前使用的 Mod
-- **模组介绍开关** — 新增配置项 `ENABLE_MOD_BROWSER`（默认开启，label「开启模组介绍」）：关闭后在助手面板隐藏模组介绍 section；modmain UI 加载条件追加 `ENABLE_MOD_BROWSER`，即使其他面板功能全部关闭，只要开启模组介绍面板仍会加载
-- **Wiki 链接切换** — 所有 Mod 的 wiki 地址统一改为新站点 `https://dst.9yue.dpdns.org/#<id>`（id 来自 `docs/modwiki.md`，共 90 个 Mod，与线上 `/api/wikis` 一致），替换原 docs.qq.com / alan.plus / flapi / modwikis 等外部链接；首条目「联机版wiki」指向新站点首页
-  - 涉及文件：`scripts/widgets/modbrowserscreen.lua`（新增）、`scripts/widgets/little_moon_panel.lua`、`scripts/ui/moon_panel.lua`、`modinfo.lua`、`scripts/core/config.lua`、`modmain.lua`、`docs/modwiki.md`（数据源）
+- **模组介绍 (Mod浏览器)** — 新增mod wiki网站介绍模块
 
-### 修改
-- **模组介绍界面** — 移除英文语言包，仅保留中文：`LANG` 表去 `en`/`zh` 嵌套直接作为顶层中文表，删除 `language` 参数与所有语言判断分支
-  - 涉及文件：`scripts/widgets/modbrowserscreen.lua`
 
 ## 1.17.6 - 2026-08-15
 
