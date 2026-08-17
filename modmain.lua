@@ -113,7 +113,7 @@ modimport("scripts/enchants/epsilon")
 -- 4. UI 界面 (仅当任一相关功能启用时加载)
 -- ------------------------------------------------------------------
 local CFG = GLOBAL.MOON_CFG
-if CFG.ENABLE_TREASURE or CFG.ENABLE_QL_HELPER or CFG.ENABLE_AUTO_PICKUP or CFG.ENABLE_SUICIDE or CFG.ENABLE_MORE_ENCHANTS or CFG.ENABLE_DEATH_STATS or CFG.ENABLE_QUICK_CHAT then
+if CFG.ENABLE_TREASURE or CFG.ENABLE_QL_HELPER or CFG.ENABLE_AUTO_PICKUP or CFG.ENABLE_SUICIDE or CFG.ENABLE_MORE_ENCHANTS or CFG.ENABLE_DEATH_STATS or CFG.ENABLE_QUICK_CHAT or CFG.ENABLE_MOD_BROWSER then
     modimport("scripts/ui/moon_button")
     modimport("scripts/ui/moon_panel")
 end

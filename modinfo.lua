@@ -1,7 +1,7 @@
 name = "小月亮 (Little Moon)"
 description = "提取自特定Mod的召唤功能：小月亮按钮及召唤面板"
 author = "九月"
-version = "1.17.6"
+version = "1.18.0"
 api_version = 10
 priority = 1000
 dst_compatible = true
@@ -394,6 +394,18 @@ configuration_options = {
         name = "ENABLE_QUICK_CHAT",
         label = "开启快捷发言",
         hover = "是否在助手面板中显示快捷发言输入框",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
+
+    AddTitle("模组介绍"),
+    {
+        name = "ENABLE_MOD_BROWSER",
+        label = "开启模组介绍",
+        hover = "在助手面板中显示模组浏览器，查看服务器 Mod 的 Wiki 介绍",
         options = {
             { description = "开启", data = true },
             { description = "关闭", data = false },

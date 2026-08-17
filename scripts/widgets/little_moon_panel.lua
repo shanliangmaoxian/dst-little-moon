@@ -85,7 +85,7 @@ local function CreateSectionTitle(parent, text, onClick)
 	return w, label
 end
 
-local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat, enable_death_stats)
+local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, enable_treasure, enable_ql_helper, enable_auto_pickup, enable_suicide, dig_treasure_mode, enable_quick_chat, enable_death_stats, enable_mod_browser)
 	Widget._ctor(self, "LittleMoonPanel")
 
 	self.owner = owner
@@ -97,6 +97,7 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.dig_treasure_mode = dig_treasure_mode or 0
 	self.enable_quick_chat = enable_quick_chat ~= false
 	self.enable_death_stats = enable_death_stats ~= false
+	self.enable_mod_browser = enable_mod_browser ~= false
 
 	self.drag_move_handler = nil
 	self.drag_button_handler = nil
@@ -157,6 +158,43 @@ local LittleMoonPanel = Class(Widget, function(self, owner, max_summon, scale, e
 	self.drag_dots_bottom = self.handle_bottom:AddChild(Text(CHATFONT, 24, "::: 小月亮助手 :::"))
 	self.drag_dots_bottom:SetColour(unpack(GOLD))
 	self.drag_dots_bottom:SetPosition(0, -1, 0)
+
+	-------------------------------------------------------------------
+	-- Mod浏览器 (模组百科, 集成自 demo/dst-mod-browser-master)
+	-------------------------------------------------------------------
+	if self.enable_mod_browser then
+		local title_w, title_label = CreateSectionTitle(self, "模组介绍", function() self:ToggleSection("modbrowser") end)
+		local container = self:AddChild(Widget("modbrowser_container"))
+
+		self.mod_browser_btn = container:AddChild(TEMPLATES.StandardButton(function()
+			local hud = ThePlayer and ThePlayer.HUD
+			if not hud then return end
+			if not hud.little_moon_mod_browser then
+				local ModBrowserScreen = require("widgets/modbrowserscreen")
+				hud.little_moon_mod_browser = hud:AddChild(ModBrowserScreen(ThePlayer))
+			end
+			local screen = hud.little_moon_mod_browser
+			if screen:IsVisible() then
+				screen:Hide()
+			else
+				screen:Show()
+				screen:MoveToFront()
+			end
+		end, "打开模组介绍", { 140, 36 }))
+		self.mod_browser_btn:SetPosition(0, 0, 0)
+		self.mod_browser_btn:SetTextSize(20)
+
+		table.insert(self.sections, {
+			key = "modbrowser",
+			enabled = true,
+			title_bar = title_w,
+			title_label = title_label,
+			container = container,
+			container_height = 45,
+			collapsed = true,
+			section_name = "模组介绍",
+		})
+	end
 
 	-------------------------------------------------------------------
 	-- 快捷指令 (QL Helper)
