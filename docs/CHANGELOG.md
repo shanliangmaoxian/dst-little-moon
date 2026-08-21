@@ -10,6 +10,8 @@
 - **附魔「负重前行」** — 移速减少90%，获得20%免伤，攻击倍率×2。负重前行，一步一个脚印！Boss 掉落附魔石（权重 0.01）
   - 涉及文件：`scripts/enchants/fuzhong.lua`（新增）、`modmain.lua`、`docs/enchants.md`
 
+  - **物品** — 星辰胸针兑换
+
 ### 修复
 - **附魔「梨花雪」穿戴叠加（最终修复：实例级包装）** — 上一版兜底在玩家实例上报错：`attempt to index local 'proto' (a function value)`——**DST 新版 class.lua 的实例 `metatable.__index` 是函数而非表**，`getmetatable(dt).__index` 方案在玩家组件上不可用（这也是此前 `AddComponentPostInit` 回调对玩家实例"未生效"的表现之一）。**改为实例级包装**：直接在组件实例上覆盖 `OnSave/OnLoad/AddSx/ClearSx/AddSxAll`（不碰 metatable），由 `ensure_lhx_patched` 在 on_equip/apply_extra 入口强制自愈（补字段初始化 + 补包装），对任何实例、任何加载时序都生效。真实代码模拟：字段全 nil 的玩家实例（含历史污染 zf=2480），穿戴 3 轮后属性恒定（408.0↔414.2）不再叠加
 - **附魔「梨花雪」历史叠加污染提示** — 玩家锻体增幅已污染至 zf=2480（理论上限 200），兜底保留现状（穿脱不再叠加）但锻体属性仍虚高，日志警告建议重置锻体数据（`elaina_dt` 存档中的 `zf`/`sx_tab`）
