@@ -499,18 +499,18 @@ _G.MOON_MOB_ENCHANTS = {
     -----------------------------------------------------------------
     -- 云中雀 — 周期性爆发
     -----------------------------------------------------------------
-    MOB_YZQ = {
-        name = "云中雀", desc = "每8秒范围爆发伤害", weight = 1, boss_only = false,
-        on_update = function(inst, tier, mult, state)
-            -- 每 8 秒爆发一次
-            local dmg = (inst.components.combat and inst.components.combat.defaultdamage * 3.5 or 100) * mult
-            for _, target in ipairs(FindEnemies(inst, 6)) do
-                DealDamage(inst, target, dmg, "mob_yzq")
-            end
-            SpawnFX("groundpoundring_fx", inst.Transform:GetWorldPosition(), 1.5)
-        end,
-        update_period = 8,
-    },
+    -- MOB_YZQ = {
+    --     name = "云中雀", desc = "每8秒范围爆发伤害", weight = 1, boss_only = false,
+    --     on_update = function(inst, tier, mult, state)
+    --         -- 每 8 秒爆发一次
+    --         local dmg = (inst.components.combat and inst.components.combat.defaultdamage * 3.5 or 100) * mult
+    --         for _, target in ipairs(FindEnemies(inst, 6)) do
+    --             DealDamage(inst, target, dmg, "mob_yzq")
+    --         end
+    --         SpawnFX("groundpoundring_fx", inst.Transform:GetWorldPosition(), 1.5)
+    --     end,
+    --     update_period = 8,
+    -- },
 
     -----------------------------------------------------------------
     -- 紫蝶分身 — 攻击召唤分身
