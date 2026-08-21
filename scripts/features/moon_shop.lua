@@ -81,7 +81,7 @@ local shop_localization = {
     ["MoonShop_emojitan"]                     = { name = "恶魔祭坛",   desc = "虚空异界的远古祭坛" },
     ["MoonShop_moonstorm_spark"]              = { name = "月熠",       desc = "5 个月亮碎片兑换 1 个月熠" },
     ["MoonShop_shijizhihua_bulb"]             = { name = "世纪之花球茎", desc = "原地放置，召唤世纪之花" },
-    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石兑换 1 个星辰胸针（需 Legend 模组）" },
+    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石 + 60 个锻体碎片 + 666 魔法值兑换 1 个星辰胸针（需 Legend 模组）" },
 }
 
 -- 标题/描述兜底 key（recipe.name 大写）在两端 mod 加载时写入（modmain 蓝图兜底只填缺失项，不会覆盖）
@@ -319,13 +319,23 @@ local function InitMoonShop()
         end
     end
 
-    -- 星辰胸针兑换: 1 个 Legend_LAOSHI 附魔石 → 1 个星辰胸针 (需要 Legend 模组 2578692071)
+    -- 星辰胸针兑换: 1 个 Legend_LAOSHI 附魔石 + 60 个锻体碎片 + 666 魔法值 → 1 个星辰胸针 (需要 Legend 模组 2578692071)
     if CFG.ENABLE_MOON_SHOP_STAR_BROOCH and legend_enabled then
         local star_brooch_recipe_id = "MoonShop_star_brooch"
         if not (AllRecipes and AllRecipes[star_brooch_recipe_id]) then
+            -- 检查是否有 CHARACTER_INGREDIENT.ELAINA_MAGIC
+            local has_elaina_magic = _G.CHARACTER_INGREDIENT and _G.CHARACTER_INGREDIENT.ELAINA_MAGIC
+            local ingredients = {
+                Ingredient("hh_effect_stone", 1),
+                Ingredient("elaina_dtsp", 60),
+            }
+            -- 如果有魔法值系统，添加魔法值消耗
+            if has_elaina_magic then
+                table.insert(ingredients, Ingredient(_G.CHARACTER_INGREDIENT.ELAINA_MAGIC, 666, "images/inventoryimages/elaina_magic.xml"))
+            end
             local recipe = AddRecipe2(
                 star_brooch_recipe_id,
-                { Ingredient("hh_effect_stone", 1) },
+                ingredients,
                 TECH.NONE,
                 { 
                     product = "star_brooch", 
@@ -375,6 +385,12 @@ local function InitMoonShop()
                     end
                     if not has_legend_stone then
                         return false, "NOITEM"
+                    end
+                    -- 检查魔法值是否足够
+                    if has_elaina_magic and inst.components.elaina_magic then
+                        if inst.components.elaina_magic:GetMagic() < 666 then
+                            return false, "NOITEM"
+                        end
                     end
                     return true
                 end
