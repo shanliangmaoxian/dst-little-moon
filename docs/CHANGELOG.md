@@ -1,6 +1,6 @@
 # 小月亮 (Little Moon) 修改记录
 
-## 1.19.0 - 2026-08-21
+## 1.18.0 - 2026-08-21
 
 ### 新增
 - **附魔「梨花雪」** — 提高魔女的锻体属性增幅 20%~100%（附魔时随机确定）。需开启魔女之旅 Mod（workshop-2578692071），仅可附魔胸针（prefab 含 brooch），唯一。实现：包装 `elaina_dt` 组件（OnSave/OnLoad/AddSx），附魔生效期间临时提升锻体增幅 `zf`，全 mod 所有读 zf 的乘算点统一吃到增幅，存档仍写基准增幅不污染。Boss 掉落附魔石（权重 0.01）
@@ -9,20 +9,14 @@
   - 涉及文件：`scripts/enchants/laoshi.lua`（新增）、`modmain.lua`、`docs/enchants.md`
 - **附魔「负重前行」** — 移速减少90%，获得20%免伤，攻击倍率×2。负重前行，一步一个脚印！Boss 掉落附魔石（权重 0.01）
   - 涉及文件：`scripts/enchants/fuzhong.lua`（新增）、`modmain.lua`、`docs/enchants.md`
-
-  - **物品** — 星辰胸针兑换
+- **模组介绍 (Mod浏览器)** — 新增mod wiki网站介绍模块
+- **物品** — 星辰胸针兑换
 
 ### 修复
 - **附魔「梨花雪」穿戴叠加（最终修复：实例级包装）** — 上一版兜底在玩家实例上报错：`attempt to index local 'proto' (a function value)`——**DST 新版 class.lua 的实例 `metatable.__index` 是函数而非表**，`getmetatable(dt).__index` 方案在玩家组件上不可用（这也是此前 `AddComponentPostInit` 回调对玩家实例"未生效"的表现之一）。**改为实例级包装**：直接在组件实例上覆盖 `OnSave/OnLoad/AddSx/ClearSx/AddSxAll`（不碰 metatable），由 `ensure_lhx_patched` 在 on_equip/apply_extra 入口强制自愈（补字段初始化 + 补包装），对任何实例、任何加载时序都生效。真实代码模拟：字段全 nil 的玩家实例（含历史污染 zf=2480），穿戴 3 轮后属性恒定（408.0↔414.2）不再叠加
 - **附魔「梨花雪」历史叠加污染提示** — 玩家锻体增幅已污染至 zf=2480（理论上限 200），兜底保留现状（穿脱不再叠加）但锻体属性仍虚高，日志警告建议重置锻体数据（`elaina_dt` 存档中的 `zf`/`sx_tab`）
 - **附魔「老师怜悯」摘下再戴上重复给碎片** — 原「刚装备时首次给」无天数判断，脱下重穿必重复。改为 `try_give_daily`：当天已给过（`_laoshi_last_day` 当天）则跳过，跨天或首次装备才给；轮询逻辑同步统一
   - 涉及文件：`scripts/enchants/lihuaxue.lua`、`scripts/enchants/laoshi.lua`
-
-## 1.18.0 - 2026-08-17
-
-### 新增
-- **模组介绍 (Mod浏览器)** — 新增mod wiki网站介绍模块
-
 
 ## 1.17.6 - 2026-08-15
 
