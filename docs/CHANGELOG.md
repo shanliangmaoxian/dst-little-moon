@@ -10,6 +10,11 @@
 - **附魔「负重前行」** — 移速减少90%，获得20%免伤，攻击倍率×2。负重前行，一步一个脚印！Boss 掉落附魔石（权重 0.01）
   - 涉及文件：`scripts/enchants/fuzhong.lua`（新增）、`modmain.lua`、`docs/enchants.md`
 
+### 修复
+- **附魔「梨花雪」卸下再穿上属性叠加（彻底）** — 上版修复后仍叠加，根因有二：① 累加型属性清除清单漏了「魔法恢复速度」（`elaina_magic:SetMagicRecovery` 是 `+=` 累加型）；② 更根本的——mod 的 `AddSxAll` 为无条件累加，重进世界时其 OnLoad 延迟 0.5s 的 AddSxAll 与附魔重算交叉会双重应用。**改为把 mod 的 `ClearSx`/`AddSxAll` 包装为幂等版本**：每次应用前按上次生效倍率精确清除累加型属性（9 项：法强/生命/san/饱食/魔法/多重施法/位面防御/位面伤害/魔法恢复），覆盖型由 SetModifier 天然覆盖；加 `_moon_lhx_applied` 标志区分「首次应用」（从 0 开始不清除）与「重算」。无论 mod 何时调用（OnLoad 延迟/增幅碎片/玩家操作）都幂等，顺带修复了 mod 自身增幅碎片残留 bug。15 个场景脚本验证全部通过
+- **附魔「老师怜悯」摘下再戴上重复给碎片** — 原「刚装备时首次给」无天数判断，脱下重穿必重复。改为 `try_give_daily`：当天已给过（`_laoshi_last_day` 当天）则跳过，跨天或首次装备才给；轮询逻辑同步统一
+  - 涉及文件：`scripts/enchants/lihuaxue.lua`、`scripts/enchants/laoshi.lua`
+
 ## 1.18.0 - 2026-08-17
 
 ### 新增

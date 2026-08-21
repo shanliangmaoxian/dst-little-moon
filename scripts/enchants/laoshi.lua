@@ -57,12 +57,23 @@ AddPrefabPostInit("world", function(inst)
                         end
                     end
 
+                    -- 当天已给过（含刚装备/轮询）则不重复给
+                    local function try_give_daily()
+                        if not _G.Moon_HasEffect(owner, "laoshi") then return end
+                        if not owner:IsValid() or not owner.components.inventory then return end
+                        local current_day = _G.TheWorld.state.cycles
+                        if owner._laoshi_last_day ~= nil and current_day <= owner._laoshi_last_day then
+                            return -- 今天已经给过，脱下重穿不重复
+                        end
+                        owner._laoshi_last_day = current_day
+                        give_dtsp()
+                    end
+
                     -- 每天送两个锻体碎片（轮询天数变化，必触发）
-                    owner._laoshi_last_day = _G.TheWorld.state.cycles
                     owner._laoshi_daycheck_task = owner:DoPeriodicTask(60, function()
                         if not _G.Moon_HasEffect(owner, "laoshi") then return end
                         local current_day = _G.TheWorld.state.cycles
-                        if current_day > owner._laoshi_last_day then
+                        if owner._laoshi_last_day == nil or current_day > owner._laoshi_last_day then
                             owner._laoshi_last_day = current_day
                             owner:DoTaskInTime(0.5, function()
                                 if owner:IsValid() then give_dtsp() end
@@ -70,9 +81,9 @@ AddPrefabPostInit("world", function(inst)
                         end
                     end)
 
-                    -- 刚装备时首次给（延迟几秒等加载完成）
+                    -- 刚装备时首次给（延迟几秒等加载完成）；当天已给过则跳过
                     owner:DoTaskInTime(3, function()
-                        if owner:IsValid() then give_dtsp() end
+                        if owner:IsValid() then try_give_daily() end
                     end)
                 end
             end
