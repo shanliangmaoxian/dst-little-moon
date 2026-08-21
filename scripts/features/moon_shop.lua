@@ -81,7 +81,7 @@ local shop_localization = {
     ["MoonShop_emojitan"]                     = { name = "恶魔祭坛",   desc = "虚空异界的远古祭坛" },
     ["MoonShop_moonstorm_spark"]              = { name = "月熠",       desc = "5 个月亮碎片兑换 1 个月熠" },
     ["MoonShop_shijizhihua_bulb"]             = { name = "世纪之花球茎", desc = "原地放置，召唤世纪之花" },
-    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石 + 60 个锻体碎片 + 666 魔法值兑换 1 个星辰胸针（需 Legend 模组）" },
+    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个老师怜悯附魔石 + 60 个锻体碎片 + 666 魔法值兑换\n只能是老师怜悯这个附魔兑换，其他附魔无效" },
 }
 
 -- 标题/描述兜底 key（recipe.name 大写）在两端 mod 加载时写入（modmain 蓝图兜底只填缺失项，不会覆盖）
@@ -423,12 +423,14 @@ local function InitMoonShop()
     end
 
     -- 商店配方专属描述写入 recipe.description
-    -- （craftingmenu_details.lua:362 优先读 recipe.description，否则回落到 RECIPE_DESC[product] 显示原版配方描述）
+    -- （craftingmenu_details.lua:348 优先读 recipe.description 作为 STRINGS.RECIPE_DESC 的 key，否则回落到 recipe.product）
+    -- 我们已经在模块加载时设置了 STRINGS.RECIPE_DESC[recipe_id]，所以需要设置 recipe.description = recipe_id
+    -- 这样 UI 就会使用正确的 key 来查找描述
     if _G.AllRecipes then
         for recipe_id, entry in pairs(shop_localization) do
             local recipe = _G.AllRecipes[recipe_id]
-            if recipe and entry.desc and recipe.description == nil then
-                recipe.description = entry.desc
+            if recipe and entry.desc then
+                recipe.description = recipe_id
             end
         end
     end
