@@ -605,6 +605,16 @@ configuration_options = {
         },
         default = true,
     },
+    {
+        name = "ENABLE_MOON_SHOP_STAR_BROOCH",
+        label = "星辰胸针兑换",
+        hover = "小月亮商店中显示用 1 个老师怜悯附魔石兑换 1 个星辰胸针（需 Legend 模组）",
+        options = {
+            { description = "开启", data = true },
+            { description = "关闭", data = false },
+        },
+        default = true,
+    },
 
     AddTitle("开局礼包"),
     {

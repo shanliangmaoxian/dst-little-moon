@@ -21,6 +21,8 @@ Assets = {
     Asset("ATLAS", "images/inventoryimages/shijizhihua_bulb.xml"),
     Asset("IMAGE", "images/inventoryimages/pig_man.tex"),
     Asset("ATLAS", "images/inventoryimages/pig_man.xml"),
+    Asset("IMAGE", "images/inventoryimages/star_brooch.tex"),
+    Asset("ATLAS", "images/inventoryimages/star_brooch.xml"),
 }
 
 -- 骰子 RPC 在最顶部注册（确保客户端 MOD_RPC 表正确填充）

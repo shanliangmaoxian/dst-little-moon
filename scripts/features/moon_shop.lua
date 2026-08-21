@@ -31,6 +31,7 @@ local filter_list = has_filter and { "MOON_SHOP" } or nil
 local hh_enabled = _G.Moon_IsModEnabled("workshop-3096210166")
 local soul_exchange_enabled = _G.Moon_IsModEnabled("workshop-2526778484")
 local hoshino_enabled = _G.Moon_IsModEnabled("workshop-3398290914")
+local legend_enabled = _G.Moon_IsModEnabled("workshop-2578692071")
 
 -- 织影者地上防自毁（模块加载时注册，确保在第一个实例出生前生效）
 if hh_enabled then
@@ -80,6 +81,7 @@ local shop_localization = {
     ["MoonShop_emojitan"]                     = { name = "恶魔祭坛",   desc = "虚空异界的远古祭坛" },
     ["MoonShop_moonstorm_spark"]              = { name = "月熠",       desc = "5 个月亮碎片兑换 1 个月熠" },
     ["MoonShop_shijizhihua_bulb"]             = { name = "世纪之花球茎", desc = "原地放置，召唤世纪之花" },
+    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石兑换 1 个星辰胸针" },
 }
 
 -- 标题/描述兜底 key（recipe.name 大写）在两端 mod 加载时写入（modmain 蓝图兜底只填缺失项，不会覆盖）
@@ -314,6 +316,27 @@ local function InitMoonShop()
                 filter_list
             )
             print("[小月亮商店] 月熠兑换注册成功")
+        end
+    end
+
+    -- 星辰胸针兑换: 1 个 Legend_LAOSHI → 1 个星辰胸针 (需要 Legend 模组 2578692071)
+    if CFG.ENABLE_MOON_SHOP_STAR_BROOCH and legend_enabled then
+        local star_brooch_recipe_id = "MoonShop_star_brooch"
+        if not (AllRecipes and AllRecipes[star_brooch_recipe_id]) then
+            AddRecipe2(
+                star_brooch_recipe_id,
+                { Ingredient("Legend_LAOSHI", 1) },
+                TECH.NONE,
+                { 
+                    product = "star_brooch", 
+                    nounlock = true, 
+                    numtogive = 1,
+                    atlas = "images/inventoryimages/star_brooch.xml",
+                    image = "star_brooch.tex",
+                },
+                filter_list
+            )
+            print("[小月亮商店] 星辰胸针兑换注册成功")
         end
     end
 
