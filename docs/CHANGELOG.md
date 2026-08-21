@@ -1,5 +1,15 @@
 # 小月亮 (Little Moon) 修改记录
 
+## 1.19.0 - 2026-08-21
+
+### 新增
+- **附魔「梨花雪」** — 提高魔女的锻体属性增幅 20%~100%（附魔时随机确定）。需开启魔女之旅 Mod（workshop-2578692071），仅可附魔胸针（prefab 含 brooch），唯一。实现：包装 `elaina_dt` 组件（OnSave/OnLoad/AddSx），附魔生效期间临时提升锻体增幅 `zf`，全 mod 所有读 zf 的乘算点统一吃到增幅，存档仍写基准增幅不污染。Boss 掉落附魔石（权重 0.01）
+  - 涉及文件：`scripts/enchants/lihuaxue.lua`（新增）、`modmain.lua`、`docs/enchants.md`
+- **附魔「老师怜悯」** — 每日额外获取两个锻体碎片（`elaina_dtsp`）。需开启魔女之旅 Mod（workshop-2578692071）才注册，仅伊蕾娜(elaina)角色装备生效，每日轮询天数变化必触发 + 刚装备首次赠送。Boss 掉落附魔石（权重 0.01）
+  - 涉及文件：`scripts/enchants/laoshi.lua`（新增）、`modmain.lua`、`docs/enchants.md`
+- **附魔「负重前行」** — 移速减少90%，获得20%免伤，攻击倍率×2。负重前行，一步一个脚印！Boss 掉落附魔石（权重 0.01）
+  - 涉及文件：`scripts/enchants/fuzhong.lua`（新增）、`modmain.lua`、`docs/enchants.md`
+
 ## 1.18.0 - 2026-08-17
 
 ### 新增

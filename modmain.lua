@@ -107,6 +107,9 @@ modimport("scripts/enchants/youjishucai")
 modimport("scripts/enchants/qiangwei")
 modimport("scripts/enchants/dengdengqiuling")
 modimport("scripts/enchants/epsilon")
+modimport("scripts/enchants/fuzhong")
+modimport("scripts/enchants/laoshi")
+modimport("scripts/enchants/lihuaxue")
 -- modimport("scripts/enchants/xinshidi")
 
 -- ------------------------------------------------------------------
