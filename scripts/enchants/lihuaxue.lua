@@ -35,11 +35,7 @@ local function apply_extra(dt)
     end
     local extra = _G.Moon_GetTotalEffectValue(player, "lhx") or 0
     local base = dt._moon_lhx_base
-    if base == nil then
-        base = (dt.zf or 0) - extra  -- 首次：从当前 zf 减去 LHX 增量得到真实基准
-        dt._moon_lhx_base = base
-        print(string.format("[LHX] apply_extra: FIRST CALL, derived base=%.1f (zf=%.1f - extra=%.1f)", base, dt.zf or 0, extra))
-    end
+    if base == nil then base = dt.zf or 0 end
     local target = base + extra
     print(string.format("[LHX] apply_extra: base=%.1f, extra=%.1f, target=%.1f, cur_zf=%.1f", base, extra, target, dt.zf or 0))
     if dt.zf == target then
@@ -64,8 +60,10 @@ end
 AddComponentPostInit("elaina_dt", function(inst, self)
     if not self then return end
 
-    -- 不在这里初始化 _moon_lhx_base（此时 zf 还是 0）
-    -- 由 OnLoad 设置正确的基准值，或由 apply_extra 首次调用时自动计算
+    -- 初始化基准增幅（此时 zf 通常是 0，OnLoad 会用存档值覆盖）
+    if self._moon_lhx_base == nil then
+        self._moon_lhx_base = self.zf or 0
+    end
     print("[LHX] AddComponentPostInit: inst="..tostring(inst.prefab).." zf="..tostring(self.zf).." base="..tostring(self._moon_lhx_base))
 
     local proto = getmetatable(self).__index

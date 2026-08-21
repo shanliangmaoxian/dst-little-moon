@@ -81,7 +81,7 @@ local shop_localization = {
     ["MoonShop_emojitan"]                     = { name = "恶魔祭坛",   desc = "虚空异界的远古祭坛" },
     ["MoonShop_moonstorm_spark"]              = { name = "月熠",       desc = "5 个月亮碎片兑换 1 个月熠" },
     ["MoonShop_shijizhihua_bulb"]             = { name = "世纪之花球茎", desc = "原地放置，召唤世纪之花" },
-    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石兑换 1 个星辰胸针" },
+    ["MoonShop_star_brooch"]                  = { name = "星辰胸针",   desc = "1 个 Legend_LAOSHI 附魔石兑换 1 个星辰胸针（需 Legend 模组）" },
 }
 
 -- 标题/描述兜底 key（recipe.name 大写）在两端 mod 加载时写入（modmain 蓝图兜底只填缺失项，不会覆盖）
@@ -319,13 +319,13 @@ local function InitMoonShop()
         end
     end
 
-    -- 星辰胸针兑换: 1 个 Legend_LAOSHI → 1 个星辰胸针 (需要 Legend 模组 2578692071)
+    -- 星辰胸针兑换: 1 个 Legend_LAOSHI 附魔石 → 1 个星辰胸针 (需要 Legend 模组 2578692071)
     if CFG.ENABLE_MOON_SHOP_STAR_BROOCH and legend_enabled then
         local star_brooch_recipe_id = "MoonShop_star_brooch"
         if not (AllRecipes and AllRecipes[star_brooch_recipe_id]) then
-            AddRecipe2(
+            local recipe = AddRecipe2(
                 star_brooch_recipe_id,
-                { Ingredient("Legend_LAOSHI", 1) },
+                { Ingredient("hh_effect_stone", 1) },
                 TECH.NONE,
                 { 
                     product = "star_brooch", 
@@ -336,6 +336,68 @@ local function InitMoonShop()
                 },
                 filter_list
             )
+            -- 添加自定义检查：只接受 Legend_LAOSHI 附魔石
+            if recipe then
+                recipe.canbuild = function(recipe, inst, pt, rotation, prototyper)
+                    if not inst or not inst.components or not inst.components.inventory then
+                        return false, "NOITEM"
+                    end
+                    -- 检查背包中是否有 Legend_LAOSHI 附魔石
+                    local has_legend_stone = false
+                    for k, v in pairs(inst.components.inventory.itemslots) do
+                        if v and v.prefab == "hh_effect_stone" and v.hh_effect == "Legend_LAOSHI" then
+                            has_legend_stone = true
+                            break
+                        end
+                    end
+                    -- 检查手持物品
+                    if not has_legend_stone and inst.components.inventory.activeitem then
+                        local item = inst.components.inventory.activeitem
+                        if item and item.prefab == "hh_effect_stone" and item.hh_effect == "Legend_LAOSHI" then
+                            has_legend_stone = true
+                        end
+                    end
+                    -- 检查打开的容器
+                    if not has_legend_stone and inst.components.inventory.opencontainers then
+                        for container_inst in pairs(inst.components.inventory.opencontainers) do
+                            local container = container_inst.components.container
+                            if container then
+                                for i = 1, container.numslots do
+                                    local v = container.slots[i]
+                                    if v and v.prefab == "hh_effect_stone" and v.hh_effect == "Legend_LAOSHI" then
+                                        has_legend_stone = true
+                                        break
+                                    end
+                                end
+                            end
+                            if has_legend_stone then break end
+                        end
+                    end
+                    if not has_legend_stone then
+                        return false, "NOITEM"
+                    end
+                    return true
+                end
+                -- 添加自定义消耗逻辑：只消耗 Legend_LAOSHI 附魔石
+                -- 在 onPreBuilt 中手动消耗，然后从 materials 中移除，避免 RemoveIngredients 重复消耗
+                recipe.onPreBuilt = function(self, builder, materials, recipe)
+                    if builder and builder.components and builder.components.inventory then
+                        local inventory = builder.components.inventory
+                        -- 从背包中查找并移除 Legend_LAOSHI 附魔石
+                        for k, v in pairs(inventory.itemslots) do
+                            if v and v.prefab == "hh_effect_stone" and v.hh_effect == "Legend_LAOSHI" then
+                                inventory:RemoveItemBySlot(k)
+                                v:Remove()
+                                break
+                            end
+                        end
+                    end
+                    -- 从 materials 中移除 hh_effect_stone，避免 RemoveIngredients 重复消耗
+                    if materials and materials["hh_effect_stone"] then
+                        materials["hh_effect_stone"] = nil
+                    end
+                end
+            end
             print("[小月亮商店] 星辰胸针兑换注册成功")
         end
     end
