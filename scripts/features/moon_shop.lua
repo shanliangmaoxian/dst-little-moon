@@ -378,25 +378,6 @@ local function InitMoonShop()
                     end
                     return true
                 end
-                -- 添加自定义消耗逻辑：只消耗 Legend_LAOSHI 附魔石
-                -- 在 onPreBuilt 中手动消耗，然后从 materials 中移除，避免 RemoveIngredients 重复消耗
-                recipe.onPreBuilt = function(self, builder, materials, recipe)
-                    if builder and builder.components and builder.components.inventory then
-                        local inventory = builder.components.inventory
-                        -- 从背包中查找并移除 Legend_LAOSHI 附魔石
-                        for k, v in pairs(inventory.itemslots) do
-                            if v and v.prefab == "hh_effect_stone" and v.hh_effect == "Legend_LAOSHI" then
-                                inventory:RemoveItemBySlot(k)
-                                v:Remove()
-                                break
-                            end
-                        end
-                    end
-                    -- 从 materials 中移除 hh_effect_stone，避免 RemoveIngredients 重复消耗
-                    if materials and materials["hh_effect_stone"] then
-                        materials["hh_effect_stone"] = nil
-                    end
-                end
             end
             print("[小月亮商店] 星辰胸针兑换注册成功")
         end
@@ -440,3 +421,40 @@ end
 AddPrefabPostInit("world", function(inst)
     InitMoonShop()
 end)
+
+-- 星辰胸针兑换：修改 inventory 组件的 GetCraftingIngredient 函数，确保只返回 Legend_LAOSHI 附魔石
+if CFG.ENABLE_MOON_SHOP_STAR_BROOCH and legend_enabled then
+    AddComponentPostInit("inventory", function(self)
+        local original_GetCraftingIngredient = self.GetCraftingIngredient
+        self.GetCraftingIngredient = function(self, item, amount, ...)
+            if item == "hh_effect_stone" then
+                -- 当请求 hh_effect_stone 时，只返回 Legend_LAOSHI 附魔石
+                local crafting_items = {}
+                local total_num_found = 0
+                
+                -- 检查背包中的物品
+                for i = 1, self.maxslots do
+                    local v = self.itemslots[i]
+                    if v ~= nil and v.prefab == "hh_effect_stone" and v.hh_effect == "Legend_LAOSHI" and not v:HasTag("nocrafting") then
+                        local stacksize = v.components.stackable and v.components.stackable:StackSize() or 1
+                        crafting_items[v] = stacksize
+                        total_num_found = total_num_found + stacksize
+                        if total_num_found >= amount then
+                            return crafting_items
+                        end
+                    end
+                end
+                
+                -- 检查手持物品
+                if self.activeitem ~= nil and self.activeitem.prefab == "hh_effect_stone" and self.activeitem.hh_effect == "Legend_LAOSHI" and not self.activeitem:HasTag("nocrafting") then
+                    local stacksize = self.activeitem.components.stackable and self.activeitem.components.stackable:StackSize() or 1
+                    crafting_items[self.activeitem] = math.min(stacksize, amount - total_num_found)
+                end
+                
+                return crafting_items
+            end
+            -- 对于其他物品，使用原始函数
+            return original_GetCraftingIngredient(self, item, amount, ...)
+        end
+    end)
+end

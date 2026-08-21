@@ -16,7 +16,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_LAOSHI", {
         name = "老师怜悯",
         client_text = "老师\n怜悯",
-        desc = "每日额外获取两个锻体碎片\n需开启魔女之旅Mod，仅伊蕾娜(elaina)角色装备生效",
+        desc = "每日额外获取两个锻体碎片\n仅可附魔胸针，唯一",
         check_desc = "倒霉孩子，老师怜悯你了！",
         can_add = false,
         only_one = true,
@@ -24,7 +24,10 @@ AddPrefabPostInit("world", function(inst)
         client_color = { 0.8, 0, 0.8, 1 },
         ui_from_desc = "击败精英/Boss概率掉落",
         check_equip_can_add = function(inst)
-            return true, "满足条件"
+            if inst and inst.prefab and string.find(inst.prefab, "brooch") then
+                return true, "满足条件"
+            end
+            return false, "只能附魔在胸针上"
         end,
         on_equip_fn = function(inst, owner, value)
             _G.Moon_AddEffect(owner, "laoshi", "Legend_LAOSHI", 1)
