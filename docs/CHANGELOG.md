@@ -1,4 +1,9 @@
 # 小月亮 (Little Moon) 修改记录
+## 1.18.1 - 2026-08-21
+### 修复
+- **附魔「蔷薇」** 暂时去掉 后面 换一下效果  不要涉及血量
+- **附魔「蔷薇」去掉回血** — 移除队友回血光环（原：6格内有队友时双方每2秒回2血），保留低血移速与受击冰霜爆发
+  - 涉及文件：`scripts/enchants/qiangwei.lua`
 
 ## 1.18.0 - 2026-08-21
 
@@ -11,6 +16,7 @@
   - 涉及文件：`scripts/enchants/fuzhong.lua`（新增）、`modmain.lua`、`docs/enchants.md`
 - **模组介绍 (Mod浏览器)** — 新增mod wiki网站介绍模块
 - **物品** — 星辰胸针兑换
+
 
 ### 修复
 - **附魔「梨花雪」穿戴叠加（最终修复：实例级包装）** — 上一版兜底在玩家实例上报错：`attempt to index local 'proto' (a function value)`——**DST 新版 class.lua 的实例 `metatable.__index` 是函数而非表**，`getmetatable(dt).__index` 方案在玩家组件上不可用（这也是此前 `AddComponentPostInit` 回调对玩家实例"未生效"的表现之一）。**改为实例级包装**：直接在组件实例上覆盖 `OnSave/OnLoad/AddSx/ClearSx/AddSxAll`（不碰 metatable），由 `ensure_lhx_patched` 在 on_equip/apply_extra 入口强制自愈（补字段初始化 + 补包装），对任何实例、任何加载时序都生效。真实代码模拟：字段全 nil 的玩家实例（含历史污染 zf=2480），穿戴 3 轮后属性恒定（408.0↔414.2）不再叠加
