@@ -77,7 +77,7 @@ AddPrefabPostInit("world", function(inst)
                     if not isSuitActive() then return end
                     -- 只响应玩家击杀他人（killed 事件，data.target=被击杀者；
                     -- 此时目标 IsDead() 已为 true，不能再拿 IsDead 过滤）
-                    local target = data and data.target
+                    local target = data and data.victim
                     if not target or target == owner or not target:IsValid() then return end
 
                     local now = _G.GetTime()
