@@ -2,7 +2,6 @@
 -- 将血肉织成能抵御伤害的披风！
 -- 血量≤50%时每损失1%血+0.6%移速(上限+30%)
 -- 受击冰霜爆发：4格内敌人冻结1秒+50%攻击力伤害(CD4秒)
--- 6格内有队友时缓慢回血(双方)
 
 local _G = GLOBAL
 local CFG = GLOBAL.MOON_CFG
@@ -12,9 +11,6 @@ if not CFG.ENABLE_MORE_ENCHANTS then return end
 local MAX_SPEED = 30        -- 低血移速上限
 local FROST_RANGE = 4       -- 冰霜爆发范围
 local FROST_CD = 4          -- 冰霜爆发冷却(秒)
-local HEAL_RANGE = 6        -- 队友回血光环范围
-local HEAL_TICK = 2         -- 回血间隔(秒)
-local HEAL_AMOUNT = 2       -- 每次回血量
 
 -- 更新低血移速（血量≤50%时，每损失1%血 +0.6%移速，上限+30%）
 local function update_speed(owner)
@@ -68,7 +64,7 @@ AddPrefabPostInit("world", function(inst)
     GLOBAL.AddSpecialEquipEffect("Legend_QIANGWEI", {
         name = "蔷薇主教",
         client_text = "蔷\n薇",
-        desc = "血肉披风:血量≤50%时低血加移速(上限+30%)\n受击冰霜爆发:4格内敌人冻结1秒+50%伤害(CD4秒)\n6格内有队友时双方缓慢回血",
+        desc = "血肉披风:血量≤50%时低血加移速(上限+30%)\n受击冰霜爆发:4格内敌人冻结1秒+50%伤害(CD4秒)",
         check_desc = "将血肉织成能抵御伤害的披风！",
         can_add = false,
         only_one = true,
@@ -104,24 +100,6 @@ AddPrefabPostInit("world", function(inst)
                     if not _G.Moon_HasEffect(owner, "qiangwei") then return end
                     update_speed(owner)
                 end)
-
-                -- 队友回血光环：6格内有队友时双方缓慢回血
-                owner._qiangwei_heal_task = owner:DoPeriodicTask(HEAL_TICK, function()
-                    if not _G.Moon_HasEffect(owner, "qiangwei") then return end
-                    if not owner:IsValid() then return end
-                    local hx, hy, hz = owner.Transform:GetWorldPosition()
-                    local allies = _G.TheSim:FindEntities(hx, hy, hz, HEAL_RANGE, { "player" }, { "playerghost", "INLIMBO" })
-                    local has_ally = false
-                    for _, p in ipairs(allies) do
-                        if p ~= owner and p.components.health and not p.components.health:IsDead() then
-                            has_ally = true
-                            p.components.health:DoDelta(HEAL_AMOUNT, false, nil)
-                        end
-                    end
-                    if has_ally and owner.components.health then
-                        owner.components.health:DoDelta(HEAL_AMOUNT, false, nil)
-                    end
-                end)
             end
         end,
         un_equip_fn = function(inst, owner, value)
@@ -144,10 +122,6 @@ AddPrefabPostInit("world", function(inst)
                 if owner._qiangwei_speed_task then
                     owner._qiangwei_speed_task:Cancel()
                     owner._qiangwei_speed_task = nil
-                end
-                if owner._qiangwei_heal_task then
-                    owner._qiangwei_heal_task:Cancel()
-                    owner._qiangwei_heal_task = nil
                 end
                 owner._qiangwei_frost_cd = nil
                 owner._qiangwei_hooked = nil
