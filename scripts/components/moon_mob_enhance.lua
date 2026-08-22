@@ -132,7 +132,7 @@ function MoonMobEnhance:_ApplyDefense()
                     local px, py, pz = comp.inst.Transform:GetWorldPosition()
                     afflicter:DoTaskInTime(0, function()
                         if not comp.inst:IsValid() then return end
-                        local fx = SpawnPrefab("statue_transition_2")
+                        local fx = SpawnPrefab("weaponsparks")
                         if fx then
                             fx.Transform:SetPosition(px, py, pz)
                         end
@@ -284,12 +284,12 @@ function MoonMobEnhance:_ApplyVisuals()
     end
 
     local x, y, z = inst.Transform:GetWorldPosition()
-    local fx = SpawnPrefab("statue_transition_2")
+    local fx = SpawnPrefab("weaponsparks")
     if fx then
         fx.Transform:SetPosition(x, y, z)
         fx.Transform:SetScale(1.5, 1.5, 1.5)
     end
-    local fx2 = SpawnPrefab("moonglass_glow")
+    local fx2 = SpawnPrefab("groundpoundring_fx")
     if fx2 then
         fx2.Transform:SetPosition(x, y, z)
         fx2.Transform:SetScale(2, 2, 2)

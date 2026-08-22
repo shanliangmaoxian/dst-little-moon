@@ -99,7 +99,7 @@ AddPrefabPostInit("world", function(inst)
                     end
 
                     -- 特效
-                    local fx = _G.SpawnPrefab("groundpoundring_fx") or _G.SpawnPrefab("statue_transition_1")
+                    local fx = _G.SpawnPrefab("groundpoundring_fx")
                     if fx then
                         fx.Transform:SetPosition(x, y, z)
                         fx.Transform:SetScale(2, 2, 2)
@@ -151,7 +151,7 @@ AddPrefabPostInit("world", function(inst)
                                     addArmorStack()
 
                                     -- 限伤特效
-                                    local fx = _G.SpawnPrefab("statue_transition_2")
+                                    local fx = _G.SpawnPrefab("weaponsparks")
                                     if fx then
                                         fx.Transform:SetPosition(owner.Transform:GetWorldPosition())
                                     end

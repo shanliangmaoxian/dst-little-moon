@@ -95,7 +95,7 @@ AddPrefabPostInit("world", function(inst)
 
                                 -- 粒子特效代替乌鸦（避免生成物理实体）
                                 if GLOBAL.SpawnPrefab then
-                                    local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                    local fx = GLOBAL.SpawnPrefab("weaponsparks")
                                     if fx then
                                         local bx, by, bz = owner.Transform:GetWorldPosition()
                                         fx.Transform:SetPosition(bx, by + 1.5, bz)

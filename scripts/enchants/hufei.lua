@@ -97,7 +97,7 @@ AddPrefabPostInit("world", function(inst)
                                     if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
                                         owner._hufei_fx_cd = now
                                         local x, y, z = owner.Transform:GetWorldPosition()
-                                        local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                        local fx = GLOBAL.SpawnPrefab("weaponsparks")
                                         if fx then
                                             fx.Transform:SetPosition(x, y, z)
                                         end
@@ -141,7 +141,7 @@ AddPrefabPostInit("world", function(inst)
                             if not owner._hufei_fx_cd or now - owner._hufei_fx_cd >= 2 then
                                 owner._hufei_fx_cd = now
                                 local x, y, z = owner.Transform:GetWorldPosition()
-                                local fx = GLOBAL.SpawnPrefab("statue_transition_2")
+                                local fx = GLOBAL.SpawnPrefab("weaponsparks")
                                 if fx then
                                     fx.Transform:SetPosition(x, y, z)
                                 end

@@ -94,7 +94,7 @@ AddPrefabPostInit("world", function(inst)
                                         local now = _G.GetTime and _G.GetTime() or 0
                                         if not owner._luo_fx_cd or now - owner._luo_fx_cd >= 2 then
                                             owner._luo_fx_cd = now
-                                            local fx = _G.SpawnPrefab("statue_transition_2")
+                                            local fx = _G.SpawnPrefab("weaponsparks")
                                             if fx then
                                                 local x, y, z = owner.Transform:GetWorldPosition()
                                                 fx.Transform:SetPosition(x, y, z)

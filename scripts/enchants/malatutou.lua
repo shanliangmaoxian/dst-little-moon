@@ -28,7 +28,7 @@ local function spawn_decoy(owner)
     end
 
     -- 登场特效
-    local fx = _G.SpawnPrefab("statue_transition_2")
+    local fx = _G.SpawnPrefab("weaponsparks")
     if fx then fx.Transform:SetPosition(x, y + 1, z) end
 
     -- 移除可能干扰的种族标签
@@ -82,7 +82,7 @@ local function spawn_decoy(owner)
     decoy:DoTaskInTime(6, function()
         if decoy:IsValid() then
             local dx, dy, dz = decoy.Transform:GetWorldPosition()
-            local fx2 = _G.SpawnPrefab("statue_transition_2")
+            local fx2 = _G.SpawnPrefab("weaponsparks")
             if fx2 then fx2.Transform:SetPosition(dx, dy + 1, dz) end
             decoy:Remove()
         end

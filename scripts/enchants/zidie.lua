@@ -49,7 +49,7 @@ local function spawn_clone(owner, target)
     clone.Transform:SetPosition(sx, y, sz)
 
     -- 蝴蝶特效登场
-    local fx = _G.SpawnPrefab("statue_transition_2")
+    local fx = _G.SpawnPrefab("weaponsparks")
     if fx then fx.Transform:SetPosition(sx, y + 0.5, sz) end
 
     -- 紫蝶化外观：紫色半透明！
@@ -97,7 +97,7 @@ local function spawn_clone(owner, target)
     clone:DoTaskInTime(8, function()
         if clone:IsValid() then
             local cx, cy, cz = clone.Transform:GetWorldPosition()
-            local fx2 = _G.SpawnPrefab("statue_transition_2")
+            local fx2 = _G.SpawnPrefab("weaponsparks")
             if fx2 then fx2.Transform:SetPosition(cx, cy + 0.5, cz) end
             clone:Remove()
         end

@@ -82,7 +82,7 @@ local function spawn_cat(owner)
     end
 
     -- 登场特效
-    local fx = _G.SpawnPrefab("statue_transition_2")
+    local fx = _G.SpawnPrefab("weaponsparks")
     if fx then fx.Transform:SetPosition(x, y + 0.5, z) end
 
     -- 摘除可能干扰的标签
@@ -242,7 +242,7 @@ AddPrefabPostInit("world", function(inst)
                                                 cat._ymk_gift_task:Cancel()
                                             end
                                             local cx, cy, cz = cat.Transform:GetWorldPosition()
-                                            local fx = _G.SpawnPrefab("statue_transition_2")
+                                            local fx = _G.SpawnPrefab("weaponsparks")
                                             if fx then fx.Transform:SetPosition(cx, cy + 1, cz) end
                                             cat:Remove()
                                         end

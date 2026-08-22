@@ -210,7 +210,7 @@ _G.MOON_MOB_ENCHANTS = {
             for _, t in ipairs(FindEnemies(inst, 6)) do
                 DealDamage(inst, t, dmg, "mob_panghu")
             end
-            SpawnFX("statue_transition_1", inst.Transform:GetWorldPosition(), 1.5)
+            SpawnFX("groundpoundring_fx", inst.Transform:GetWorldPosition(), 1.5)
         end,
     },
 
@@ -233,7 +233,7 @@ _G.MOON_MOB_ENCHANTS = {
             for _, t in ipairs(FindEnemies(inst, 4)) do
                 DealDamage(inst, t, dmg, "mob_wjbd")
             end
-            SpawnFX("icespall_spawn_fx", inst.Transform:GetWorldPosition())
+            SpawnFX("deerclops_icespike_fx", inst.Transform:GetWorldPosition())
         end,
     },
 
@@ -352,7 +352,7 @@ _G.MOON_MOB_ENCHANTS = {
             if state._combo >= 10 and inst.components.combat then
                 local extra = inst.components.combat.defaultdamage * 0.5 * mult
                 DealDamage(inst, target, extra, "mob_lanqiu")
-                SpawnFX("statue_transition_1", target.Transform:GetWorldPosition())
+                SpawnFX("groundpoundring_fx", target.Transform:GetWorldPosition())
             end
         end,
     },
@@ -377,7 +377,7 @@ _G.MOON_MOB_ENCHANTS = {
             if cleared > 0 then
                 local bonus = cleared * 0.6 * inst.components.combat.defaultdamage * mult
                 DealDamage(inst, target, bonus, "mob_kongbai")
-                SpawnFX("statue_transition_1", target.Transform:GetWorldPosition())
+                SpawnFX("groundpoundring_fx", target.Transform:GetWorldPosition())
             end
         end,
     },
@@ -456,7 +456,7 @@ _G.MOON_MOB_ENCHANTS = {
             if not IsImmuneReflect(target) and nearest and nearest:IsValid()  and nearest.components.health then
                 local dmg = inst.components.combat and inst.components.combat.defaultdamage * 3 * mult or 100
                 DealDamage(inst, nearest, dmg, "mob_liang")
-                SpawnFX("moonglass_glow", nearest.Transform:GetWorldPosition())
+                SpawnFX("groundpoundring_fx", nearest.Transform:GetWorldPosition())
             end
         end,
         update_period = 30,
@@ -491,7 +491,7 @@ _G.MOON_MOB_ENCHANTS = {
             if math.random() < 0.42 and not IsImmuneReflect(attacker) then
                 local counter = (inst.components.combat and inst.components.combat.defaultdamage * 2 or 100) * mult
                 DealDamage(inst, attacker, counter, "mob_gugugu")
-                SpawnFX("statue_transition_1", attacker.Transform:GetWorldPosition())
+                SpawnFX("groundpoundring_fx", attacker.Transform:GetWorldPosition())
             end
         end,
     },
@@ -539,7 +539,7 @@ _G.MOON_MOB_ENCHANTS = {
                 clone:ListenForEvent("death", function()
                     state._clone_count = math.max((state._clone_count or 1) - 1, 0)
                 end)
-                SpawnFX("statue_transition_2", clone.Transform:GetWorldPosition())
+                SpawnFX("weaponsparks", clone.Transform:GetWorldPosition())
             end
         end,
     },

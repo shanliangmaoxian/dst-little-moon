@@ -137,7 +137,7 @@ AddPrefabPostInit("world", function(inst)
                                 target.components.health:DoDelta(-bonus, false, "suansuancao_maxhp")
                             end
                             if _G.SpawnPrefab then
-                                local fx = _G.SpawnPrefab("statue_transition_2")
+                                local fx = _G.SpawnPrefab("weaponsparks")
                                 if fx then
                                     local x, y, z = target.Transform:GetWorldPosition()
                                     fx.Transform:SetPosition(x, y, z)

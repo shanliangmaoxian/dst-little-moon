@@ -102,7 +102,7 @@ AddPrefabPostInit("world", function(inst)
 
                             -- 特效
                             if GLOBAL.SpawnPrefab then
-                                local fx = GLOBAL.SpawnPrefab("statue_transition")
+                                local fx = GLOBAL.SpawnPrefab("groundpoundring_fx")
                                 if fx then
                                     local x, y, z = target.Transform:GetWorldPosition()
                                     fx.Transform:SetPosition(x, y, z)
